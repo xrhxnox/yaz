@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NOMBRES, TALLAS, TEMA_INICIAL, otra, type Persona, type Tallas } from "@/lib/config";
-import { api } from "@/lib/cliente";
+import { api, type Ubicacion } from "@/lib/cliente";
+import { BuscarCiudad, guardarCiudad } from "./HoraClima";
+import Notificaciones from "./Notificaciones";
 import { aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
@@ -433,17 +435,62 @@ function SeccionCuenta() {
   );
 }
 
+// ---------- Ajustes ----------
+
+function SeccionAjustes({ yo, ubicacion, alCambiar }: { yo: Persona; ubicacion: Ubicacion | null; alCambiar: () => Promise<void> }) {
+  const [buscando, setBuscando] = useState(false);
+  return (
+    <section className={tarjeta}>
+      <p className={tituloSeccion}>Ajustes</p>
+
+      <div className="mt-4">
+        <p className={etiqueta}>Mi ciudad</p>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <p className="font-serif text-lg">{ubicacion?.ciudad ?? "Sin ciudad todavía"}</p>
+          {!buscando && (
+            <button onClick={() => setBuscando(true)} className={`${enlace} shrink-0`}>
+              {ubicacion ? "Cambiar" : "Poner mi ciudad"}
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-suave">Se usa para tu hora y tu clima en el inicio.</p>
+        {buscando && (
+          <BuscarCiudad
+            alCancelar={() => setBuscando(false)}
+            alElegir={async (r) => {
+              await guardarCiudad(r);
+              await alCambiar();
+              setBuscando(false);
+            }}
+          />
+        )}
+      </div>
+
+      <div className="mt-5 border-t border-borde pt-4">
+        <p className={etiqueta}>Notificaciones</p>
+        <div className="mt-2">
+          <Notificaciones yo={yo} enPerfil />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ---------- Perfil ----------
 
 export default function Perfil({
   yo,
   temaActual,
+  ubicacion,
   alCambiarTema,
+  alCambiarDatos,
   alSalir,
 }: {
   yo: Persona;
   temaActual: Tema | null;
+  ubicacion: Ubicacion | null;
   alCambiarTema: () => Promise<void>;
+  alCambiarDatos: () => Promise<void>;
   alSalir: () => void;
 }) {
   const [viendo, setViendo] = useState<Persona>(yo);
@@ -531,6 +578,7 @@ export default function Perfil({
             await alCambiarTema();
           }}
         />
+        <SeccionAjustes yo={yo} ubicacion={ubicacion} alCambiar={alCambiarDatos} />
         <SeccionCuenta />
       </div>
       )}

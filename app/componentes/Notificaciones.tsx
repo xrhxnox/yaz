@@ -12,7 +12,7 @@ function base64AUint8(base64: string) {
 
 type Situacion = "cargando" | "activas" | "inactivas" | "bloqueadas" | "instalar-ios" | "sin-soporte";
 
-export default function Notificaciones({ yo }: { yo: Persona }) {
+export default function Notificaciones({ yo, enPerfil }: { yo: Persona; enPerfil?: boolean }) {
   const [situacion, setSituacion] = useState<Situacion>("cargando");
   const [error, setError] = useState("");
 
@@ -53,10 +53,20 @@ export default function Notificaciones({ yo }: { yo: Persona }) {
     }
   }
 
-  if (situacion === "cargando" || situacion === "activas") return null;
+  if (situacion === "cargando" || (situacion === "activas" && !enPerfil)) return null;
 
   return (
-    <section className="rounded-xl bg-relleno p-4 text-sm">
+    <section className={enPerfil ? "text-sm" : "rounded-xl bg-relleno p-4 text-sm"}>
+      {situacion === "activas" && (
+        <p className="flex items-center gap-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-acento text-sobre-acento">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+              <path d="M5 12l5 5 9-10" />
+            </svg>
+          </span>
+          Activadas en este dispositivo
+        </p>
+      )}
       {situacion === "inactivas" && (
         <>
           <p>Activa las notificaciones para enterarte cuando {NOMBRES[otra(yo)]} te mande algo.</p>

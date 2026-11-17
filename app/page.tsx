@@ -158,7 +158,14 @@ export default function Inicio() {
         {seccion === "lista" && <Pendientes />}
         {seccion === "fotos" && <Fotos yo={yo} />}
         {seccion === "momentos" && <Momentos />}
-        {seccion === "perfil" && <Perfil yo={yo} temaActual={estado?.temas?.[yo] ?? null} alCambiarTema={cargar} alSalir={salir} />}
+        {seccion === "perfil" && <Perfil
+            yo={yo}
+            temaActual={estado?.temas?.[yo] ?? null}
+            ubicacion={estado?.ubicaciones?.[yo] ?? null}
+            alCambiarTema={cargar}
+            alCambiarDatos={cargar}
+            alSalir={salir}
+          />}
       </main>
 
       <Navegacion actual={seccion} />

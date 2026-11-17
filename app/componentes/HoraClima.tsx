@@ -7,7 +7,7 @@ import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
 
 type Clima = { temp: number; codigo: number };
-type Resultado = { name: string; admin1?: string; country?: string; latitude: number; longitude: number; timezone: string };
+export type Resultado = { name: string; admin1?: string; country?: string; latitude: number; longitude: number; timezone: string };
 
 // Códigos WMO que usa Open-Meteo
 function describir(codigo: number): string {
@@ -30,7 +30,12 @@ function horaEn(zona: string, ahora: Date) {
   return { hora, dia, deNoche: h >= 23 || h < 7 };
 }
 
-function BuscarCiudad({ alElegir, alCancelar }: { alElegir: (r: Resultado) => Promise<void>; alCancelar: () => void }) {
+// Guarda la ciudad elegida (y su zona horaria) para la persona que inició sesión
+export async function guardarCiudad(r: Resultado) {
+  await api("/api/ubicacion", { ciudad: r.name, lat: r.latitude, lon: r.longitude, zona: r.timezone });
+}
+
+export function BuscarCiudad({ alElegir, alCancelar }: { alElegir: (r: Resultado) => Promise<void>; alCancelar: () => void }) {
   const [texto, setTexto] = useState("");
   const [resultados, setResultados] = useState<Resultado[] | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -154,12 +159,7 @@ export default function HoraClima({
         <BuscarCiudad
           alCancelar={() => setEditando(false)}
           alElegir={async (r) => {
-            await api("/api/ubicacion", {
-              ciudad: r.name,
-              lat: r.latitude,
-              lon: r.longitude,
-              zona: r.timezone,
-            });
+            await guardarCiudad(r);
             await alCambiar();
             setEditando(false);
           }}
