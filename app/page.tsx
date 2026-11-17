@@ -106,7 +106,7 @@ export default function Inicio() {
         : PAREJA_INICIAL,
     [estado],
   );
-  const titulo = `${pareja.nombres.b} & ${pareja.nombres.a}`;
+  const titulo = `${pareja.nombres.b}&${pareja.nombres.a}`;
   useEffect(() => {
     document.title = sesion ? titulo : PAREJA;
   }, [titulo, sesion]);
