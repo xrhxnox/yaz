@@ -112,10 +112,6 @@
   --letra-titulos: var(--font-pixelify), system-ui, sans-serif;
   --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
 }
-[data-fuente="maquina"] {
-  --letra-titulos: var(--font-geist-mono), ui-monospace, monospace;
-  --letra-texto: var(--font-geist-mono), ui-monospace, monospace;
-}
 
 /* Instalada como app: en iPhone la zona de la barra de estado se ve borrosa al hacer scroll.
    Una franja del color de acento la cubre y deja espacio antes del contenido */
