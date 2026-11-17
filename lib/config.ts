@@ -9,6 +9,9 @@ export const NOMBRES: Record<Persona, string> = {
   b: process.env.NEXT_PUBLIC_NOMBRE_B || "Yaz",
 };
 
+// Cómo se escribe el nombre de la app: Yaz va primero
+export const PAREJA = `${NOMBRES.b} & ${NOMBRES.a}`;
+
 // Fecha en que empezamos a ser pareja (YYYY-MM-DD)
 export const FECHA_INICIO = process.env.NEXT_PUBLIC_FECHA_INICIO || "2026-02-15";
 

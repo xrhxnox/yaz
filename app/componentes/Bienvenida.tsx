@@ -32,7 +32,7 @@ export default function Bienvenida({ alEntrar }: { alEntrar: (s: Sesion) => void
       <form onSubmit={entrar} className="w-full max-w-sm">
         <p className="text-center text-[11px] tracking-wide text-suave">Desde el {formatearFecha(FECHA_INICIO)}</p>
         <h1 className="mt-1 text-center font-serif text-5xl leading-none tracking-tight">
-          {NOMBRES.a} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.b}
+          {NOMBRES.b} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.a}
         </h1>
         <p className="mt-4 border-y border-borde py-1.5 text-center font-serif text-sm italic text-suave">Nuestro diario a distancia</p>
 

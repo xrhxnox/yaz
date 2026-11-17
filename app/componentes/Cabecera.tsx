@@ -20,7 +20,7 @@ export default function Cabecera({
   enPerfil: boolean;
 }) {
   const fecha = ahora.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
-  const ruta = ubicaciones?.a && ubicaciones?.b ? `${ubicaciones.a.ciudad} — ${ubicaciones.b.ciudad}` : null;
+  const ruta = ubicaciones?.a && ubicaciones?.b ? `${ubicaciones.b.ciudad} — ${ubicaciones.a.ciudad}` : null;
 
   return (
     <header className="pb-1">
@@ -40,7 +40,7 @@ export default function Cabecera({
         </a>
       </div>
       <h1 className="mt-1 text-center font-serif text-[2.6rem] leading-none tracking-tight">
-        {NOMBRES.a} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.b}
+        {NOMBRES.b} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.a}
       </h1>
       <div className="mt-3 flex justify-between gap-2 border-y border-borde py-1.5 text-[11px] tracking-wide text-suave">
         <span className="first-letter:uppercase">{fecha}</span>

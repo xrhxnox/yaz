@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
-import { NOMBRES } from "@/lib/config";
+import { PAREJA } from "@/lib/config";
 import { SCRIPT_TEMA } from "@/lib/tema";
 import "./globals.css";
 
@@ -23,9 +23,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${NOMBRES.a} & ${NOMBRES.b}`,
+  title: PAREJA,
   description: "Nuestro espacio a distancia",
-  appleWebApp: { capable: true, title: `${NOMBRES.a} & ${NOMBRES.b}`, statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: PAREJA, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

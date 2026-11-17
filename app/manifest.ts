@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
-import { NOMBRES } from "@/lib/config";
+import { PAREJA } from "@/lib/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${NOMBRES.a} & ${NOMBRES.b}`,
-    short_name: `${NOMBRES.a} & ${NOMBRES.b}`,
+    name: PAREJA,
+    short_name: PAREJA,
     description: "Nuestro espacio a distancia",
     start_url: "/",
     display: "standalone",
