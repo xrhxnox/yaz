@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Fraunces, Geist, Geist_Mono, Nunito, Playfair_Display, Space_Grotesk } from "next/font/google";
+import { Caveat, Fraunces, Geist, Geist_Mono, Nunito, Pixelify_Sans, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { PAREJA } from "@/lib/config";
 import { SCRIPT_TEMA } from "@/lib/tema";
 import "./globals.css";
@@ -27,6 +27,7 @@ const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["lati
 const grotesk = Space_Grotesk({ variable: "--font-grotesk", subsets: ["latin"], preload: false });
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], style: ["normal", "italic"], preload: false });
 const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"], preload: false });
+const pixelify = Pixelify_Sans({ variable: "--font-pixelify", subsets: ["latin"], preload: false });
 
 export const metadata: Metadata = {
   title: PAREJA,
@@ -47,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${playfair.variable} ${grotesk.variable} ${nunito.variable} ${caveat.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${playfair.variable} ${grotesk.variable} ${nunito.variable} ${caveat.variable} ${pixelify.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Aplica el tema de quien entró antes de pintar, para que no parpadee */}
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />

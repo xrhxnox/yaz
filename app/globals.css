@@ -107,6 +107,11 @@
   --letra-titulos: var(--font-caveat), cursive;
   --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
 }
+/* Gamer: títulos y números en pixeles; el texto se queda legible */
+[data-fuente="gamer"] {
+  --letra-titulos: var(--font-pixelify), system-ui, sans-serif;
+  --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
+}
 [data-fuente="maquina"] {
   --letra-titulos: var(--font-geist-mono), ui-monospace, monospace;
   --letra-texto: var(--font-geist-mono), ui-monospace, monospace;

@@ -14,6 +14,7 @@ export const FUENTES = [
   { id: "redonda", nombre: "Redonda" },
   { id: "a-mano", nombre: "A mano" },
   { id: "maquina", nombre: "Máquina" },
+  { id: "gamer", nombre: "Gamer" },
 ] as const;
 export type Fuente = (typeof FUENTES)[number]["id"];
 export function esFuente(x: unknown): x is Fuente {
