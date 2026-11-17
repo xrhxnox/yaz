@@ -28,7 +28,7 @@ type Datos = {
 function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (posicion: number) => void }) {
   const { acentos } = usePareja();
   return (
-    <div className="mx-auto grid aspect-square w-full max-w-xs grid-cols-3">
+    <div className="mx-auto grid aspect-square w-full max-w-xs grid-cols-3 grid-rows-3">
       {p.tablero.map((f, i) => {
         const fila = Math.floor(i / 3);
         const col = i % 3;
@@ -40,7 +40,7 @@ function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boole
             onClick={() => libre && alJugar(i)}
             disabled={!libre}
             aria-label={f ? `Casilla ocupada` : `Jugar en la casilla ${i + 1}`}
-            className={`flex items-center justify-center font-serif text-6xl leading-none transition ${fila < 2 ? "border-b border-borde" : ""} ${
+            className={`flex min-h-0 min-w-0 items-center justify-center overflow-hidden font-serif text-6xl leading-none transition ${fila < 2 ? "border-b border-borde" : ""} ${
               col < 2 ? "border-r border-borde" : ""
             } ${libre ? "hover:bg-relleno" : ""} ${enLinea ? "bg-acento-suave" : ""}`}
             style={{ color: f ? acentos[f] : undefined }}
@@ -57,27 +57,35 @@ function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boole
 function TableroConecta4({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (columna: number) => void }) {
   const { acentos } = usePareja();
   const { filas, columnas } = JUEGOS.conecta4;
-  const [encima, setEncima] = useState<number | null>(null);
   return (
-    <div className="mx-auto w-full max-w-sm rounded-2xl bg-relleno p-2" onMouseLeave={() => setEncima(null)}>
+    <div className="mx-auto w-full max-w-sm rounded-2xl bg-relleno p-2">
       <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }}>
-        {Array.from({ length: filas * columnas }, (_, i) => {
-          const col = i % columnas;
-          const f = p.tablero[i];
+        {Array.from({ length: columnas }, (_, col) => {
           const libre = puedoJugar && caidaEnColumna(p.tablero, col) >= 0;
-          const enLinea = p.linea?.includes(i);
           return (
+            // Cada columna es un botón; el sombreado de "aquí caería" solo aparece con mouse
             <button
-              key={i}
+              key={col}
               onClick={() => libre && alJugar(col)}
-              onMouseEnter={() => setEncima(col)}
               disabled={!libre}
               aria-label={`Columna ${col + 1}`}
-              className={`aspect-square rounded-full transition ${!f && libre && encima === col ? "bg-borde" : !f ? "bg-fondo" : ""} ${
-                enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""
-              }`}
-              style={f ? { backgroundColor: acentos[f] } : undefined}
-            />
+              className="group flex flex-col gap-1.5 rounded-full"
+            >
+              {Array.from({ length: filas }, (_, fila) => {
+                const i = fila * columnas + col;
+                const f = p.tablero[i];
+                const enLinea = p.linea?.includes(i);
+                return (
+                  <span
+                    key={fila}
+                    className={`aspect-square w-full rounded-full ${f ? "" : libre ? "bg-fondo group-hover:bg-borde" : "bg-fondo"} ${
+                      enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""
+                    }`}
+                    style={f ? { backgroundColor: acentos[f] } : undefined}
+                  />
+                );
+              })}
+            </button>
           );
         })}
       </div>
