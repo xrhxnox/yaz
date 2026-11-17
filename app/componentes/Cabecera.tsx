@@ -32,8 +32,7 @@ export default function Cabecera({
         </span>
         <a
           href={enPerfil ? "#inicio" : "#perfil"}
-          aria-label={enPerfil ? "Volver al inicio" : "Perfiles"}
-          className={`flex h-7 w-7 items-center justify-center rounded-full border transition lg:h-9 lg:w-9 ${
+          className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs transition lg:h-9 lg:px-4 lg:text-sm ${
             enPerfil ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:text-texto"
           }`}
         >
@@ -41,6 +40,7 @@ export default function Cabecera({
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21a8 8 0 0 1 16 0" />
           </svg>
+          {enPerfil ? "Volver" : "Perfil"}
         </a>
       </div>
       <h1 className="mt-1 text-center font-serif text-[2.6rem] leading-none tracking-tight lg:mt-0 lg:text-[5.5rem]">
