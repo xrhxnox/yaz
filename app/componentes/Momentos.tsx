@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
-import { api, comprimirImagen } from "@/lib/cliente";
+import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, enlace, titulo as tituloSeccion } from "@/lib/estilos";
 import Imagen from "./Imagen";
@@ -201,7 +201,7 @@ export default function Momentos() {
   const NOMBRES = useNombres();
   const { acentos } = usePareja();
   const [editando, setEditando] = useState<number | null>(null);
-  const [datos, setDatos] = useState<{ maximo: number; momentos: Momento[] } | null>(null);
+  const [datos, setDatos] = useState<{ maximo: number; momentos: Momento[] } | null>(() => enCache("/api/momentos"));
   const [agregando, setAgregando] = useState(false);
   const [subiendo, setSubiendo] = useState<{ id: number; texto: string } | null>(null);
   const [error, setError] = useState("");

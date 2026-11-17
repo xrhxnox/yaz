@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { otra, type Persona } from "@/lib/config";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { JUEGOS, caidaEnColumna, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
@@ -201,7 +201,7 @@ function JuegoActual({ tipo, p, yo, hoy, limite, alJugar, alNueva, alAbandonar }
 // Juegos por turnos: cada quien juega cuando puede
 export default function Juegos({ yo, tipo }: { yo: Persona; tipo: TipoJuego }) {
   const { nombres, acentos } = usePareja();
-  const [datos, setDatos] = useState<Datos | null>(null);
+  const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/juegos"));
   const [error, setError] = useState("");
   const tu = otra(yo);
 

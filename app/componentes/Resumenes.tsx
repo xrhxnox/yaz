@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { formatearFecha, type Persona } from "@/lib/config";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
@@ -137,7 +137,7 @@ function ResumenMes({ r }: { r: Resumen }) {
 
 // Un resumen por cada "mes" de la relación (del 15 al 14)
 export default function Resumenes() {
-  const [meses, setMeses] = useState<Mes[] | null>(null);
+  const [meses, setMeses] = useState<Mes[] | null>(() => enCache<{ meses: Mes[] }>("/api/resumen")?.meses ?? null);
   const [abierto, setAbierto] = useState<number | null>(null);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [error, setError] = useState("");

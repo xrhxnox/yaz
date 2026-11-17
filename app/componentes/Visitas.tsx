@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
@@ -75,7 +75,7 @@ function FormVisita({ inicial, boton, alGuardar, alCancelar }: { inicial: Datos;
 // Cada vez que se vieron en persona
 export default function Visitas() {
   const { acentos } = usePareja();
-  const [visitas, setVisitas] = useState<Visita[] | null>(null);
+  const [visitas, setVisitas] = useState<Visita[] | null>(() => enCache<{ visitas: Visita[] }>("/api/visitas")?.visitas ?? null);
   const [error, setError] = useState("");
   const [agregando, setAgregando] = useState(false);
   const [editando, setEditando] = useState<number | null>(null);

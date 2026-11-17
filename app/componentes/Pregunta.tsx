@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { formatearFecha, otra, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import Avatar from "./Avatar";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, enlace, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
 
@@ -31,7 +31,7 @@ function Respuesta({ quien, persona, texto, destacada }: { quien: string; person
 
 export default function Pregunta({ yo }: { yo: Persona }) {
   const NOMBRES = useNombres();
-  const [datos, setDatos] = useState<Datos | null>(null);
+  const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/pregunta"));
   const [error, setError] = useState("");
   const [texto, setTexto] = useState("");
   const [editando, setEditando] = useState(false);

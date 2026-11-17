@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { TIPOS_DIARIO, formatearFecha, hoyCompartido, otra, type Persona, type TipoDiario } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, junto, tarjeta, titulo } from "@/lib/estilos";
 
@@ -112,7 +112,7 @@ export default function Diario({ yo }: { yo: Persona }) {
   const nombres = useNombres();
   const tu = otra(yo);
   const [fecha, setFecha] = useState(() => hoyCompartido());
-  const [datos, setDatos] = useState<Datos | null>(null);
+  const [datos, setDatos] = useState<Datos | null>(() => enCache(`/api/diario?fecha=${hoyCompartido()}`));
   const [error, setError] = useState("");
   const [tipo, setTipo] = useState<TipoDiario>("hice");
   const [texto, setTexto] = useState("");

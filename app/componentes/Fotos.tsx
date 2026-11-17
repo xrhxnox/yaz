@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatearFecha, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
-import { api, comprimirImagen } from "@/lib/cliente";
+import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
@@ -64,7 +64,7 @@ function Galeria({
 
 export default function Fotos({ yo }: { yo: Persona }) {
   const NOMBRES = useNombres();
-  const [datos, setDatos] = useState<{ hoy: string; maximo: number; dias: Dia[] } | null>(null);
+  const [datos, setDatos] = useState<{ hoy: string; maximo: number; dias: Dia[] } | null>(() => enCache("/api/fotos"));
   const [error, setError] = useState("");
   const [elegidas, setElegidas] = useState<Elegida[]>([]);
   const [nota, setNota] = useState("");

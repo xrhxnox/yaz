@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FUENTES, TALLAS, TEMA_INICIAL, otra, type Fuente, type Persona, type Tallas } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import Avatar from "./Avatar";
-import { api, type Ubicacion, comprimirImagen } from "@/lib/cliente";
+import { api, type Ubicacion, comprimirImagen, enCache } from "@/lib/cliente";
 import { BuscarCiudad, guardarCiudad } from "./HoraClima";
 import Notificaciones from "./Notificaciones";
 import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
@@ -1033,7 +1033,7 @@ export default function Perfil({
   const [viendo, setViendo] = useState<Persona>(yo);
   // Al ver el perfil del otro, datos y favoritos / tallas / wishlist van en pestañas
   const [pestana, setPestana] = useState<"favoritos" | "tallas" | "wishlist">("favoritos");
-  const [datos, setDatos] = useState<Datos | null>(null);
+  const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/perfil"));
   const [error, setError] = useState("");
   // Tu perfil en el celular: tus datos y la configuración de la app en pestañas separadas
   const [parte, setParte] = useSubseccion<"datos" | "app">(["datos", "app"], "datos");

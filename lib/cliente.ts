@@ -73,9 +73,23 @@ export function guardarSesion(s: Sesion | null) {
   oyentes.forEach((o) => o());
 }
 
+// Última respuesta de cada consulta (GET): al regresar a una sección se muestra al instante
+// mientras se actualiza por detrás. Solo vive en memoria; se borra al cerrar sesión.
+const cache = new Map<string, unknown>();
+
+export function enCache<T>(ruta: string): T | null {
+  return (cache.get(ruta) as T | undefined) ?? null;
+}
+
+export function limpiarCache() {
+  cache.clear();
+}
+
 // Todas las llamadas cuentan para el cargador
-export function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
-  return contarCarga(llamar<T>(ruta, cuerpo, metodo));
+export async function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
+  const datos = await contarCarga(llamar<T>(ruta, cuerpo, metodo));
+  if (cuerpo === undefined && metodo === undefined) cache.set(ruta, datos);
+  return datos;
 }
 
 async function llamar<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {

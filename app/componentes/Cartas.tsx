@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { formatearFecha, hoyCompartido, otra, type Persona } from "@/lib/config";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
@@ -127,7 +127,7 @@ function cuando(c: { abrir_desde: string | null; condicion: string | null }) {
 // Cartas que se abren en una fecha o en un momento especial
 export default function Cartas({ yo }: { yo: Persona }) {
   const { nombres, acentos } = usePareja();
-  const [datos, setDatos] = useState<{ recibidas: Recibida[]; enviadas: Enviada[] } | null>(null);
+  const [datos, setDatos] = useState<{ recibidas: Recibida[]; enviadas: Enviada[] } | null>(() => enCache("/api/cartas"));
   const [error, setError] = useState("");
   const [escribiendo, setEscribiendo] = useState(false);
   const [leyendo, setLeyendo] = useState<number | null>(null);

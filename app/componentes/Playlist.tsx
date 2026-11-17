@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { otra, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
-import { api } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, caja, campo, etiqueta, titulo } from "@/lib/estilos";
 import Corazon from "./Corazon";
@@ -129,7 +129,7 @@ function Fila({
 export default function Playlist({ yo }: { yo: Persona }) {
   const nombres = useNombres();
   const { acentos } = usePareja();
-  const [canciones, setCanciones] = useState<Cancion[] | null>(null);
+  const [canciones, setCanciones] = useState<Cancion[] | null>(() => enCache<{ canciones: Cancion[] }>("/api/canciones")?.canciones ?? null);
   const [error, setError] = useState("");
   const [url, setUrl] = useState("");
   const [nota, setNota] = useState("");

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIAS, formatearFecha, hoyCompartido, type Categoria, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
-import { api, comprimirImagen } from "@/lib/cliente";
+import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
@@ -177,7 +177,7 @@ function Fila({
 }
 
 export default function Pendientes() {
-  const [lista, setLista] = useState<Pendiente[] | null>(null);
+  const [lista, setLista] = useState<Pendiente[] | null>(() => enCache<{ pendientes: Pendiente[] }>("/api/pendientes")?.pendientes ?? null);
   const [filtro, setFiltro] = useState<Categoria | "todo">("todo");
   const [texto, setTexto] = useState("");
   const [categoria, setCategoria] = useState<Categoria>("pelis");

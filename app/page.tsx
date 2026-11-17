@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { PAREJA, esFuente, otra } from "@/lib/config";
 import { PAREJA_INICIAL, ProveedorPareja, type Pareja } from "@/lib/pareja";
-import { api, guardarSesion, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
+import { api, guardarSesion, limpiarCache, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cerrarSesion } from "@/lib/cuenta";
@@ -140,6 +140,7 @@ export default function Inicio() {
 
   const salir = useCallback(() => {
     cerrarSesion();
+    limpiarCache();
     guardarSesion(null);
     setEstado(null);
     ultimoVisto.current = null;
