@@ -13,6 +13,7 @@ export type Estado = {
   rachas?: { preguntas: number; fotos: number };
   visitas?: { veces: number; dias: number } | null;
   planes?: { id: number; texto: string }[];
+  turnos?: string[];
   nombres: Record<Persona, string>;
   cumples: Record<Persona, string | null>;
   avatares: Record<Persona, string | null>;

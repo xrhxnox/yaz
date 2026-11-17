@@ -89,7 +89,7 @@ export async function GET(req: Request) {
 
     // Extras opcionales: ánimo, rachas, visitas y planes del reencuentro
     const hoy = hoyCompartido();
-    const [animosFilas, respuestasFilas, fotosFilas, visitasFilas, planes] = await Promise.all([
+    const [animosFilas, respuestasFilas, fotosFilas, visitasFilas, planes, misTurnos] = await Promise.all([
       opcional<{ persona: Persona; texto: string; updated_at: string }[]>(db().from("animos").select("persona, texto, updated_at")),
       opcional<{ fecha: string; persona: string }[]>(db().from("respuestas").select("fecha, persona").order("fecha", { ascending: false }).limit(800)),
       opcional<{ fecha: string; persona: string }[]>(db().from("fotos").select("fecha, persona").order("fecha", { ascending: false }).limit(2000)),
@@ -97,6 +97,8 @@ export async function GET(req: Request) {
       opcional<{ id: number; texto: string }[]>(
         db().from("pendientes").select("id, texto").eq("para_reencuentro", true).eq("hecho", false).order("created_at", { ascending: true }),
       ),
+      // Juegos en los que me toca jugar
+      opcional<{ tipo: string }[]>(db().from("partidas").select("tipo").eq("turno", yo).is("ganador", null)),
     ]);
     const animos: Record<Persona, { texto: string; updated_at: string } | null> = { a: null, b: null };
     for (const a of animosFilas ?? []) animos[a.persona] = { texto: a.texto, updated_at: a.updated_at };
@@ -112,6 +114,7 @@ export async function GET(req: Request) {
       rachas: { preguntas: racha(respuestasFilas, hoy), fotos: racha(fotosFilas, hoy) },
       visitas,
       planes: planes ?? [],
+      turnos: (misTurnos ?? []).map((t) => t.tipo),
       temas,
       nombres,
       cumples,

@@ -56,8 +56,10 @@ export async function autenticar(req: Request): Promise<Persona | Response> {
 }
 
 export function error(e: unknown): Response {
-  const mensaje = e instanceof Error ? e.message : "Algo salió mal";
+  let mensaje = e instanceof Error ? e.message : "Algo salió mal";
   const status = (e as { status?: number }).status ?? 500;
+  // Tabla o columna que todavía no existe: falta correr el schema.sql nuevo en Supabase
+  if (/schema cache|does not exist/i.test(mensaje)) mensaje = "Esta parte se activa al actualizar la base de datos (corre supabase/schema.sql en Supabase)";
   if (status >= 500) console.error(e);
   return Response.json({ error: mensaje }, { status });
 }

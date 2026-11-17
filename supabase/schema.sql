@@ -169,6 +169,20 @@ create table if not exists cartas (
   created_at timestamptz not null default now()
 );
 
+-- Juegos por turnos: gato y conecta 4
+create table if not exists partidas (
+  id bigserial primary key,
+  tipo text not null check (tipo in ('gato', 'conecta4')),
+  tablero jsonb not null,
+  empieza text not null check (empieza in ('a', 'b')),
+  turno text check (turno in ('a', 'b')),
+  ganador text check (ganador in ('a', 'b', 'empate')),
+  linea jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists partidas_tipo on partidas (tipo, created_at desc);
+
 -- Sin políticas: solo el servidor (con la service role key) puede leer y escribir
 alter table ajustes enable row level security;
 alter table pensamientos enable row level security;
@@ -184,6 +198,7 @@ alter table deseos enable row level security;
 alter table animos enable row level security;
 alter table visitas enable row level security;
 alter table cartas enable row level security;
+alter table partidas enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.

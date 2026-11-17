@@ -16,6 +16,8 @@ import HoraClima from "./componentes/HoraClima";
 import Pregunta from "./componentes/Pregunta";
 import Pendientes from "./componentes/Pendientes";
 import Cartas from "./componentes/Cartas";
+import Juegos from "./componentes/Juegos";
+import AvisoTurno from "./componentes/AvisoTurno";
 import Fotos from "./componentes/Fotos";
 import Recuerdos from "./componentes/Recuerdos";
 import Buscar from "./componentes/Buscar";
@@ -160,6 +162,7 @@ export default function Inicio() {
           <>
             <Cumpleanos yo={yo} />
             <AvisoResumen />
+            <AvisoTurno turnos={estado?.turnos} />
             <Animo yo={yo} animos={estado?.animos} alCambiar={cargar} />
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas, como la portada de un periódico */}
@@ -203,6 +206,7 @@ export default function Inicio() {
         {seccion === "lista" && <Pendientes />}
         {seccion === "fotos" && <Fotos yo={yo} />}
         {seccion === "momentos" && <Recuerdos />}
+        {seccion === "juegos" && <Juegos yo={yo} />}
         {seccion === "buzon" && (
           <div className="lg:mx-auto lg:max-w-2xl">
             <Cartas yo={yo} />

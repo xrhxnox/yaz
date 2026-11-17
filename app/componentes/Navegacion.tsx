@@ -1,6 +1,6 @@
 "use client";
 
-export const SECCIONES = ["inicio", "pregunta", "lista", "fotos", "buzon", "momentos"] as const;
+export const SECCIONES = ["inicio", "pregunta", "lista", "fotos", "juegos", "buzon", "momentos"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
 const ICONOS: Record<Seccion, React.ReactNode> = {
@@ -16,6 +16,12 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
     <>
       <path d="M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
       <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  juegos: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
     </>
   ),
   buzon: (
@@ -37,6 +43,7 @@ export const NOMBRES_SECCION: Record<Seccion, string> = {
   pregunta: "Pregunta",
   lista: "Pendientes",
   fotos: "Fotos",
+  juegos: "Juegos",
   buzon: "Buzón",
   momentos: "Recuerdos",
 };
@@ -44,13 +51,13 @@ export const NOMBRES_SECCION: Record<Seccion, string> = {
 export default function Navegacion({ actual }: { actual: string }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t lg:hidden border-borde bg-tarjeta/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="mx-auto grid max-w-md grid-cols-6">
+      <ul className="mx-auto grid max-w-md grid-cols-7">
         {SECCIONES.map((s) => (
           <li key={s}>
             <a
               href={`#${s}`}
               aria-current={actual === s ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2 text-[10px] min-[360px]:text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
+              className={`flex flex-col items-center gap-0.5 py-2 text-[9px] min-[360px]:text-[10px] min-[420px]:text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actual === s ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 {ICONOS[s]}

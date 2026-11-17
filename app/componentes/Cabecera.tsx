@@ -97,7 +97,7 @@ export default function Cabecera({
         </a>
         </div>
       </div>
-      <h1 className="mt-1 text-center font-serif text-[2.6rem] leading-none tracking-tight lg:mt-0 lg:text-[5.5rem]">
+      <h1 className="mt-5 text-center font-serif text-[2.6rem] leading-none tracking-tight lg:mt-0 lg:text-[5.5rem]">
         {NOMBRES.b} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.a}
       </h1>
       <div className="mt-3 flex items-center justify-between gap-2 border-y border-borde py-1.5 text-[11px] tracking-wide text-suave lg:mt-5 lg:py-2.5 lg:text-xs">

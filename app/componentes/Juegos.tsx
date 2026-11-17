@@ -1,0 +1,265 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { otra, type Persona } from "@/lib/config";
+import { api } from "@/lib/cliente";
+import { useCarga } from "@/lib/useCarga";
+import { usePareja } from "@/lib/pareja";
+import { useSubseccion } from "@/lib/subseccion";
+import { JUEGOS, caidaEnColumna, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
+import { botonPrimario, enlace, numero } from "@/lib/estilos";
+import Pestanas from "./Pestanas";
+
+type Partida = {
+  id: number;
+  tipo: TipoJuego;
+  tablero: Ficha[];
+  empieza: Persona;
+  turno: Persona | null;
+  ganador: Resultado | null;
+  linea: number[] | null;
+};
+type Datos = {
+  actual: Record<TipoJuego, Partida | null>;
+  marcador: Record<TipoJuego, { a: number; b: number; empate: number }>;
+};
+
+const PESTANAS = [
+  { id: "gato", nombre: "Gato" },
+  { id: "conecta4", nombre: "Conecta 4" },
+] as const;
+
+// Gato: × para Ric (a), ○ para Yaz (b), cada quien en su color
+function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (posicion: number) => void }) {
+  const { acentos } = usePareja();
+  return (
+    <div className="mx-auto grid aspect-square w-full max-w-xs grid-cols-3">
+      {p.tablero.map((f, i) => {
+        const fila = Math.floor(i / 3);
+        const col = i % 3;
+        const libre = f === null && puedoJugar;
+        const enLinea = p.linea?.includes(i);
+        return (
+          <button
+            key={i}
+            onClick={() => libre && alJugar(i)}
+            disabled={!libre}
+            aria-label={f ? `Casilla ocupada` : `Jugar en la casilla ${i + 1}`}
+            className={`flex items-center justify-center font-serif text-6xl leading-none transition ${fila < 2 ? "border-b border-borde" : ""} ${
+              col < 2 ? "border-r border-borde" : ""
+            } ${libre ? "hover:bg-relleno" : ""} ${enLinea ? "bg-acento-suave" : ""}`}
+            style={{ color: f ? acentos[f] : undefined }}
+          >
+            {f === "a" ? "×" : f === "b" ? "○" : ""}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Conecta 4: tocas una columna y la ficha cae hasta abajo
+function TableroConecta4({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (columna: number) => void }) {
+  const { acentos } = usePareja();
+  const { filas, columnas } = JUEGOS.conecta4;
+  const [encima, setEncima] = useState<number | null>(null);
+  return (
+    <div className="mx-auto w-full max-w-sm rounded-2xl bg-relleno p-2" onMouseLeave={() => setEncima(null)}>
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }}>
+        {Array.from({ length: filas * columnas }, (_, i) => {
+          const col = i % columnas;
+          const f = p.tablero[i];
+          const libre = puedoJugar && caidaEnColumna(p.tablero, col) >= 0;
+          const enLinea = p.linea?.includes(i);
+          return (
+            <button
+              key={i}
+              onClick={() => libre && alJugar(col)}
+              onMouseEnter={() => setEncima(col)}
+              disabled={!libre}
+              aria-label={`Columna ${col + 1}`}
+              className={`aspect-square rounded-full transition ${!f && libre && encima === col ? "bg-borde" : !f ? "bg-fondo" : ""} ${
+                enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""
+              }`}
+              style={f ? { backgroundColor: acentos[f] } : undefined}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function JuegoActual({ tipo, p, yo, alJugar, alNueva, alAbandonar }: {
+  tipo: TipoJuego;
+  p: Partida | null;
+  yo: Persona;
+  alJugar: (posicion: number) => void;
+  alNueva: () => void;
+  alAbandonar: (p: Partida) => void;
+}) {
+  const { nombres, acentos } = usePareja();
+  const tu = otra(yo);
+
+  if (!p) {
+    return (
+      <div className="py-6 text-center">
+        <p className="font-serif text-xl italic text-suave">Todavía no han jugado {JUEGOS[tipo].nombre.toLowerCase()}.</p>
+        <button onClick={alNueva} className={`${botonPrimario} mt-4 px-6 py-2.5`}>
+          Empezar partida
+        </button>
+      </div>
+    );
+  }
+
+  const miTurno = p.turno === yo;
+  const estado = p.ganador ? (
+    p.ganador === "empate" ? (
+      "Empate"
+    ) : p.ganador === yo ? (
+      "Ganaste"
+    ) : (
+      <>
+        Ganó <span style={{ color: acentos[tu] }}>{nombres[tu]}</span>
+      </>
+    )
+  ) : miTurno ? (
+    <span className="text-acento-texto">Tu turno</span>
+  ) : (
+    <>
+      Turno de <span style={{ color: acentos[tu] }}>{nombres[tu]}</span>…
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <p className="text-center font-serif text-3xl leading-tight">{estado}</p>
+      {tipo === "gato" ? (
+        <TableroGato p={p} puedoJugar={miTurno && !p.ganador} alJugar={alJugar} />
+      ) : (
+        <TableroConecta4 p={p} puedoJugar={miTurno && !p.ganador} alJugar={alJugar} />
+      )}
+      <p className="text-center text-xs text-suave">
+        {tipo === "gato" ? (
+          <>
+            <span style={{ color: acentos.a }}>× {nombres.a}</span> · <span style={{ color: acentos.b }}>○ {nombres.b}</span>
+          </>
+        ) : (
+          <>
+            <span style={{ color: acentos.a }}>● {nombres.a}</span> · <span style={{ color: acentos.b }}>● {nombres.b}</span>
+          </>
+        )}
+        {" · "}Empezó {p.empieza === yo ? "tú" : nombres[p.empieza]}
+      </p>
+      <div className="flex justify-center">
+        {p.ganador ? (
+          <button onClick={alNueva} className={`${botonPrimario} px-6 py-2.5`}>
+            Revancha
+          </button>
+        ) : (
+          <button onClick={() => alAbandonar(p)} className={`${enlace} text-xs`}>
+            Abandonar partida
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Juegos por turnos: cada quien juega cuando puede
+export default function Juegos({ yo }: { yo: Persona }) {
+  const { nombres, acentos } = usePareja();
+  const [tipo, setTipo] = useSubseccion<TipoJuego>(["gato", "conecta4"], "gato");
+  const [datos, setDatos] = useState<Datos | null>(null);
+  const [error, setError] = useState("");
+  const tu = otra(yo);
+
+  const cargar = useCallback(async () => {
+    try {
+      setDatos(await api<Datos>("/api/juegos"));
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, []);
+
+  // Revisa seguido para ver cuando el otro ya jugó
+  useCarga(cargar, 4000);
+
+  async function hacer(accion: Promise<unknown>) {
+    try {
+      await accion;
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+    await cargar();
+  }
+
+  function jugar(p: Partida, posicion: number) {
+    // Se ve la jugada al momento; el servidor la confirma
+    setDatos((d) => {
+      if (!d) return d;
+      const tablero = [...p.tablero];
+      const casilla = p.tipo === "conecta4" ? caidaEnColumna(tablero, posicion) : posicion;
+      if (casilla >= 0) tablero[casilla] = yo;
+      return { ...d, actual: { ...d.actual, [p.tipo]: { ...p, tablero, turno: tu } } };
+    });
+    hacer(api("/api/juegos", { id: p.id, posicion }, "PATCH"));
+  }
+
+  const p = datos?.actual[tipo] ?? null;
+  const m = datos?.marcador[tipo];
+  const tocaEn = (t: TipoJuego) => {
+    const x = datos?.actual[t];
+    return x && !x.ganador && x.turno === yo ? 1 : 0;
+  };
+
+  return (
+    <div className="space-y-6 lg:mx-auto lg:max-w-xl">
+      <Pestanas
+        opciones={PESTANAS.map((o) => ({ ...o, cuantos: tocaEn(o.id) }))}
+        actual={tipo}
+        alCambiar={setTipo}
+        etiqueta="Juegos"
+      />
+
+      {m && (
+        <section className="grid grid-cols-3 divide-x divide-borde border-b border-borde pb-4 text-center">
+          <div>
+            <p className={`${numero} text-4xl`} style={{ color: acentos[yo] }}>
+              {m[yo]}
+            </p>
+            <p className="text-xs text-suave">Tú</p>
+          </div>
+          <div>
+            <p className={`${numero} text-4xl text-suave`}>{m.empate}</p>
+            <p className="text-xs text-suave">Empates</p>
+          </div>
+          <div>
+            <p className={`${numero} text-4xl`} style={{ color: acentos[tu] }}>
+              {m[tu]}
+            </p>
+            <p className="text-xs text-suave">{nombres[tu]}</p>
+          </div>
+        </section>
+      )}
+
+      {error && <p className="text-center text-sm text-acento-texto">{error}</p>}
+      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {datos && (
+        <JuegoActual
+          key={`${tipo}-${p?.id ?? "nueva"}`}
+          tipo={tipo}
+          p={p}
+          yo={yo}
+          alJugar={(posicion) => p && jugar(p, posicion)}
+          alNueva={() => hacer(api("/api/juegos", { tipo }))}
+          alAbandonar={(x) => {
+            if (confirm("¿Abandonar esta partida? No cuenta en el marcador.")) hacer(api(`/api/juegos?id=${x.id}`, undefined, "DELETE"));
+          }}
+        />
+      )}
+    </div>
+  );
+}
