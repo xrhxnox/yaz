@@ -10,7 +10,7 @@ Nuestro espacio a distancia:
 - **Buzón:** cartas que se abren en una fecha o en un momento especial.
 - **Inicio:** también el ánimo de cada uno, rachas y los planes para el próximo reencuentro.
 - **Buscar** en mensajes, respuestas, momentos, pendientes, wishlist, visitas y cartas.
-- **Recordatorios:** a las 10 a.m. y 10 p.m., si nadie ha mandado nada, llega un aviso (necesita `CRON_SECRET` en Vercel).
+- **Recordatorios (necesitan `CRON_SECRET` en Vercel):** a las 10 a.m. el aviso de mesiversario (el día 15) y los buenos días si nadie ha mandado nada; a las 10 p.m. el recordatorio del diario a quien no anotó nada y las buenas noches.
 - **Perfiles** (botón arriba a la derecha): tallas, wishlist con links (el otro puede marcar "Ya lo compré" sin que el dueño lo vea) y colores personalizados de fondo y acento para tu app.
 
 Hecha con Next.js, Supabase (base de datos y fotos), Web Push (PWA) y Open-Meteo (clima, sin llave).
