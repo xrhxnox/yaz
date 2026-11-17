@@ -2,7 +2,10 @@ import { borrarImagenes, db, error, invalido, autenticar, revisar, subirImagen }
 import { TALLAS, type Persona, type Tallas } from "@/lib/config";
 import { esHex } from "@/lib/colores";
 
-type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string } | null };
+type Favorito = { titulo: string; valor: string };
+type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string } | null; favoritos?: Favorito[] };
+
+const MAX_FAVORITOS = 40;
 // Cumpleaños: "MM-DD" (se acepta el 29 de febrero)
 function esCumple(v: unknown): v is string {
   if (typeof v !== "string" || !/^\d{2}-\d{2}$/.test(v)) return false;
@@ -17,13 +20,16 @@ export async function GET(req: Request) {
   if (yo instanceof Response) return yo;
 
   try {
-    const [filas, deseos]: [Fila[], Deseo[]] = await Promise.all([
-      db().from("perfiles").select("persona, tallas, tema").then(revisar),
-      db().from("deseos").select("id, persona, titulo, url, nota, comprado").order("created_at", { ascending: false }).then(revisar),
-    ]).then(([f, d]) => [f ?? [], d ?? []]);
+    // Si todavía no existe la columna favoritos, se lee sin ella (la sección queda vacía)
+    let r = await db().from("perfiles").select("persona, tallas, tema, favoritos");
+    if (r.error && /favoritos/.test(r.error.message)) r = await db().from("perfiles").select("persona, tallas, tema");
+    const filas: Fila[] = revisar(r) ?? [];
+    const deseos: Deseo[] =
+      revisar(await db().from("deseos").select("id, persona, titulo, url, nota, comprado").order("created_at", { ascending: false })) ?? [];
 
-    const perfiles: Record<Persona, Omit<Fila, "persona">> = { a: { tallas: {}, tema: null }, b: { tallas: {}, tema: null } };
-    for (const { persona, ...p } of filas) perfiles[persona] = p;
+    const vacio = () => ({ tallas: {}, tema: null, favoritos: [] as Favorito[] });
+    const perfiles: Record<Persona, Omit<Fila, "persona">> = { a: vacio(), b: vacio() };
+    for (const { persona, ...p } of filas) perfiles[persona] = { ...p, favoritos: p.favoritos ?? [] };
 
     return Response.json({
       perfiles,
@@ -39,7 +45,7 @@ export async function POST(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { tallas, tema, apodo, cumple, quitarFoto } = await req.json().catch(() => ({}));
+  const { tallas, tema, apodo, cumple, quitarFoto, favoritos } = await req.json().catch(() => ({}));
   const persona = yo;
 
   const cambios: Record<string, unknown> = { persona, updated_at: new Date().toISOString() };
@@ -62,6 +68,14 @@ export async function POST(req: Request) {
   if (apodo !== undefined) {
     if (apodo !== null && typeof apodo !== "string") return invalido();
     cambios.apodo = apodo?.trim() ? apodo.trim().slice(0, 30) : null;
+  }
+
+  if (favoritos !== undefined) {
+    if (!Array.isArray(favoritos)) return invalido();
+    cambios.favoritos = favoritos
+      .filter((f) => typeof f?.titulo === "string" && typeof f?.valor === "string" && f.titulo.trim() && f.valor.trim())
+      .slice(0, MAX_FAVORITOS)
+      .map((f) => ({ titulo: f.titulo.trim().slice(0, 60), valor: f.valor.trim().slice(0, 120) }));
   }
 
   if (cumple !== undefined) {

@@ -116,6 +116,8 @@ create table if not exists perfiles (
 alter table perfiles add column if not exists apodo text;
 alter table perfiles add column if not exists cumple text;
 alter table perfiles add column if not exists avatar_path text;
+-- Favoritos: lista de { titulo, valor } (ej. "Equipo de fútbol" → "Real Madrid")
+alter table perfiles add column if not exists favoritos jsonb not null default '[]';
 
 -- Wishlist: links de cosas que nos gustan
 create table if not exists deseos (

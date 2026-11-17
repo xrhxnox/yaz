@@ -14,7 +14,7 @@ import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
-type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null }>; deseos: Deseo[] };
+type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null; favoritos: Favorito[] }>; deseos: Deseo[] };
 
 const FONDOS = ["#000000", "#0f1115", "#1b1a1f", "#ffffff", "#fbf7fa", "#f6f4ef", "#eef3f8"];
 const ACENTOS = ["#2f99eb", "#fad4f5", "#e5484d", "#22c55e", "#f59e0b", "#8b5cf6", "#14b8a6", "#f472b6"];
@@ -117,6 +117,146 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
           </dl>
           {tallas.notas && <p className="mt-3 text-sm whitespace-pre-wrap text-suave">{tallas.notas}</p>}
         </>
+      )}
+    </section>
+  );
+}
+
+// ---------- Favoritos ----------
+
+type Favorito = { titulo: string; valor: string };
+
+// Ideas para empezar rápido; cada quien puede escribir los suyos
+const SUGERENCIAS = [
+  "Silueta de tenis",
+  "Marca de ropa",
+  "Equipo de fútbol",
+  "Comida",
+  "Postre",
+  "Bebida",
+  "Café",
+  "Película",
+  "Serie",
+  "Canción",
+  "Artista",
+  "Libro",
+  "Color",
+  "Flor",
+  "Perfume",
+  "Lugar",
+];
+
+function SeccionFavoritos({ favoritos, editable, alGuardar }: { favoritos: Favorito[]; editable: boolean; alGuardar: (f: Favorito[]) => Promise<void> }) {
+  const [borrador, setBorrador] = useState<Favorito[] | null>(null);
+  const [guardando, setGuardando] = useState(false);
+
+  function cambiar(i: number, campoNombre: keyof Favorito, valor: string) {
+    setBorrador((b) => b && b.map((f, j) => (j === i ? { ...f, [campoNombre]: valor } : f)));
+  }
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!borrador) return;
+    setGuardando(true);
+    try {
+      await alGuardar(borrador.filter((f) => f.titulo.trim() && f.valor.trim()));
+      setBorrador(null);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  if (borrador) {
+    const usados = new Set(borrador.map((f) => f.titulo.trim().toLowerCase()));
+    return (
+      <form onSubmit={guardar} className={`${caja} space-y-3`}>
+        <p className={tituloSeccion}>Mis favoritos</p>
+        {borrador.length === 0 && <p className="text-sm text-suave">Agrega el primero con las ideas de abajo o con “Agregar otro”.</p>}
+        <ul className="space-y-2">
+          {borrador.map((f, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2">
+                <input
+                  value={f.titulo}
+                  onChange={(e) => cambiar(i, "titulo", e.target.value)}
+                  maxLength={60}
+                  placeholder="¿Qué? (ej. Equipo de fútbol)"
+                  className={`${campo} text-sm`}
+                />
+                <input
+                  value={f.valor}
+                  onChange={(e) => cambiar(i, "valor", e.target.value)}
+                  maxLength={120}
+                  placeholder="¿Cuál? (ej. Real Madrid)"
+                  className={`${campo} text-sm`}
+                  autoFocus={!f.valor && !!f.titulo}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setBorrador((b) => b && b.filter((_, j) => j !== i))}
+                aria-label="Quitar"
+                className="mt-2.5 shrink-0 p-1 text-suave hover:text-acento-texto"
+              >
+                <Equis />
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <button type="button" onClick={() => setBorrador((b) => b && [...b, { titulo: "", valor: "" }])} className={enlace}>
+          Agregar otro
+        </button>
+
+        <div>
+          <p className={etiqueta}>Ideas</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {SUGERENCIAS.filter((s) => !usados.has(s.toLowerCase())).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setBorrador((b) => b && [...b, { titulo: s, valor: "" }])}
+                className="rounded-full border border-borde px-3 py-1 text-xs transition hover:bg-relleno"
+              >
+                + {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <button type="button" onClick={() => setBorrador(null)} className={botonSecundario}>
+            Cancelar
+          </button>
+          <button disabled={guardando} className={`${botonPrimario} flex-1`}>
+            {guardando ? "Guardando…" : "Guardar"}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <section className={tarjeta}>
+      <div className="flex items-center justify-between">
+        <p className={tituloSeccion}>Favoritos</p>
+        {editable && (
+          <button onClick={() => setBorrador(favoritos.length ? favoritos.map((f) => ({ ...f })) : [])} className={enlace}>
+            {favoritos.length ? "Editar" : "Agregar"}
+          </button>
+        )}
+      </div>
+      {favoritos.length === 0 ? (
+        <p className="mt-2 text-sm text-suave">{editable ? "Todavía no agregas tus favoritos." : "Todavía no agrega sus favoritos."}</p>
+      ) : (
+        <dl className="mt-2 divide-y divide-borde">
+          {favoritos.map((f, i) => (
+            <div key={i} className="flex items-baseline justify-between gap-4 py-2.5">
+              <dt className="text-sm text-suave">{f.titulo}</dt>
+              <dd className="text-right font-serif text-lg leading-snug break-words">{f.valor}</dd>
+            </div>
+          ))}
+        </dl>
       )}
     </section>
   );
@@ -700,6 +840,12 @@ export default function Perfil({
             tallas={datos.perfiles[viendo].tallas}
             editable={viendo === yo}
             alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
+          />
+          <SeccionFavoritos
+            key={`favoritos-${viendo}`}
+            favoritos={datos.perfiles[viendo].favoritos ?? []}
+            editable={viendo === yo}
+            alGuardar={(favoritos) => hacer(api("/api/perfil", { favoritos }))}
           />
           <SeccionDeseos
             key={`deseos-${viendo}`}
