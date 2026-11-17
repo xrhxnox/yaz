@@ -7,6 +7,8 @@ import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, junto, tarjeta, titulo } from "@/lib/estilos";
 import Reacciones, { type Reaccion } from "./Reacciones";
+import { useReproductor } from "@/lib/reproductor";
+import { embedDe } from "@/lib/embed";
 
 type Entrada = {
   id: number;
@@ -106,6 +108,7 @@ function Lista({
   alCambiar: () => Promise<void>;
 }) {
   const color = usePareja().acentos[persona];
+  const { poner } = useReproductor();
   const propias = persona === yo;
   const [editando, setEditando] = useState<number | null>(null);
   // Canciones ya pasadas a la playlist en esta visita
@@ -157,6 +160,14 @@ function Lista({
                       >
                         {dominio(e.link)} ↗
                       </a>
+                    )}
+                    {e.link && embedDe(e.link) && (
+                      <button
+                        onClick={() => poner({ id: `diario-${e.id}`, url: e.link!, titulo: e.texto })}
+                        className="ml-3 text-xs text-acento-texto transition hover:opacity-80"
+                      >
+                        ▶ {e.tipo === "vi" ? "Ver" : "Escuchar"}
+                      </button>
                     )}
                     {e.link && e.tipo === "escuche" && (
                       <button

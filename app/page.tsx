@@ -27,6 +27,8 @@ import AvisoResumen from "./componentes/AvisoResumen";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
 import Cabecera from "./componentes/Cabecera";
+import Reproductor, { EspacioReproductor } from "./componentes/Reproductor";
+import { ProveedorReproductor } from "@/lib/reproductor";
 import Cumpleanos from "./componentes/Cumpleanos";
 import Corazones, { crearCorazones, type Particula } from "./componentes/Corazones";
 
@@ -174,6 +176,7 @@ export default function Inicio() {
 
   return (
     <ProveedorPareja value={pareja}>
+      <ProveedorReproductor>
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] app:pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
         <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} />
 
@@ -246,15 +249,18 @@ export default function Inicio() {
             alCambiarDatos={cargar}
             alSalir={salir}
           />}
+        <EspacioReproductor />
       </main>
 
       <Navegacion actual={seccion} />
+      <Reproductor />
       <Corazones lista={corazones} />
       {aviso && (
         <div className="fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-8">
           <p className="rounded-full bg-texto px-4 py-2 text-sm font-medium text-fondo shadow-lg">{aviso}</p>
         </div>
       )}
+      </ProveedorReproductor>
     </ProveedorPareja>
   );
 }

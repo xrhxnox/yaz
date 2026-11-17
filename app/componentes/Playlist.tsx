@@ -7,6 +7,7 @@ import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, caja, campo, etiqueta, titulo } from "@/lib/estilos";
 import Corazon from "./Corazon";
+import { useReproductor, type Pista } from "@/lib/reproductor";
 
 type Cancion = {
   id: number;
@@ -68,21 +69,31 @@ function Portada({ cancion, medida }: { cancion: Cancion; medida: string }) {
   );
 }
 
-// Botón redondo de play: abre la canción en su app (Spotify, YouTube…)
-function Play({ cancion, grande }: { cancion: Cancion; grande?: boolean }) {
+// Botón redondo de play: suena dentro de la app (o se abre afuera si el servicio no deja)
+function Play({ cancion, grande, cola }: { cancion: Cancion; grande?: boolean; cola: Pista[] }) {
+  const { actual, poner } = useReproductor();
+  const sonando = actual?.id === cancion.id;
   const medida = grande ? "h-14 w-14" : "h-11 w-11";
   return (
-    <a
-      href={cancion.url}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`Reproducir ${cancion.titulo}`}
+    <button
+      onClick={() => poner(cancion, cola)}
+      aria-label={sonando ? `Sonando: ${cancion.titulo}` : `Reproducir ${cancion.titulo}`}
       className={`${medida} flex shrink-0 items-center justify-center rounded-full bg-acento text-sobre-acento shadow-sm transition group-hover:scale-110 active:scale-95`}
     >
-      <svg width="42%" height="42%" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="translate-x-[8%]">
-        <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z" />
-      </svg>
-    </a>
+      {sonando ? (
+        // Barritas de "sonando"
+        <svg width="42%" height="42%" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <rect x="4" y="9" width="3.5" height="11" rx="1.2" className="animate-pulse" />
+          <rect x="10.25" y="4" width="3.5" height="16" rx="1.2" className="animate-pulse [animation-delay:200ms]" />
+          <rect x="16.5" y="11" width="3.5" height="9" rx="1.2" className="animate-pulse [animation-delay:400ms]" />
+        </svg>
+      ) : (
+        // Triángulo centrado por su centro visual (no por su caja), para que no se vea corrido
+        <svg width="42%" height="42%" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.6-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14z" />
+        </svg>
+      )}
+    </button>
   );
 }
 
@@ -129,6 +140,7 @@ function EditarCancion({ cancion, alListo, alCancelar }: { cancion: Cancion; alL
 // Tarjeta de una canción: portada, nombre, artista y play. Lo demás va en "Más"
 function Tarjeta({
   cancion,
+  cola,
   yo,
   grande,
   alCorazon,
@@ -137,6 +149,7 @@ function Tarjeta({
   alCambiar,
 }: {
   cancion: Cancion;
+  cola: Pista[];
   yo: Persona;
   grande?: boolean;
   alCorazon: () => void;
@@ -183,7 +196,7 @@ function Tarjeta({
             )}
           </p>
         </div>
-        <Play cancion={cancion} grande={grande} />
+        <Play cancion={cancion} grande={grande} cola={cola} />
       </div>
 
       {cancion.nota && <p className="mt-2 line-clamp-2 font-serif text-sm italic break-words">“{cancion.nota}”</p>}
@@ -245,6 +258,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
   // El formulario solo se abre al querer agregar una canción
   const [agregando, setAgregando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const { poner } = useReproductor();
 
   const cargar = useCallback(async () => {
     try {
@@ -377,7 +391,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && lista[0]) {
                 e.preventDefault();
-                window.open(lista[0].url, "_blank", "noopener");
+                poner(lista[0], lista);
               }
             }}
             placeholder="Buscar canción o artista"
@@ -404,6 +418,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
             <Tarjeta
               key={c.id}
               cancion={c}
+              cola={lista}
               yo={yo}
               grande={c === destacada}
               alCambiar={cargar}
