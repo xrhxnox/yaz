@@ -24,8 +24,16 @@ export async function GET(req: Request) {
     let r = await db().from("perfiles").select("persona, tallas, tema, favoritos");
     if (r.error && /favoritos/.test(r.error.message)) r = await db().from("perfiles").select("persona, tallas, tema");
     const filas: Fila[] = revisar(r) ?? [];
-    const deseos: Deseo[] =
-      revisar(await db().from("deseos").select("id, persona, titulo, url, nota, comprado").order("created_at", { ascending: false })) ?? [];
+    // Orden elegido por el dueño; si todavía no existe la columna orden, del más nuevo al más viejo
+    let rd = await db()
+      .from("deseos")
+      .select("id, persona, titulo, url, nota, comprado")
+      .order("orden", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: false });
+    if (rd.error && /orden/.test(rd.error.message)) {
+      rd = await db().from("deseos").select("id, persona, titulo, url, nota, comprado").order("created_at", { ascending: false });
+    }
+    const deseos: Deseo[] = revisar(rd) ?? [];
 
     const vacio = () => ({ tallas: {}, tema: null, favoritos: [] as Favorito[] });
     const perfiles: Record<Persona, Omit<Fila, "persona">> = { a: vacio(), b: vacio() };

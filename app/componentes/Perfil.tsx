@@ -122,6 +122,33 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
   );
 }
 
+// Botones ↑ ↓ para mover un elemento en una lista
+function Flechas({ indice, total, alMover }: { indice: number; total: number; alMover: (desde: number, hacia: number) => void }) {
+  const boton = "flex h-7 w-7 items-center justify-center rounded-full border border-borde text-suave transition hover:text-texto disabled:opacity-25";
+  return (
+    <div className="flex shrink-0 gap-1">
+      <button type="button" onClick={() => alMover(indice, indice - 1)} disabled={indice === 0} aria-label="Subir" className={boton}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+          <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+      </button>
+      <button type="button" onClick={() => alMover(indice, indice + 1)} disabled={indice === total - 1} aria-label="Bajar" className={boton}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function mover<T>(lista: T[], desde: number, hacia: number): T[] {
+  if (hacia < 0 || hacia >= lista.length) return lista;
+  const copia = [...lista];
+  const [x] = copia.splice(desde, 1);
+  copia.splice(hacia, 0, x);
+  return copia;
+}
+
 // ---------- Favoritos ----------
 
 type Favorito = { titulo: string; valor: string };
@@ -175,6 +202,9 @@ function SeccionFavoritos({ favoritos, editable, alGuardar }: { favoritos: Favor
         <ul className="space-y-2">
           {borrador.map((f, i) => (
             <li key={i} className="flex items-start gap-2">
+              <div className="mt-1">
+                <Flechas indice={i} total={borrador.length} alMover={(a, b) => setBorrador((x) => x && mover(x, a, b))} />
+              </div>
               <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2">
                 <input
                   value={f.titulo}
@@ -329,6 +359,7 @@ function SeccionDeseos({
   alEditar,
   alBorrar,
   alMarcar,
+  alOrdenar,
 }: {
   duenio: Persona;
   yo: Persona;
@@ -337,10 +368,12 @@ function SeccionDeseos({
   alEditar: (d: Deseo, datos: DatosDeseo) => Promise<void>;
   alBorrar: (d: Deseo) => void;
   alMarcar: (d: Deseo) => void;
+  alOrdenar: (ids: number[]) => void;
 }) {
   const NOMBRES = useNombres();
   const [agregando, setAgregando] = useState(false);
   const [editando, setEditando] = useState<number | null>(null);
+  const [ordenando, setOrdenando] = useState(false);
   const esMia = duenio === yo;
 
   return (
@@ -348,15 +381,30 @@ function SeccionDeseos({
       <div className="flex items-center justify-between">
         <p className={tituloSeccion}>Wishlist</p>
         {esMia && !agregando && (
-          <button
-            onClick={() => {
-              setAgregando(true);
-              setEditando(null);
-            }}
-            className={enlace}
-          >
-            Agregar link
-          </button>
+          <div className="flex items-center gap-4">
+            {deseos.length > 1 && (
+              <button
+                onClick={() => {
+                  setOrdenando((o) => !o);
+                  setEditando(null);
+                }}
+                className={enlace}
+              >
+                {ordenando ? "Listo" : "Ordenar"}
+              </button>
+            )}
+            {!ordenando && (
+              <button
+                onClick={() => {
+                  setAgregando(true);
+                  setEditando(null);
+                }}
+                className={enlace}
+              >
+                Agregar link
+              </button>
+            )}
+          </div>
         )}
       </div>
       {!esMia && <p className="mt-1 text-xs text-suave">{NOMBRES[duenio]} no ve lo que marques como comprado.</p>}
@@ -377,7 +425,7 @@ function SeccionDeseos({
         !agregando && <p className="mt-2 text-sm text-suave">{esMia ? "Agrega links de cosas que te gustan." : "Todavía no hay nada aquí."}</p>
       ) : (
         <ul className="mt-2 divide-y divide-borde">
-          {deseos.map((d) =>
+          {deseos.map((d, i) =>
             editando === d.id ? (
               <li key={d.id} className="py-3">
                 <p className={etiqueta}>Editar producto</p>
@@ -405,7 +453,13 @@ function SeccionDeseos({
                   <p className="text-xs text-suave">{dominio(d.url)}</p>
                   {d.nota && <p className="mt-0.5 text-sm break-words text-suave">{d.nota}</p>}
                 </div>
-                {esMia ? (
+                {esMia && ordenando ? (
+                  <Flechas
+                    indice={i}
+                    total={deseos.length}
+                    alMover={(a, b) => alOrdenar(mover(deseos, a, b).map((x) => x.id))}
+                  />
+                ) : esMia ? (
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={() => {
@@ -972,6 +1026,15 @@ export default function Perfil({
             deseos={deseos}
             alAgregar={(d) => hacer(api("/api/deseos", d))}
             alEditar={(d, datos) => hacer(api("/api/deseos", { id: d.id, ...datos }, "PUT"))}
+            alOrdenar={(ids) => {
+              setDatos((x) => {
+                if (!x) return x;
+                const otros = x.deseos.filter((d) => !ids.includes(d.id));
+                const ordenados = ids.map((id) => x.deseos.find((d) => d.id === id)!).filter(Boolean);
+                return { ...x, deseos: [...ordenados, ...otros] };
+              });
+              hacer(api("/api/deseos", { orden: ids }, "PATCH")).catch(() => {});
+            }}
             alBorrar={(d) => {
               if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
             }}

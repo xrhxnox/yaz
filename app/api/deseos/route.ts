@@ -73,7 +73,23 @@ export async function PATCH(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { id, comprado } = await req.json().catch(() => ({}));
+  const cuerpo = await req.json().catch(() => ({}));
+
+  // { orden: [ids] } → guarda el orden de TU wishlist
+  if (Array.isArray(cuerpo.orden)) {
+    const ids: number[] = cuerpo.orden.filter((x: unknown) => Number.isInteger(x));
+    try {
+      const mios: { id: number }[] = revisar(await db().from("deseos").select("id").eq("persona", yo)) ?? [];
+      const propios = new Set(mios.map((m) => m.id));
+      if (ids.some((x) => !propios.has(x))) return invalido("Solo puedes ordenar tu propia wishlist");
+      await Promise.all(ids.map((x, i) => db().from("deseos").update({ orden: i }).eq("id", x).then(revisar)));
+      return Response.json({ ok: true });
+    } catch (e) {
+      return error(e);
+    }
+  }
+
+  const { id, comprado } = cuerpo;
   if (!Number.isInteger(id) || typeof comprado !== "boolean") return invalido();
 
   try {

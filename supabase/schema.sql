@@ -131,6 +131,8 @@ create table if not exists deseos (
   comprado boolean not null default false,
   created_at timestamptz not null default now()
 );
+-- Orden elegido por el dueño (los nuevos, sin orden, salen primero)
+alter table deseos add column if not exists orden int;
 
 -- Sin políticas: solo el servidor (con la service role key) puede leer y escribir
 alter table ajustes enable row level security;
