@@ -293,6 +293,8 @@ export default function Playlist({ yo }: { yo: Persona }) {
   const [nombre, setNombre] = useState("");
   const [artista, setArtista] = useState("");
   const [guardando, setGuardando] = useState(false);
+  // El formulario solo se abre al querer agregar una canción
+  const [agregando, setAgregando] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -328,6 +330,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
       setNombre("");
       setArtista("");
       setError("");
+      setAgregando(false);
       await cargar();
     } catch (e) {
       setError((e as Error).message);
@@ -348,53 +351,81 @@ export default function Playlist({ yo }: { yo: Persona }) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={agregar} className={`${caja} space-y-2`}>
-        <p className={titulo}>Agregar canción</p>
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          type="url"
-          inputMode="url"
-          maxLength={500}
-          placeholder="Link de Spotify, YouTube, Apple Music…"
-          className={`${campo} sin-mayuscula text-sm`}
-        />
-        {/* Con Spotify y YouTube se llenan solos; aquí se pueden escribir o corregir */}
-        <div className="grid gap-2 sm:grid-cols-2">
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            maxLength={200}
-            placeholder="Nombre de la canción"
-            className={`${campo} text-sm`}
-          />
-          <input
-            value={artista}
-            onChange={(e) => setArtista(e.target.value)}
-            maxLength={120}
-            placeholder="Artista"
-            className={`${campo} text-sm`}
-          />
+      {!agregando ? (
+        <div>
+          <button
+            onClick={() => {
+              setAgregando(true);
+              setError("");
+            }}
+            className={`${botonPrimario} w-full py-2.5`}
+          >
+            + Agregar canción
+          </button>
+          {error && <p className="mt-2 text-sm text-acento-texto">{error}</p>}
         </div>
-        <p className="text-xs text-suave">
-          Con links de Spotify o YouTube, el nombre, el artista y la portada se
-          llenan solos si los dejas vacíos.
-        </p>
-        <input
-          value={nota}
-          onChange={(e) => setNota(e.target.value)}
-          maxLength={300}
-          placeholder="¿Por qué la agregas? (opcional)"
-          className={`${campo} text-sm`}
-        />
-        <button
-          disabled={guardando || !url.trim()}
-          className={`${botonPrimario} w-full py-2.5`}
-        >
-          {guardando ? "Buscando la canción…" : "Agregar a la playlist"}
-        </button>
-        {error && <p className="text-sm text-acento-texto">{error}</p>}
-      </form>
+      ) : (
+        <form onSubmit={agregar} className={`${caja} space-y-2`}>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className={titulo}>Agregar canción</p>
+            <button
+              type="button"
+              onClick={() => {
+                setAgregando(false);
+                setError("");
+              }}
+              className="text-sm text-suave transition hover:text-texto"
+            >
+              Cancelar
+            </button>
+          </div>
+          <input
+            autoFocus
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            type="url"
+            inputMode="url"
+            maxLength={500}
+            placeholder="Link de Spotify, YouTube, Apple Music…"
+            className={`${campo} sin-mayuscula text-sm`}
+          />
+          {/* Con Spotify y YouTube se llenan solos; aquí se pueden escribir o corregir */}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              maxLength={200}
+              placeholder="Nombre de la canción"
+              className={`${campo} text-sm`}
+            />
+            <input
+              value={artista}
+              onChange={(e) => setArtista(e.target.value)}
+              maxLength={120}
+              placeholder="Artista"
+              className={`${campo} text-sm`}
+            />
+          </div>
+          <p className="text-xs text-suave">
+            Con links de Spotify o YouTube, el nombre, el artista y la portada
+            se llenan solos si los dejas vacíos.
+          </p>
+          <input
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            maxLength={300}
+            placeholder="¿Por qué la agregas? (opcional)"
+            className={`${campo} text-sm`}
+          />
+          <button
+            disabled={guardando || !url.trim()}
+            className={`${botonPrimario} w-full py-2.5`}
+          >
+            {guardando ? "Buscando la canción…" : "Agregar a la playlist"}
+          </button>
+          {error && <p className="text-sm text-acento-texto">{error}</p>}
+        </form>
+      )}
 
       {!canciones && !error && (
         <p className="py-10 text-center text-sm text-suave">Cargando…</p>
