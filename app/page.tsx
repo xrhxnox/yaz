@@ -9,6 +9,7 @@ import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
 import Juntos from "./componentes/Juntos";
+import UnDiaComoHoy from "./componentes/UnDiaComoHoy";
 import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
@@ -187,6 +188,7 @@ export default function Inicio() {
             <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
             <div className="space-y-6 lg:col-span-7 lg:space-y-10">
             <Juntos ahora={ahora} />
+            <UnDiaComoHoy />
             <Rachas rachas={estado?.rachas} />
             <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
             <Reencuentro
