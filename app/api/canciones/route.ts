@@ -101,14 +101,26 @@ export async function POST(req: Request) {
 }
 
 // { id, corazon: true|false } → mi corazón; { id, destacada: true|false } → "nuestra canción" (solo una)
+// { id, titulo, artista?, nota? } → corregir una canción que agregué yo
 export async function PATCH(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { id, corazon, destacada } = await req.json().catch(() => ({}));
+  const { id, corazon, destacada, titulo, artista, nota } = await req.json().catch(() => ({}));
   if (!Number.isInteger(id)) return invalido();
 
   try {
+    if (titulo !== undefined) {
+      if (typeof titulo !== "string" || !titulo.trim()) return invalido("Escribe el nombre de la canción");
+      const texto = (x: unknown) => (typeof x === "string" && x.trim() ? x.trim() : null);
+      revisar(
+        await db()
+          .from("canciones")
+          .update({ titulo: titulo.trim().slice(0, 200), artista: texto(artista)?.slice(0, 120) ?? null, nota: texto(nota)?.slice(0, 300) ?? null })
+          .eq("id", id)
+          .eq("persona", yo),
+      );
+    }
     if (typeof corazon === "boolean") {
       revisar(await db().from("canciones").update({ [`corazon_${yo}`]: corazon }).eq("id", id));
     }

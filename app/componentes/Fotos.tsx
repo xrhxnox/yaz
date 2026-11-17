@@ -7,8 +7,9 @@ import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
+import Reacciones, { EditorComentario, reaccionar, type Reaccion } from "./Reacciones";
 
-type Foto = { id: number; url: string; nota: string | null };
+type Foto = { id: number; url: string; nota: string | null; reacciones?: Reaccion[] };
 type Dia = { fecha: string; a: Foto[]; b: Foto[] };
 type Elegida = { blob: Blob; vista: string };
 
@@ -16,18 +17,25 @@ type Elegida = { blob: Blob; vista: string };
 function Galeria({
   fotos,
   persona,
+  yo,
   nombre,
   propias,
   alBorrar,
+  alCambiar,
 }: {
   fotos: Foto[];
   persona: Persona;
+  yo: Persona;
   nombre: string;
   propias?: boolean;
   alBorrar?: (f: Foto) => void;
+  alCambiar: () => Promise<void>;
 }) {
   // Cada quien con su color de acento
   const color = usePareja().acentos[persona];
+  // Foto que estoy comentando: el campo va debajo de la cuadrícula, a lo ancho
+  const [comentando, setComentando] = useState<number | null>(null);
+  const fotoComentada = fotos.find((f) => f.id === comentando);
   return (
     <div>
       <p className="mb-2 flex items-center gap-1.5 text-xs text-suave">
@@ -54,8 +62,32 @@ function Galeria({
                 </button>
               )}
               {f.nota && <figcaption className="mt-1 font-serif text-xs italic break-words">{f.nota}</figcaption>}
+              <Reacciones
+                tipo="foto"
+                id={f.id}
+                duenio={persona}
+                yo={yo}
+                reacciones={f.reacciones}
+                alCambiar={alCambiar}
+                alComentar={() => setComentando(f.id)}
+              />
             </figure>
           ))}
+        </div>
+      )}
+      {fotoComentada && (
+        <div className="mt-2">
+          <p className="text-xs text-suave">Comentario para la foto{fotoComentada.nota ? ` “${fotoComentada.nota}”` : ""}</p>
+          <EditorComentario
+            key={fotoComentada.id}
+            inicial={fotoComentada.reacciones?.find((r) => r.persona === yo)?.comentario ?? ""}
+            alCancelar={() => setComentando(null)}
+            alGuardar={async (texto) => {
+              await reaccionar("foto", fotoComentada.id, { comentario: texto });
+              await alCambiar();
+              setComentando(null);
+            }}
+          />
         </div>
       )}
     </div>
@@ -204,8 +236,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
         ) : (
           <>
             <div className="mt-4 space-y-5">
-              <Galeria fotos={hoy[yo]} persona={yo} nombre="Tú" propias alBorrar={borrar} />
-              <Galeria fotos={hoy[tu]} persona={tu} nombre={NOMBRES[tu]} />
+              <Galeria fotos={hoy[yo]} persona={yo} yo={yo} alCambiar={cargar} nombre="Tú" propias alBorrar={borrar} />
+              <Galeria fotos={hoy[tu]} persona={tu} yo={yo} alCambiar={cargar} nombre={NOMBRES[tu]} />
             </div>
             <button
               onClick={() => selector.current?.click()}
@@ -227,8 +259,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
             <section key={d.fecha} className={tarjeta}>
               <p className={etiqueta}>{formatearFecha(d.fecha, { weekday: "long", day: "numeric", month: "long" })}</p>
               <div className="mt-3 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-                <Galeria fotos={d[yo]} persona={yo} nombre="Tú" propias alBorrar={borrar} />
-                <Galeria fotos={d[tu]} persona={tu} nombre={NOMBRES[tu]} />
+                <Galeria fotos={d[yo]} persona={yo} yo={yo} alCambiar={cargar} nombre="Tú" propias alBorrar={borrar} />
+                <Galeria fotos={d[tu]} persona={tu} yo={yo} alCambiar={cargar} nombre={NOMBRES[tu]} />
               </div>
             </section>
           ))}

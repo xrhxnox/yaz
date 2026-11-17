@@ -1,8 +1,9 @@
 import { borrarImagenes, db, error, firmar, invalido, autenticar, nombresActuales, notificar, revisar, subirImagen } from "@/lib/servidor";
 import { hoyCompartido, otra, type Persona } from "@/lib/config";
+import { borrarReacciones, reaccionesDe, type Reaccion } from "@/lib/reacciones";
 
 type Fila = { id: number; fecha: string; persona: Persona; path: string; nota: string | null };
-type Foto = { id: number; url: string; nota: string | null };
+type Foto = { id: number; url: string; nota: string | null; reacciones: Reaccion[] };
 
 // Máximo de fotos por persona por día
 const MAX_POR_DIA = 12;
@@ -21,13 +22,13 @@ export async function GET(req: Request) {
           .order("created_at", { ascending: true })
           .limit(400),
       ) ?? [];
-    const urls = await firmar(filas.map((f) => f.path));
+    const [urls, reacciones] = await Promise.all([firmar(filas.map((f) => f.path)), reaccionesDe("foto", filas.map((f) => f.id))]);
 
     const porDia = new Map<string, Record<Persona, Foto[]>>();
     for (const f of filas) {
       if (!urls[f.path]) continue;
       const dia = porDia.get(f.fecha) ?? { a: [], b: [] };
-      dia[f.persona].push({ id: f.id, url: urls[f.path], nota: f.nota });
+      dia[f.persona].push({ id: f.id, url: urls[f.path], nota: f.nota, reacciones: reacciones.get(f.id) ?? [] });
       porDia.set(f.fecha, dia);
     }
 
@@ -81,6 +82,7 @@ export async function DELETE(req: Request) {
     const borrada = revisar(await db().from("fotos").delete().eq("id", id).eq("persona", yo).select("path").maybeSingle());
     if (!borrada) return invalido("Solo puedes borrar tus propias fotos");
     await borrarImagenes([borrada.path]);
+    await borrarReacciones("foto", id);
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

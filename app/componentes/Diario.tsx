@@ -6,8 +6,18 @@ import { useNombres, usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, junto, tarjeta, titulo } from "@/lib/estilos";
+import Reacciones, { type Reaccion } from "./Reacciones";
 
-type Entrada = { id: number; persona: Persona; fecha: string; tipo: TipoDiario; texto: string; link: string | null; created_at: string };
+type Entrada = {
+  id: number;
+  persona: Persona;
+  fecha: string;
+  tipo: TipoDiario;
+  texto: string;
+  link: string | null;
+  created_at: string;
+  reacciones?: Reaccion[];
+};
 type Datos = { fecha: string; hoy: string; entradas: Entrada[] };
 
 const NOMBRE_TIPO = Object.fromEntries(TIPOS_DIARIO.map((t) => [t.id, t.nombre])) as Record<TipoDiario, string>;
@@ -25,21 +35,79 @@ function dominio(url: string) {
   }
 }
 
+// Corregir algo que anoté: tipo, texto y link
+function EditarEntrada({ e, alListo, alCancelar }: { e: Entrada; alListo: () => Promise<void>; alCancelar: () => void }) {
+  const [tipo, setTipo] = useState<TipoDiario>(e.tipo);
+  const [texto, setTexto] = useState(e.texto);
+  const [link, setLink] = useState(e.link ?? "");
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const conLink = TIPOS_DIARIO.find((t) => t.id === tipo)!.conLink;
+
+  async function guardar(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!texto.trim()) return;
+    setGuardando(true);
+    try {
+      await api("/api/diario", { id: e.id, tipo, texto, link: conLink ? link : "" }, "PATCH");
+      await alListo();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <form onSubmit={guardar} className="space-y-2">
+      <div className="flex flex-wrap gap-1">
+        {TIPOS_DIARIO.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTipo(t.id)}
+            className={`rounded-full border px-2.5 py-0.5 text-xs transition ${tipo === t.id ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"}`}
+          >
+            {t.nombre}
+          </button>
+        ))}
+      </div>
+      <input value={texto} onChange={(x) => setTexto(x.target.value)} maxLength={300} className={`${campo} text-sm`} autoFocus />
+      {conLink && (
+        <input value={link} onChange={(x) => setLink(x.target.value)} type="url" inputMode="url" maxLength={500} placeholder="Link (opcional)" className={`${campo} sin-mayuscula text-sm`} />
+      )}
+      {error && <p className="text-xs text-acento-texto">{error}</p>}
+      <div className="flex gap-3 text-xs">
+        <button disabled={guardando || !texto.trim()} className="font-medium text-acento-texto disabled:opacity-50">
+          {guardando ? "Guardando…" : "Guardar"}
+        </button>
+        <button type="button" onClick={alCancelar} className="text-suave">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
 // Lo que anotó una persona en el día, en su color
 function Lista({
   persona,
+  yo,
   nombre,
   entradas,
-  propias,
   alBorrar,
+  alCambiar,
 }: {
   persona: Persona;
+  yo: Persona;
   nombre: string;
   entradas: Entrada[];
-  propias: boolean;
   alBorrar: (e: Entrada) => void;
+  alCambiar: () => Promise<void>;
 }) {
   const color = usePareja().acentos[persona];
+  const propias = persona === yo;
+  const [editando, setEditando] = useState<number | null>(null);
   // Canciones ya pasadas a la playlist en esta visita
   const [enPlaylist, setEnPlaylist] = useState<Record<number, "guardando" | "listo" | string>>({});
 
@@ -61,43 +129,62 @@ function Lista({
       {entradas.length === 0 ? (
         <p className="font-serif text-sm italic text-suave">{propias ? "Todavía no anotas nada." : "Todavía no anota nada."}</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {entradas.map((e) => (
-            <li key={e.id} className="flex items-start gap-3 border-l-2 pl-3" style={{ borderColor: color }}>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] tracking-wide" style={{ color }}>
-                  {NOMBRE_TIPO[e.tipo]}
-                </p>
-                <p className="font-serif text-lg leading-snug break-words">{e.texto}</p>
-                {e.link && (
-                  <a
-                    href={e.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="sin-mayuscula mt-0.5 inline-block text-xs text-suave underline decoration-borde underline-offset-4 hover:text-texto"
-                  >
-                    {dominio(e.link)} ↗
-                  </a>
-                )}
-                {e.link && e.tipo === "escuche" && (
-                  <button
-                    onClick={() => aPlaylist(e)}
-                    disabled={enPlaylist[e.id] === "guardando" || enPlaylist[e.id] === "listo"}
-                    className="ml-3 text-xs text-suave transition hover:text-texto disabled:opacity-60"
-                  >
-                    {enPlaylist[e.id] === "listo" ? "En la playlist ✓" : enPlaylist[e.id] === "guardando" ? "Agregando…" : "+ Playlist"}
-                  </button>
-                )}
-                {enPlaylist[e.id] && !["listo", "guardando"].includes(enPlaylist[e.id]) && (
-                  <p className="mt-0.5 text-xs text-acento-texto">{enPlaylist[e.id]}</p>
-                )}
-              </div>
-              {propias && (
-                <button onClick={() => alBorrar(e)} aria-label="Borrar" className="mt-1 shrink-0 p-1 text-suave hover:text-acento-texto">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  </svg>
-                </button>
+            <li key={e.id} className="border-l-2 pl-3" style={{ borderColor: color }}>
+              {editando === e.id ? (
+                <EditarEntrada
+                  e={e}
+                  alCancelar={() => setEditando(null)}
+                  alListo={async () => {
+                    await alCambiar();
+                    setEditando(null);
+                  }}
+                />
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] tracking-wide" style={{ color }}>
+                      {NOMBRE_TIPO[e.tipo]}
+                    </p>
+                    <p className="font-serif text-lg leading-snug break-words">{e.texto}</p>
+                    {e.link && (
+                      <a
+                        href={e.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="sin-mayuscula mt-0.5 inline-block text-xs text-suave underline decoration-borde underline-offset-4 hover:text-texto"
+                      >
+                        {dominio(e.link)} ↗
+                      </a>
+                    )}
+                    {e.link && e.tipo === "escuche" && (
+                      <button
+                        onClick={() => aPlaylist(e)}
+                        disabled={enPlaylist[e.id] === "guardando" || enPlaylist[e.id] === "listo"}
+                        className="ml-3 text-xs text-suave transition hover:text-texto disabled:opacity-60"
+                      >
+                        {enPlaylist[e.id] === "listo" ? "En la playlist ✓" : enPlaylist[e.id] === "guardando" ? "Agregando…" : "+ Playlist"}
+                      </button>
+                    )}
+                    {enPlaylist[e.id] && !["listo", "guardando"].includes(enPlaylist[e.id]) && (
+                      <p className="mt-0.5 text-xs text-acento-texto">{enPlaylist[e.id]}</p>
+                    )}
+                    <Reacciones tipo="diario" id={e.id} duenio={e.persona} yo={yo} reacciones={e.reacciones} alCambiar={alCambiar} />
+                    {propias && (
+                      <button onClick={() => setEditando(e.id)} className="mt-1 text-xs text-suave transition hover:text-texto">
+                        Editar
+                      </button>
+                    )}
+                  </div>
+                  {propias && (
+                    <button onClick={() => alBorrar(e)} aria-label="Borrar" className="mt-1 shrink-0 p-1 text-suave hover:text-acento-texto">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M6 6l12 12M18 6L6 18" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               )}
             </li>
           ))}
@@ -227,8 +314,8 @@ export default function Diario({ yo }: { yo: Persona }) {
         {!delDia && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
         {delDia && (
           <div className="mt-5 grid gap-6 sm:grid-cols-2">
-            <Lista persona={yo} nombre="Tú" entradas={delDia.filter((e) => e.persona === yo)} propias alBorrar={borrar} />
-            <Lista persona={tu} nombre={nombres[tu]} entradas={delDia.filter((e) => e.persona === tu)} propias={false} alBorrar={borrar} />
+            <Lista persona={yo} yo={yo} nombre="Tú" entradas={delDia.filter((e) => e.persona === yo)} alBorrar={borrar} alCambiar={cargar} />
+            <Lista persona={tu} yo={yo} nombre={nombres[tu]} entradas={delDia.filter((e) => e.persona === tu)} alBorrar={borrar} alCambiar={cargar} />
           </div>
         )}
       </section>

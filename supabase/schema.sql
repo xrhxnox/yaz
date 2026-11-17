@@ -196,6 +196,18 @@ create table if not exists canciones (
   created_at timestamptz not null default now()
 );
 
+-- Reacciones a fotos y al diario de la otra persona: corazón y comentario cortito
+create table if not exists reacciones (
+  id bigserial primary key,
+  tipo text not null check (tipo in ('foto', 'diario')),
+  objeto bigint not null,
+  persona text not null check (persona in ('a', 'b')),
+  corazon boolean not null default false,
+  comentario text,
+  updated_at timestamptz not null default now(),
+  unique (tipo, objeto, persona)
+);
+
 -- Juegos por turnos: gato y conecta 4
 create table if not exists partidas (
   id bigserial primary key,
@@ -230,6 +242,7 @@ alter table cartas enable row level security;
 alter table partidas enable row level security;
 alter table diario enable row level security;
 alter table canciones enable row level security;
+alter table reacciones enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.
