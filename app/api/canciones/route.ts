@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         }),
     );
     const nombres = await nombresActuales();
-    await notificar(otra(yo), "Playlist", `${nombres[yo]} agregó “${nombre}”`, "/#momentos/playlist");
+    await notificar(otra(yo), "Playlist", `${nombres[yo]} agregó “${nombre}”`, "/#playlist");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

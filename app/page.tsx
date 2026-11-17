@@ -13,7 +13,7 @@ import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import HoraClima from "./componentes/HoraClima";
-import Pendientes from "./componentes/Pendientes";
+import Playlist from "./componentes/Playlist";
 import Cartas from "./componentes/Cartas";
 import SeccionJuegos from "./componentes/SeccionJuegos";
 import AvisoTurno from "./componentes/AvisoTurno";
@@ -38,6 +38,11 @@ function leerSeccion(): Vista {
   if (h === "pregunta") {
     history.replaceState(null, "", "#juegos/pregunta");
     return "juegos";
+  }
+  // Pendientes ahora es una pestaña de Recuerdos
+  if (h === "lista") {
+    history.replaceState(null, "", "#momentos/pendientes");
+    return "momentos";
   }
   return h === "perfil" || h === "buscar" || (SECCIONES as readonly string[]).includes(h) ? (h as Vista) : "inicio";
 }
@@ -214,9 +219,13 @@ export default function Inicio() {
             </div>
           </>
         )}
-        {seccion === "lista" && <Pendientes />}
+        {seccion === "playlist" && (
+          <div className="lg:mx-auto lg:max-w-2xl">
+            <Playlist yo={yo} />
+          </div>
+        )}
         {seccion === "fotos" && <SeccionFotos yo={yo} />}
-        {seccion === "momentos" && <Recuerdos yo={yo} />}
+        {seccion === "momentos" && <Recuerdos />}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}
         {seccion === "buzon" && (
           <div className="lg:mx-auto lg:max-w-2xl">

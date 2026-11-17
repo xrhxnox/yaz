@@ -1,11 +1,17 @@
 "use client";
 
-export const SECCIONES = ["inicio", "lista", "fotos", "juegos", "buzon", "momentos"] as const;
+export const SECCIONES = ["inicio", "playlist", "fotos", "juegos", "buzon", "momentos"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
 const ICONOS: Record<Seccion, React.ReactNode> = {
   inicio: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
-  lista: <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />,
+  playlist: (
+    <>
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </>
+  ),
   fotos: (
     <>
       <path d="M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
@@ -34,7 +40,7 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
 
 export const NOMBRES_SECCION: Record<Seccion, string> = {
   inicio: "Inicio",
-  lista: "Pendientes",
+  playlist: "Playlist",
   fotos: "Fotos",
   juegos: "Juegos",
   buzon: "Buzón",

@@ -62,10 +62,10 @@ export async function GET(req: Request) {
         texto: p.texto,
         detalle: null,
         fecha: p.created_at.slice(0, 10),
-        seccion: "lista",
+        seccion: "momentos/pendientes",
       })),
       ...deseos.map((d) => ({ tipo: "Wishlist", texto: d.titulo, detalle: d.nota, fecha: null, seccion: "perfil" })),
-      ...visitas.map((v) => ({ tipo: "Visita", texto: v.ciudad ?? "Visita", detalle: v.nota, fecha: v.inicio, seccion: "momentos" })),
+      ...visitas.map((v) => ({ tipo: "Visita", texto: v.ciudad ?? "Visita", detalle: v.nota, fecha: v.inicio, seccion: "momentos/visitas" })),
       // Cartas: solo las que escribiste o las que ya abriste
       ...cartas
         .filter((c) => c.de === yo || c.abierta_at)
