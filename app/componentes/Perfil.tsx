@@ -979,8 +979,8 @@ export default function Perfil({
 }) {
   const NOMBRES = useNombres();
   const [viendo, setViendo] = useState<Persona>(yo);
-  // Al ver el perfil del otro, tallas / datos y favoritos / wishlist van en pestañas
-  const [pestana, setPestana] = useState<"tallas" | "favoritos" | "wishlist">("tallas");
+  // Al ver el perfil del otro, datos y favoritos / tallas / wishlist van en pestañas
+  const [pestana, setPestana] = useState<"favoritos" | "tallas" | "wishlist">("favoritos");
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
 
@@ -1038,8 +1038,8 @@ export default function Perfil({
         <div role="tablist" aria-label="Secciones del perfil" className="flex gap-4 border-b border-borde sm:gap-6">
           {(
             [
-              ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
               ["favoritos", "Datos y favoritos", (datos.perfiles[viendo].favoritos ?? []).length],
+              ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
               ["wishlist", "Wishlist", deseos.length],
             ] as const
           ).map(([id, nombre, cuantos]) => (
@@ -1060,15 +1060,6 @@ export default function Perfil({
       )}
       {datos && (
         <>
-          {(viendo === yo || pestana === "tallas") && (
-          <SeccionTallas
-            key={`tallas-${viendo}`}
-            tallas={datos.perfiles[viendo].tallas}
-            editable={viendo === yo}
-            sinTitulo={viendo !== yo}
-            alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
-          />
-          )}
           {(viendo === yo || pestana === "favoritos") && (
           <SeccionFavoritos
             key={`favoritos-${viendo}`}
@@ -1076,6 +1067,15 @@ export default function Perfil({
             editable={viendo === yo}
             sinTitulo={viendo !== yo}
             alGuardar={(favoritos) => hacer(api("/api/perfil", { favoritos }))}
+          />
+          )}
+          {(viendo === yo || pestana === "tallas") && (
+          <SeccionTallas
+            key={`tallas-${viendo}`}
+            tallas={datos.perfiles[viendo].tallas}
+            editable={viendo === yo}
+            sinTitulo={viendo !== yo}
+            alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
           />
           )}
           {(viendo === yo || pestana === "wishlist") && (
