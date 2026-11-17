@@ -93,6 +93,18 @@ insert into momentos (fecha, titulo, creado_por)
 select '2026-02-15', 'Nos hicimos novios', 'a'
 where not exists (select 1 from momentos);
 
+-- Fotos de cada momento (varias por momento)
+create table if not exists momento_fotos (
+  id bigserial primary key,
+  momento_id bigint not null references momentos (id) on delete cascade,
+  path text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists momento_fotos_momento on momento_fotos (momento_id);
+-- Antes cada momento tenía una sola foto en momentos.foto_path: la pasamos a la tabla nueva
+insert into momento_fotos (momento_id, path) select id, foto_path from momentos where foto_path is not null;
+update momentos set foto_path = null where foto_path is not null;
+
 -- Perfil de cada uno: tallas y colores de su app
 create table if not exists perfiles (
   persona text primary key check (persona in ('a', 'b')),
@@ -121,6 +133,7 @@ alter table ubicaciones enable row level security;
 alter table pendientes enable row level security;
 alter table fotos enable row level security;
 alter table momentos enable row level security;
+alter table momento_fotos enable row level security;
 alter table perfiles enable row level security;
 alter table deseos enable row level security;
 

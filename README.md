@@ -26,7 +26,7 @@ Hecha con Next.js, Supabase (base de datos y fotos), Web Push (PWA) y Open-Meteo
 
 1. En el menú izquierdo: **SQL Editor** → **New query**.
 2. Pega **todo** el contenido de [`supabase/schema.sql`](supabase/schema.sql) y dale **Run**.
-3. Debe decir *Success. No rows returned*. Crea 10 tablas, sus datos iniciales (ciudades y el primer momento) y la carpeta privada `fotos`.
+3. Debe decir *Success. No rows returned*. Crea las tablas, sus datos iniciales (ciudades y el primer momento) y la carpeta privada `fotos`.
 
 Se puede correr otra vez sin problema (por ejemplo, cuando agreguemos funciones nuevas): no borra ni duplica nada.
 
@@ -67,7 +67,7 @@ Lo demás en `.env.local` ya está listo: nombres, fecha, zona horaria y llaves 
 npm run verificar
 ```
 
-Revisa las variables, la conexión, las 10 tablas, las 2 cuentas, que la carpeta de fotos sea privada y que se puedan subir fotos. Si algo falla, te dice qué y dónde arreglarlo. Nunca imprime las llaves.
+Revisa las variables, la conexión, las tablas, las 2 cuentas, que la carpeta de fotos sea privada y que se puedan subir fotos. Si algo falla, te dice qué y dónde arreglarlo. Nunca imprime las llaves.
 
 ### 5. Probar en tu compu
 
