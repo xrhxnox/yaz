@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+import { Caveat, Fraunces, Geist, Geist_Mono, Nunito, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { PAREJA } from "@/lib/config";
 import { SCRIPT_TEMA } from "@/lib/tema";
 import "./globals.css";
@@ -22,6 +22,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Letras opcionales del perfil (Personalizar → Letra)
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], style: ["normal", "italic"], preload: false });
+const grotesk = Space_Grotesk({ variable: "--font-grotesk", subsets: ["latin"], preload: false });
+const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], style: ["normal", "italic"], preload: false });
+const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"], preload: false });
+
 export const metadata: Metadata = {
   title: PAREJA,
   description: "Nuestro espacio a distancia",
@@ -41,12 +47,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${playfair.variable} ${grotesk.variable} ${nunito.variable} ${caveat.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Aplica el tema de quien entró antes de pintar, para que no parpadee */}
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Como app en el celular: franja del color de acento detrás de la barra de estado */}
+        <div aria-hidden className="franja-app" />
+        {children}
+      </body>
     </html>
   );
 }

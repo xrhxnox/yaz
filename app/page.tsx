@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { PAREJA, otra } from "@/lib/config";
+import { PAREJA, esFuente, otra } from "@/lib/config";
 import { PAREJA_INICIAL, ProveedorPareja, type Pareja } from "@/lib/pareja";
 import { api, guardarSesion, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { aplicarMinusculas, aplicarTema } from "@/lib/tema";
+import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
 import Juntos from "./componentes/Juntos";
@@ -113,6 +113,15 @@ export default function Inicio() {
     if (estiloCargado) aplicarMinusculas(persona, minusculas);
   }, [persona, minusculas, estiloCargado]);
 
+  // Letra elegida en el perfil
+  const fuenteGuardada = persona ? estado?.estilos?.[persona]?.fuente : undefined;
+  const fuente = esFuente(fuenteGuardada) ? fuenteGuardada : "diario";
+  useEffect(() => {
+    if (persona === undefined) return;
+    if (persona === null) return aplicarFuente(null, "diario");
+    if (estiloCargado) aplicarFuente(persona, fuente);
+  }, [persona, fuente, estiloCargado]);
+
   const lanzarCorazones = useCallback(() => {
     const nuevos = crearCorazones();
     setCorazones((c) => [...c, ...nuevos]);
@@ -158,7 +167,7 @@ export default function Inicio() {
 
   return (
     <ProveedorPareja value={pareja}>
-      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
+      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] app:pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
         <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} />
 
         {seccion === "inicio" && (
@@ -219,6 +228,7 @@ export default function Inicio() {
             yo={yo}
             temaActual={estado?.temas?.[yo] ?? null}
             minusculas={minusculas}
+            fuente={fuente}
             ubicacion={estado?.ubicaciones?.[yo] ?? null}
             alCambiarTema={cargar}
             alCambiarDatos={cargar}

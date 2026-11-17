@@ -1,5 +1,5 @@
 import { borrarImagenes, db, error, invalido, autenticar, revisar, subirImagen } from "@/lib/servidor";
-import { TALLAS, type Persona, type Tallas } from "@/lib/config";
+import { TALLAS, type Persona, type Tallas, esFuente } from "@/lib/config";
 import { esHex } from "@/lib/colores";
 
 type Favorito = { titulo: string; valor: string };
@@ -88,7 +88,10 @@ export async function POST(req: Request) {
 
   if (estilo !== undefined) {
     if (typeof estilo !== "object" || estilo === null) return invalido();
-    cambios.estilo = { minusculas: estilo.minusculas === true };
+    cambios.estilo = {
+      minusculas: estilo.minusculas === true,
+      ...(esFuente(estilo.fuente) && estilo.fuente !== "diario" ? { fuente: estilo.fuente } : {}),
+    };
   }
 
   if (cumple !== undefined) {

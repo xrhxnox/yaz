@@ -1,4 +1,4 @@
-import { CLAVE_MINUSCULAS, CLAVE_SESION, CLAVE_TEMA, type Persona } from "./config";
+import { CLAVE_FUENTE, CLAVE_MINUSCULAS, CLAVE_SESION, CLAVE_TEMA, type Fuente, type Persona } from "./config";
 import { derivarTema, type Tema } from "./colores";
 
 // Variables que pusimos en <html style> la última vez, para poder quitarlas
@@ -42,5 +42,18 @@ export function aplicarMinusculas(persona: Persona | null, activo: boolean, guar
   } catch {}
 }
 
+// Estilo de letra (preferencia de cada quien); "diario" es el original
+export function aplicarFuente(persona: Persona | null, fuente: Fuente, guardar = true) {
+  const raiz = document.documentElement;
+  const activa = persona && fuente !== "diario";
+  if (activa) raiz.dataset.fuente = fuente;
+  else delete raiz.dataset.fuente;
+  if (!guardar) return;
+  try {
+    if (activa) localStorage.setItem(CLAVE_FUENTE, JSON.stringify({ persona, fuente }));
+    else localStorage.removeItem(CLAVE_FUENTE);
+  } catch {}
+}
+
 // Se ejecuta en <head> antes de pintar, para que no parpadee el tema
-export const SCRIPT_TEMA = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_SESION)})||"null");if(s&&(s.persona==="a"||s.persona==="b")){var r=document.documentElement;r.dataset.tema=s.persona;var t=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})||"null");if(t&&t.persona===s.persona)for(var k in t.vars)r.style.setProperty(k,t.vars[k]);if(localStorage.getItem(${JSON.stringify(CLAVE_MINUSCULAS)})===s.persona)r.dataset.minusculas=""}}catch(e){}`;
+export const SCRIPT_TEMA = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_SESION)})||"null");if(s&&(s.persona==="a"||s.persona==="b")){var r=document.documentElement;r.dataset.tema=s.persona;var t=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})||"null");if(t&&t.persona===s.persona)for(var k in t.vars)r.style.setProperty(k,t.vars[k]);if(localStorage.getItem(${JSON.stringify(CLAVE_MINUSCULAS)})===s.persona)r.dataset.minusculas="";var f=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_FUENTE)})||"null");if(f&&f.persona===s.persona)r.dataset.fuente=f.fuente}}catch(e){}`;

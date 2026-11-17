@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TALLAS, TEMA_INICIAL, otra, type Persona, type Tallas } from "@/lib/config";
+import { FUENTES, TALLAS, TEMA_INICIAL, otra, type Fuente, type Persona, type Tallas } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import Avatar from "./Avatar";
 import { api, type Ubicacion, comprimirImagen } from "@/lib/cliente";
 import { BuscarCiudad, guardarCiudad } from "./HoraClima";
 import Notificaciones from "./Notificaciones";
-import { aplicarMinusculas, aplicarTema } from "@/lib/tema";
+import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
@@ -585,18 +585,63 @@ function OpcionTexto({ yo, minusculas, alGuardar }: { yo: Persona; minusculas: b
   );
 }
 
+// Estilo de letra; cada muestra se ve con su propia letra
+function OpcionFuente({ yo, fuente, alGuardar }: { yo: Persona; fuente: Fuente; alGuardar: (fuente: Fuente) => Promise<void> }) {
+  const [guardando, setGuardando] = useState(false);
+
+  async function elegir(valor: Fuente) {
+    if (valor === fuente || guardando) return;
+    aplicarFuente(yo, valor);
+    setGuardando(true);
+    try {
+      await alGuardar(valor);
+    } catch {
+      aplicarFuente(yo, fuente);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className="mt-5">
+      <p className={etiqueta}>Letra</p>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {FUENTES.map((o) => (
+          <button
+            key={o.id}
+            data-fuente={o.id}
+            onClick={() => elegir(o.id)}
+            disabled={guardando}
+            aria-pressed={fuente === o.id}
+            className={`rounded-xl border px-2 py-3 text-center transition ${
+              fuente === o.id ? "border-acento-texto bg-relleno" : "border-borde hover:bg-relleno"
+            }`}
+          >
+            <span className="block font-serif text-3xl leading-none">Aa</span>
+            <span className="mt-1.5 block font-sans text-xs text-suave">{o.nombre}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SeccionTema({
   yo,
   temaActual,
   minusculas,
+  fuente,
   alGuardar,
   alGuardarTexto,
+  alGuardarFuente,
 }: {
   yo: Persona;
   temaActual: Tema | null;
   minusculas: boolean;
+  fuente: Fuente;
   alGuardar: (t: Tema | null) => Promise<void>;
   alGuardarTexto: (minusculas: boolean) => Promise<void>;
+  alGuardarFuente: (fuente: Fuente) => Promise<void>;
 }) {
   const original = TEMA_INICIAL[yo];
   const [borrador, setBorrador] = useState<Tema>(temaActual ?? original);
@@ -662,6 +707,7 @@ function SeccionTema({
           </button>
         )}
       </div>
+      <OpcionFuente yo={yo} fuente={fuente} alGuardar={alGuardarFuente} />
       <OpcionTexto yo={yo} minusculas={minusculas} alGuardar={alGuardarTexto} />
     </section>
   );
@@ -964,6 +1010,7 @@ export default function Perfil({
   yo,
   temaActual,
   minusculas,
+  fuente,
   ubicacion,
   alCambiarTema,
   alCambiarDatos,
@@ -972,6 +1019,7 @@ export default function Perfil({
   yo: Persona;
   temaActual: Tema | null;
   minusculas: boolean;
+  fuente: Fuente;
   ubicacion: Ubicacion | null;
   alCambiarTema: () => Promise<void>;
   alCambiarDatos: () => Promise<void>;
@@ -1115,8 +1163,13 @@ export default function Perfil({
           yo={yo}
           temaActual={temaActual}
           minusculas={minusculas}
+          fuente={fuente}
           alGuardarTexto={async (valor) => {
-            await hacer(api("/api/perfil", { estilo: { minusculas: valor } }));
+            await hacer(api("/api/perfil", { estilo: { minusculas: valor, fuente } }));
+            await alCambiarTema();
+          }}
+          alGuardarFuente={async (valor) => {
+            await hacer(api("/api/perfil", { estilo: { minusculas, fuente: valor } }));
             await alCambiarTema();
           }}
           alGuardar={async (tema) => {

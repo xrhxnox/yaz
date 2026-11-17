@@ -1,5 +1,5 @@
 import { db, error, autenticar, firmar } from "@/lib/servidor";
-import { NOMBRES, hoyCompartido, type Persona } from "@/lib/config";
+import { NOMBRES, hoyCompartido, type Persona, type Estilo } from "@/lib/config";
 
 // Lee algo opcional: si la tabla o columna aún no existe en Supabase, devuelve null en vez de fallar
 async function opcional<T>(consulta: PromiseLike<{ data: T | null; error: unknown }>): Promise<T | null> {
@@ -72,14 +72,14 @@ export async function GET(req: Request) {
     const nombres: Record<Persona, string> = { ...NOMBRES };
     const cumples: Record<Persona, string | null> = { a: null, b: null };
     const avatarPath: Record<Persona, string | null> = { a: null, b: null };
-    const estilos: Record<Persona, { minusculas?: boolean }> = { a: {}, b: {} };
+    const estilos: Record<Persona, Estilo> = { a: {}, b: {} };
     for (const p of perfiles.data ?? []) {
       const persona = p.persona as Persona;
       temas[persona] = p.tema;
       if (p.apodo) nombres[persona] = p.apodo;
       cumples[persona] = p.cumple;
       avatarPath[persona] = p.avatar_path;
-      if ("estilo" in p && p.estilo) estilos[persona] = p.estilo as { minusculas?: boolean };
+      if ("estilo" in p && p.estilo) estilos[persona] = p.estilo as Estilo;
     }
     const urls = await firmar([avatarPath.a, avatarPath.b]);
     const avatares: Record<Persona, string | null> = {

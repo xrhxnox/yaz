@@ -79,9 +79,55 @@
   --color-sobre-acento: var(--sobre-acento);
   --color-acento-texto: var(--acento-texto);
   --color-acento-suave: var(--acento-suave);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--letra-texto);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-serif: var(--letra-titulos);
+}
+
+/* Letra: títulos y números (font-serif) y texto (font-sans). Se elige en el perfil.
+   Funciona en <html> y en cualquier elemento con data-fuente (las muestras del perfil) */
+:root,
+[data-fuente="diario"] {
+  --letra-titulos: var(--font-fraunces), Georgia, serif;
+  --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
+}
+[data-fuente="elegante"] {
+  --letra-titulos: var(--font-playfair), Georgia, serif;
+  --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
+}
+[data-fuente="moderna"] {
+  --letra-titulos: var(--font-grotesk), system-ui, sans-serif;
+  --letra-texto: var(--font-grotesk), system-ui, sans-serif;
+}
+[data-fuente="redonda"] {
+  --letra-titulos: var(--font-nunito), system-ui, sans-serif;
+  --letra-texto: var(--font-nunito), system-ui, sans-serif;
+}
+[data-fuente="a-mano"] {
+  --letra-titulos: var(--font-caveat), cursive;
+  --letra-texto: var(--font-geist-sans), system-ui, sans-serif;
+}
+[data-fuente="maquina"] {
+  --letra-titulos: var(--font-geist-mono), ui-monospace, monospace;
+  --letra-texto: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Instalada como app: en iPhone la zona de la barra de estado se ve borrosa al hacer scroll.
+   Una franja del color de acento la cubre y deja espacio antes del contenido */
+@custom-variant app (@media (display-mode: standalone));
+.franja-app {
+  display: none;
+}
+@media (display-mode: standalone) {
+  .franja-app {
+    display: block;
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 60;
+    height: calc(env(safe-area-inset-top) + 0.5rem);
+    background: var(--acento);
+  }
 }
 
 /* Modo normal: la primera letra de cada texto siempre en mayúscula (aunque se haya escrito en minúsculas) */
@@ -106,7 +152,7 @@
 body {
   background: var(--fondo);
   color: var(--texto);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--letra-texto);
   -webkit-tap-highlight-color: transparent;
 }
 

@@ -4,6 +4,22 @@ export type Persona = "a" | "b";
 export const CLAVE_SESION = "nosotros:sesion";
 export const CLAVE_TEMA = "nosotros:tema";
 export const CLAVE_MINUSCULAS = "nosotros:minusculas";
+export const CLAVE_FUENTE = "nosotros:fuente";
+
+// Estilos de letra para personalizar la app (los CSS están en globals.css, [data-fuente])
+export const FUENTES = [
+  { id: "diario", nombre: "Diario" },
+  { id: "elegante", nombre: "Elegante" },
+  { id: "moderna", nombre: "Moderna" },
+  { id: "redonda", nombre: "Redonda" },
+  { id: "a-mano", nombre: "A mano" },
+  { id: "maquina", nombre: "Máquina" },
+] as const;
+export type Fuente = (typeof FUENTES)[number]["id"];
+export function esFuente(x: unknown): x is Fuente {
+  return FUENTES.some((f) => f.id === x);
+}
+export type Estilo = { minusculas?: boolean; fuente?: Fuente };
 
 export const NOMBRES: Record<Persona, string> = {
   a: process.env.NEXT_PUBLIC_NOMBRE_A || "Ric",

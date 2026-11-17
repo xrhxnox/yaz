@@ -17,7 +17,7 @@ export type Estado = {
   nombres: Record<Persona, string>;
   cumples: Record<Persona, string | null>;
   avatares: Record<Persona, string | null>;
-  estilos?: Record<Persona, { minusculas?: boolean }>;
+  estilos?: Record<Persona, { minusculas?: boolean; fuente?: string }>;
   temas: Record<Persona, { fondo: string; acento: string } | null>;
   ubicaciones: Record<Persona, Ubicacion | null>;
   proximoEncuentro: string | null;
