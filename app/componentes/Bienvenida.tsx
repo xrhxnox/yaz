@@ -3,24 +3,26 @@
 import { useState } from "react";
 import { NOMBRES, type Persona } from "@/lib/config";
 import { api, type Sesion } from "@/lib/cliente";
+import { iniciarSesion } from "@/lib/cuenta";
+import { campo } from "@/lib/estilos";
 import Corazon from "./Corazon";
 
 export default function Bienvenida({ alEntrar }: { alEntrar: (s: Sesion) => void }) {
-  const [persona, setPersona] = useState<Persona | null>(null);
-  const [codigo, setCodigo] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault();
-    if (!persona || !codigo.trim()) return;
+    if (!correo.trim() || !contrasena) return;
     setCargando(true);
     setError("");
     try {
-      await api(codigo.trim(), "/api/estado");
-      alEntrar({ persona, codigo: codigo.trim() });
+      const persona = await iniciarSesion(correo, contrasena, async () => (await api<{ persona: Persona }>("/api/yo")).persona);
+      alEntrar({ persona });
     } catch (err) {
-      setError((err as { status?: number }).status === 401 ? "Código incorrecto" : (err as Error).message);
+      setError((err as Error).message);
     } finally {
       setCargando(false);
     }
@@ -33,35 +35,30 @@ export default function Bienvenida({ alEntrar }: { alEntrar: (s: Sesion) => void
         <h1 className="mt-4 text-2xl font-semibold tracking-tight">
           {NOMBRES.a} & {NOMBRES.b}
         </h1>
-        <p className="mt-1 text-sm text-suave">Elige quién eres y escribe el código.</p>
-
-        <div className="mt-6 grid grid-cols-2 gap-2">
-          {(["a", "b"] as Persona[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPersona(p)}
-              className={`rounded-xl border px-3 py-2.5 font-medium transition ${
-                persona === p ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"
-              }`}
-            >
-              {NOMBRES[p]}
-            </button>
-          ))}
-        </div>
+        <p className="mt-1 text-sm text-suave">Entra con tu cuenta.</p>
 
         <input
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          placeholder="Correo"
+          className={`${campo} mt-6`}
+        />
+        <input
           type="password"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          placeholder="Código"
-          className="mt-3 w-full rounded-xl border border-borde bg-transparent px-4 py-2.5 outline-none placeholder:text-suave focus:border-suave"
+          autoComplete="current-password"
+          value={contrasena}
+          onChange={(e) => setContrasena(e.target.value)}
+          placeholder="Contraseña"
+          className={`${campo} mt-2`}
         />
 
         {error && <p className="mt-3 text-sm text-acento-texto">{error}</p>}
 
         <button
-          disabled={!persona || !codigo.trim() || cargando}
+          disabled={!correo.trim() || !contrasena || cargando}
           className="mt-4 w-full rounded-xl bg-acento py-2.5 font-medium text-sobre-acento transition disabled:opacity-30"
         >
           {cargando ? "Entrando…" : "Entrar"}

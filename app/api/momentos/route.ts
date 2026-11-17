@@ -1,11 +1,11 @@
-import { borrarImagenes, db, error, firmar, invalido, noAutorizado, revisar, subirImagen } from "@/lib/servidor";
-import { esFecha, esPersona } from "@/lib/config";
+import { borrarImagenes, db, error, firmar, invalido, autenticar, revisar, subirImagen } from "@/lib/servidor";
+import { esFecha } from "@/lib/config";
 
 type Fila = { id: number; fecha: string; titulo: string; descripcion: string | null; foto_path: string | null; creado_por: string };
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   try {
     const filas: Fila[] = revisar(
@@ -25,15 +25,14 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const form = await req.formData().catch(() => null);
-  const persona = form?.get("persona");
   const fecha = form?.get("fecha");
   const titulo = form?.get("titulo");
   const descripcion = form?.get("descripcion");
-  if (!form || !esPersona(persona) || !esFecha(fecha) || typeof titulo !== "string" || !titulo.trim()) return invalido();
+  if (!form || !esFecha(fecha) || typeof titulo !== "string" || !titulo.trim()) return invalido();
 
   try {
     const foto = form.get("foto");
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
           titulo: titulo.trim().slice(0, 120),
           descripcion: typeof descripcion === "string" && descripcion.trim() ? descripcion.trim().slice(0, 1000) : null,
           foto_path,
-          creado_por: persona,
+          creado_por: yo,
         }),
     );
     return Response.json({ ok: true });
@@ -56,8 +55,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const id = Number(new URL(req.url).searchParams.get("id"));
   if (!Number.isInteger(id)) return invalido();

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NOMBRES, TALLAS, TEMA_INICIAL, otra, type Persona, type Tallas } from "@/lib/config";
 import { api } from "@/lib/cliente";
 import { aplicarTema } from "@/lib/tema";
+import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, enlace, etiqueta, tarjeta } from "@/lib/estilos";
@@ -324,17 +325,123 @@ function SeccionTema({ yo, temaActual, alGuardar }: { yo: Persona; temaActual: T
   );
 }
 
+// ---------- Cuenta ----------
+
+function SeccionCuenta() {
+  const [correo, setCorreo] = useState<string | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [actual, setActual] = useState("");
+  const [nueva, setNueva] = useState("");
+  const [repetida, setRepetida] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const [listo, setListo] = useState(false);
+
+  useEffect(() => {
+    correoActual().then(setCorreo);
+  }, []);
+
+  const problema =
+    nueva && nueva.length < 8 ? "Usa al menos 8 caracteres" : repetida && nueva !== repetida ? "Las contraseñas no coinciden" : "";
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!actual || !nueva || problema || nueva !== repetida) return;
+    setGuardando(true);
+    setError("");
+    try {
+      await cambiarContrasena(actual, nueva);
+      setActual("");
+      setNueva("");
+      setRepetida("");
+      setAbierto(false);
+      setListo(true);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <section className={tarjeta}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium">Mi cuenta</p>
+          {correo && <p className="truncate text-sm text-suave">{correo}</p>}
+        </div>
+        {!abierto && (
+          <button
+            onClick={() => {
+              setAbierto(true);
+              setListo(false);
+            }}
+            className={`${enlace} shrink-0`}
+          >
+            Cambiar contraseña
+          </button>
+        )}
+      </div>
+      {listo && <p className="mt-2 text-sm text-acento-texto">Contraseña actualizada.</p>}
+
+      {abierto && (
+        <form onSubmit={guardar} className="mt-3 space-y-2">
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={actual}
+            onChange={(e) => setActual(e.target.value)}
+            placeholder="Contraseña actual"
+            className={campo}
+            autoFocus
+          />
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={nueva}
+            onChange={(e) => setNueva(e.target.value)}
+            placeholder="Nueva contraseña (mínimo 8)"
+            className={campo}
+          />
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={repetida}
+            onChange={(e) => setRepetida(e.target.value)}
+            placeholder="Repite la nueva contraseña"
+            className={campo}
+          />
+          {(problema || error) && <p className="text-sm text-acento-texto">{error || problema}</p>}
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAbierto(false);
+                setError("");
+              }}
+              className={botonSecundario}
+            >
+              Cancelar
+            </button>
+            <button disabled={!actual || !nueva || !repetida || !!problema || guardando} className={`${botonPrimario} flex-1`}>
+              {guardando ? "Guardando…" : "Cambiar contraseña"}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
 // ---------- Perfil ----------
 
 export default function Perfil({
   yo,
-  codigo,
   temaActual,
   alCambiarTema,
   alSalir,
 }: {
   yo: Persona;
-  codigo: string;
   temaActual: Tema | null;
   alCambiarTema: () => Promise<void>;
   alSalir: () => void;
@@ -345,12 +452,12 @@ export default function Perfil({
 
   const cargar = useCallback(async () => {
     try {
-      setDatos(await api<Datos>(codigo, `/api/perfil?persona=${yo}`));
+      setDatos(await api<Datos>("/api/perfil"));
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [codigo, yo]);
+  }, []);
 
   useCarga(cargar);
 
@@ -391,20 +498,20 @@ export default function Perfil({
             key={`tallas-${viendo}`}
             tallas={datos.perfiles[viendo].tallas}
             editable={viendo === yo}
-            alGuardar={(tallas) => hacer(api(codigo, "/api/perfil", { persona: yo, tallas }))}
+            alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
           />
           <SeccionDeseos
             key={`deseos-${viendo}`}
             duenio={viendo}
             yo={yo}
             deseos={deseos}
-            alAgregar={(d) => hacer(api(codigo, "/api/deseos", { persona: yo, ...d }))}
+            alAgregar={(d) => hacer(api("/api/deseos", d))}
             alBorrar={(d) => {
-              if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(codigo, `/api/deseos?id=${d.id}&persona=${yo}`, undefined, "DELETE")).catch(() => {});
+              if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
             }}
             alMarcar={(d) => {
               setDatos((x) => x && { ...x, deseos: x.deseos.map((y) => (y.id === d.id ? { ...y, comprado: !d.comprado } : y)) });
-              hacer(api(codigo, "/api/deseos", { id: d.id, persona: yo, comprado: !d.comprado }, "PATCH")).catch(() => {});
+              hacer(api("/api/deseos", { id: d.id, comprado: !d.comprado }, "PATCH")).catch(() => {});
             }}
           />
         </>
@@ -415,11 +522,13 @@ export default function Perfil({
           yo={yo}
           temaActual={temaActual}
           alGuardar={async (tema) => {
-            await hacer(api(codigo, "/api/perfil", { persona: yo, tema }));
+            await hacer(api("/api/perfil", { tema }));
             await alCambiarTema();
           }}
         />
       )}
+
+      {viendo === yo && <SeccionCuenta />}
 
       <button
         onClick={() => {

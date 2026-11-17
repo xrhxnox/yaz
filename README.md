@@ -41,7 +41,25 @@ En Supabase ve a **Project Settings** (engrane abajo a la izquierda):
 
 > ⚠️ Usa la llave **secreta**, no la *publishable* ni la *anon*. La app solo la usa en el servidor; nunca llega al navegador. No la compartas ni la subas a GitHub (`.env.local` ya está ignorado).
 
-Lo demás en `.env.local` ya está listo: nombres, fecha, zona horaria, código secreto y llaves de notificaciones. Opcional: cambia `VAPID_SUBJECT` por `mailto:` con tu correo.
+Además, para iniciar sesión desde el navegador:
+
+| Qué copiar | Dónde está | Variable |
+| --- | --- | --- |
+| La misma Project URL | | `NEXT_PUBLIC_SUPABASE_URL` |
+| **Publishable key** (`sb_publishable_…`) | **API Keys** (o la legacy `anon`) | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
+
+Esta sí es pública: está hecha para el navegador y por sí sola no da acceso a los datos.
+
+### 3b. Crear las cuentas
+
+1. En Supabase: **Authentication → Users → Add user → Create new user**.
+2. Pon el correo y una contraseña para cada uno, y marca **Auto Confirm User**.
+3. En `.env.local` pon esos correos en `CORREO_A` (Rick) y `CORREO_B` (Yaz). **Solo esos dos correos** pueden usar la app; cualquier otra cuenta queda bloqueada.
+4. Recomendado: en **Authentication → Sign In / Providers** desactiva *Allow new users to sign up*, para que nadie más pueda crear cuentas.
+
+Cada quien puede cambiar su contraseña desde la app, en su perfil.
+
+Lo demás en `.env.local` ya está listo: nombres, fecha, zona horaria y llaves de notificaciones. Opcional: cambia `VAPID_SUBJECT` por `mailto:` con tu correo.
 
 ### 4. Verificar
 
@@ -49,7 +67,7 @@ Lo demás en `.env.local` ya está listo: nombres, fecha, zona horaria, código 
 npm run verificar
 ```
 
-Revisa las variables, la conexión, las 10 tablas, que la carpeta de fotos sea privada y que se puedan subir fotos. Si algo falla, te dice qué y dónde arreglarlo. Nunca imprime las llaves.
+Revisa las variables, la conexión, las 10 tablas, las 2 cuentas, que la carpeta de fotos sea privada y que se puedan subir fotos. Si algo falla, te dice qué y dónde arreglarlo. Nunca imprime las llaves.
 
 ### 5. Probar en tu compu
 
@@ -57,7 +75,7 @@ Revisa las variables, la conexión, las 10 tablas, que la carpeta de fotos sea p
 npm run dev
 ```
 
-Abre http://localhost:3000 y entra con el código secreto (`CODIGO_SECRETO` en `.env.local`).
+Abre http://localhost:3000 y entra con tu correo y contraseña.
 
 ### Límites del plan gratis
 
@@ -77,7 +95,7 @@ Abre http://localhost:3000 y entra con el código secreto (`CODIGO_SECRETO` en `
 - **Android (Chrome):** abrir el link → menú ⋮ → **Instalar app** → **Activar notificaciones**.
 - **Compu:** abrir el link en Chrome/Edge y **Activar notificaciones**.
 
-Cada quien elige quién es la primera vez y escribe el código secreto.
+Cada quien entra con su correo y contraseña; la app sabe quién es por su cuenta.
 
 ## Estructura
 

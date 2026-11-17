@@ -12,7 +12,7 @@ function base64AUint8(base64: string) {
 
 type Situacion = "cargando" | "activas" | "inactivas" | "bloqueadas" | "instalar-ios" | "sin-soporte";
 
-export default function Notificaciones({ yo, codigo }: { yo: Persona; codigo: string }) {
+export default function Notificaciones({ yo }: { yo: Persona }) {
   const [situacion, setSituacion] = useState<Situacion>("cargando");
   const [error, setError] = useState("");
 
@@ -29,13 +29,13 @@ export default function Notificaciones({ yo, codigo }: { yo: Persona; codigo: st
       const sub = await registro.pushManager.getSubscription();
       if (sub && Notification.permission === "granted") {
         // Re-registrar por si la base se reinició o cambió de persona
-        api(codigo, "/api/suscribir", { persona: yo, subscription: sub.toJSON() }).catch(() => {});
+        api("/api/suscribir", { subscription: sub.toJSON() }).catch(() => {});
         setSituacion("activas");
       } else {
         setSituacion("inactivas");
       }
     })().catch(() => setSituacion("sin-soporte"));
-  }, [yo, codigo]);
+  }, [yo]);
 
   async function activar() {
     setError("");
@@ -46,7 +46,7 @@ export default function Notificaciones({ yo, codigo }: { yo: Persona; codigo: st
       if (permiso !== "granted") return setSituacion(permiso === "denied" ? "bloqueadas" : "inactivas");
       const registro = await navigator.serviceWorker.ready;
       const sub = await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64AUint8(clave) });
-      await api(codigo, "/api/suscribir", { persona: yo, subscription: sub.toJSON() });
+      await api("/api/suscribir", { subscription: sub.toJSON() });
       setSituacion("activas");
     } catch (e) {
       setError((e as Error).message);

@@ -1,9 +1,9 @@
-import { db, error, noAutorizado } from "@/lib/servidor";
+import { db, error, autenticar } from "@/lib/servidor";
 import type { Persona } from "@/lib/config";
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   // "desde" = medianoche local de quien consulta, para contar los de hoy
   const param = new URL(req.url).searchParams.get("desde");

@@ -14,14 +14,45 @@ export function db(): SupabaseClient {
   return cliente;
 }
 
-// Solo nosotros dos conocemos el código secreto
-export function noAutorizado(req: Request): Response | null {
-  const codigo = process.env.CODIGO_SECRETO;
-  if (!codigo) return Response.json({ error: "Falta configurar CODIGO_SECRETO" }, { status: 500 });
-  if (req.headers.get("x-codigo") !== codigo) {
-    return Response.json({ error: "Código incorrecto" }, { status: 401 });
-  }
+// Qué correo es de quién (CORREO_A = Rick, CORREO_B = Yaz). Cualquier otra cuenta no tiene acceso.
+function personaDeCorreo(correo: string): Persona | null {
+  const c = correo.trim().toLowerCase();
+  if (c === process.env.CORREO_A?.trim().toLowerCase()) return "a";
+  if (c === process.env.CORREO_B?.trim().toLowerCase()) return "b";
   return null;
+}
+
+// Guardamos un minuto qué token es de quién, para no preguntarle a Supabase en cada petición
+const sesiones = new Map<string, { persona: Persona; vence: number }>();
+
+/**
+ * Revisa la sesión de Supabase que manda el navegador y devuelve quién es.
+ * Si no hay sesión válida devuelve la respuesta de error para regresarla tal cual.
+ */
+export async function autenticar(req: Request): Promise<Persona | Response> {
+  const token = req.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
+  if (!token) return Response.json({ error: "Inicia sesión" }, { status: 401 });
+
+  const guardada = sesiones.get(token);
+  if (guardada && guardada.vence > Date.now()) return guardada.persona;
+
+  if (!process.env.CORREO_A || !process.env.CORREO_B) {
+    return Response.json({ error: "Falta configurar CORREO_A y CORREO_B" }, { status: 500 });
+  }
+
+  try {
+    const { data, error: e } = await db().auth.getUser(token);
+    if (e || !data.user?.email) return Response.json({ error: "Tu sesión expiró, vuelve a entrar" }, { status: 401 });
+
+    const persona = personaDeCorreo(data.user.email);
+    if (!persona) return Response.json({ error: "Esta cuenta no tiene acceso" }, { status: 403 });
+
+    if (sesiones.size > 50) sesiones.clear();
+    sesiones.set(token, { persona, vence: Date.now() + 60_000 });
+    return persona;
+  } catch (e) {
+    return error(e);
+  }
 }
 
 export function error(e: unknown): Response {

@@ -1,16 +1,14 @@
-import { db, error, invalido, noAutorizado, revisar } from "@/lib/servidor";
-import { TALLAS, esPersona, type Persona, type Tallas } from "@/lib/config";
+import { db, error, invalido, autenticar, revisar } from "@/lib/servidor";
+import { TALLAS, type Persona, type Tallas } from "@/lib/config";
 import { esHex } from "@/lib/colores";
 
 type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string } | null };
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const yo = new URL(req.url).searchParams.get("persona");
-  if (!esPersona(yo)) return invalido("Persona inválida");
 
   try {
     const [filas, deseos]: [Fila[], Deseo[]] = await Promise.all([
@@ -32,11 +30,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, tallas, tema } = await req.json().catch(() => ({}));
-  if (!esPersona(persona)) return invalido("Persona inválida");
+  const { tallas, tema } = await req.json().catch(() => ({}));
+  const persona = yo;
 
   const cambios: Record<string, unknown> = { persona, updated_at: new Date().toISOString() };
 

@@ -1,5 +1,4 @@
-import { db, error, invalido, noAutorizado, revisar } from "@/lib/servidor";
-import { esPersona } from "@/lib/config";
+import { db, error, invalido, autenticar, revisar } from "@/lib/servidor";
 
 function urlValida(v: unknown): v is string {
   if (typeof v !== "string") return false;
@@ -17,11 +16,11 @@ async function dueno(id: number): Promise<string | null> {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, titulo, url, nota } = await req.json().catch(() => ({}));
-  if (!esPersona(persona) || !urlValida(url)) return invalido("Revisa el link");
+  const { titulo, url, nota } = await req.json().catch(() => ({}));
+  if (!urlValida(url)) return invalido("Revisa el link");
   const link = url.trim();
 
   try {
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
       await db()
         .from("deseos")
         .insert({
-          persona,
+          persona: yo,
           url: link,
           titulo: typeof titulo === "string" && titulo.trim() ? titulo.trim().slice(0, 120) : new URL(link).hostname.replace(/^www\./, ""),
           nota: typeof nota === "string" && nota.trim() ? nota.trim().slice(0, 300) : null,
@@ -43,16 +42,16 @@ export async function POST(req: Request) {
 
 // Marcar como comprado: solo lo puede hacer el otro
 export async function PATCH(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { id, persona, comprado } = await req.json().catch(() => ({}));
-  if (!Number.isInteger(id) || !esPersona(persona) || typeof comprado !== "boolean") return invalido();
+  const { id, comprado } = await req.json().catch(() => ({}));
+  if (!Number.isInteger(id) || typeof comprado !== "boolean") return invalido();
 
   try {
     const de = await dueno(id);
     if (!de) return invalido("No existe");
-    if (de === persona) return invalido("No puedes marcar tus propios deseos");
+    if (de === yo) return invalido("No puedes marcar tus propios deseos");
     revisar(await db().from("deseos").update({ comprado }).eq("id", id));
     return Response.json({ ok: true });
   } catch (e) {
@@ -62,16 +61,14 @@ export async function PATCH(req: Request) {
 
 // Borrar: solo el dueño
 export async function DELETE(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const params = new URL(req.url).searchParams;
-  const id = Number(params.get("id"));
-  const persona = params.get("persona");
-  if (!Number.isInteger(id) || !esPersona(persona)) return invalido();
+  const id = Number(new URL(req.url).searchParams.get("id"));
+  if (!Number.isInteger(id)) return invalido();
 
   try {
-    if ((await dueno(id)) !== persona) return invalido("Solo puedes borrar tus propios deseos");
+    if ((await dueno(id)) !== yo) return invalido("Solo puedes borrar tus propios deseos");
     revisar(await db().from("deseos").delete().eq("id", id));
     return Response.json({ ok: true });
   } catch (e) {

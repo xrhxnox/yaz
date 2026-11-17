@@ -26,7 +26,7 @@ function Celda({ foto, nombre }: { foto: Foto | null; nombre: string }) {
   );
 }
 
-export default function Fotos({ yo, codigo }: { yo: Persona; codigo: string }) {
+export default function Fotos({ yo }: { yo: Persona }) {
   const [datos, setDatos] = useState<{ hoy: string; dias: Dia[] } | null>(null);
   const [error, setError] = useState("");
   const [nueva, setNueva] = useState<{ blob: Blob; vista: string } | null>(null);
@@ -36,12 +36,12 @@ export default function Fotos({ yo, codigo }: { yo: Persona; codigo: string }) {
 
   const cargar = useCallback(async () => {
     try {
-      setDatos(await api(codigo, "/api/fotos"));
+      setDatos(await api("/api/fotos"));
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [codigo]);
+  }, []);
 
   useCarga(cargar, 60000);
 
@@ -65,10 +65,9 @@ export default function Fotos({ yo, codigo }: { yo: Persona; codigo: string }) {
     setSubiendo(true);
     try {
       const form = new FormData();
-      form.set("persona", yo);
       form.set("nota", nota);
       form.set("foto", nueva.blob, "foto.jpg");
-      await api(codigo, "/api/fotos", form);
+      await api("/api/fotos", form);
       setNueva(null);
       setNota("");
       await cargar();

@@ -26,9 +26,12 @@ for (const n of ["NEXT_PUBLIC_NOMBRE_A", "NEXT_PUBLIC_NOMBRE_B", "NEXT_PUBLIC_FE
   else mal(`Falta ${n}`, "Cópiala de .env.example");
 }
 
-if (!env.CODIGO_SECRETO) mal("Falta CODIGO_SECRETO", "Pon un código que solo ustedes conozcan");
-else if (env.CODIGO_SECRETO.length < 6 || env.CODIGO_SECRETO === "cambia-esto") mal("CODIGO_SECRETO es muy corto o es el de ejemplo");
-else ok("CODIGO_SECRETO configurado");
+const correos = { a: env.CORREO_A?.trim().toLowerCase(), b: env.CORREO_B?.trim().toLowerCase() };
+for (const [p, n] of [["a", "CORREO_A"], ["b", "CORREO_B"]]) {
+  if (!correos[p]) mal(`Falta ${n}`, "Pon el correo de la cuenta de Supabase de cada quien");
+  else ok(`${n} = ${correos[p]}`);
+}
+if (correos.a && correos.a === correos.b) mal("CORREO_A y CORREO_B son iguales");
 
 const url = env.SUPABASE_URL?.trim();
 const llave = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -61,6 +64,15 @@ else {
   else ok("SUPABASE_SERVICE_ROLE_KEY es una llave secreta");
   llaveOk = tipo !== "publica";
 }
+
+const urlPublica = env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const llavePublica = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+if (!urlPublica) mal("Falta NEXT_PUBLIC_SUPABASE_URL", "Es la misma que SUPABASE_URL");
+else if (url && urlPublica.replace(/\/$/, "") !== url.replace(/\/$/, "")) mal("NEXT_PUBLIC_SUPABASE_URL no es igual a SUPABASE_URL");
+else ok("NEXT_PUBLIC_SUPABASE_URL configurada");
+if (!llavePublica) mal("Falta NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "Supabase → Project Settings → API Keys → Publishable key (sb_publishable_…) o la legacy anon");
+else if (tipoDeLlave(llavePublica) === "secreta") mal("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY es la llave SECRETA: ¡no la pongas ahí, se vería en el navegador!", "Usa la Publishable key (sb_publishable_…)");
+else ok("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY es una llave pública");
 
 // ---------- Notificaciones ----------
 titulo("Notificaciones (VAPID)");
@@ -98,6 +110,24 @@ if (url && llave && llaveOk) {
     } else mal(`${t}: ${error.message}`);
   }
   if (faltantes) console.log("    → Corre supabase/schema.sql en Supabase → SQL Editor");
+
+  titulo("Cuentas");
+  if (!conectado) aviso("Me las salto hasta que funcione la conexión");
+  else {
+    const { data: lista, error: eUsuarios } = await db.auth.admin.listUsers({ perPage: 200 });
+    if (eUsuarios) mal(`No pude leer las cuentas: ${eUsuarios.message}`);
+    else {
+      for (const [p, n] of [["a", "Rick"], ["b", "Yaz"]]) {
+        if (!correos[p]) continue;
+        const u = lista.users.find((x) => x.email?.toLowerCase() === correos[p]);
+        if (!u) mal(`No existe la cuenta de ${n} (${correos[p]})`, "Créala en Supabase → Authentication → Users → Add user (marca Auto Confirm)");
+        else if (!u.email_confirmed_at) mal(`La cuenta de ${n} no está confirmada`, "En Authentication → Users, abre la cuenta y confírmala, o créala de nuevo con Auto Confirm");
+        else ok(`Cuenta de ${n} lista (${correos[p]})`);
+      }
+      const otras = lista.users.filter((x) => !Object.values(correos).includes(x.email?.toLowerCase()));
+      if (otras.length) aviso(`Hay ${otras.length} cuenta(s) más en Supabase; no tienen acceso a la app, pero puedes borrarlas`);
+    }
+  }
 
   titulo("Carpeta de fotos");
   const { data: bucket, error: eBucket } = conectado ? await db.storage.getBucket("fotos") : { data: null, error: null };

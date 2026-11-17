@@ -1,9 +1,9 @@
-import { db, error, invalido, noAutorizado, revisar } from "@/lib/servidor";
-import { esCategoria, esPersona } from "@/lib/config";
+import { db, error, invalido, autenticar, revisar } from "@/lib/servidor";
+import { esCategoria } from "@/lib/config";
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   try {
     const pendientes = revisar(
@@ -19,14 +19,14 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, texto, categoria } = await req.json().catch(() => ({}));
-  if (!esPersona(persona) || typeof texto !== "string" || !texto.trim() || !esCategoria(categoria)) return invalido();
+  const { texto, categoria } = await req.json().catch(() => ({}));
+  if (typeof texto !== "string" || !texto.trim() || !esCategoria(categoria)) return invalido();
 
   try {
-    revisar(await db().from("pendientes").insert({ texto: texto.trim().slice(0, 200), categoria, creado_por: persona }));
+    revisar(await db().from("pendientes").insert({ texto: texto.trim().slice(0, 200), categoria, creado_por: yo }));
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);
@@ -34,8 +34,8 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const { id, hecho } = await req.json().catch(() => ({}));
   if (!Number.isInteger(id) || typeof hecho !== "boolean") return invalido();
@@ -54,8 +54,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const id = Number(new URL(req.url).searchParams.get("id"));
   if (!Number.isInteger(id)) return invalido();

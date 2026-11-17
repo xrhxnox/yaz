@@ -1,8 +1,8 @@
-import { db, error, noAutorizado } from "@/lib/servidor";
+import { db, error, autenticar } from "@/lib/servidor";
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const { fecha } = await req.json().catch(() => ({}));
   if (fecha !== null && (typeof fecha !== "string" || isNaN(Date.parse(fecha)))) {

@@ -1,5 +1,4 @@
-import { db, error, invalido, noAutorizado, revisar } from "@/lib/servidor";
-import { esPersona } from "@/lib/config";
+import { db, error, invalido, autenticar, revisar } from "@/lib/servidor";
 
 function zonaValida(zona: unknown): zona is string {
   if (typeof zona !== "string") return false;
@@ -12,12 +11,11 @@ function zonaValida(zona: unknown): zona is string {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, ciudad, lat, lon, zona } = await req.json().catch(() => ({}));
+  const { ciudad, lat, lon, zona } = await req.json().catch(() => ({}));
   if (
-    !esPersona(persona) ||
     typeof ciudad !== "string" ||
     !ciudad.trim() ||
     typeof lat !== "number" ||
@@ -33,7 +31,7 @@ export async function POST(req: Request) {
     revisar(
       await db()
         .from("ubicaciones")
-        .upsert({ persona, ciudad: ciudad.trim().slice(0, 120), lat, lon, zona, updated_at: new Date().toISOString() }),
+        .upsert({ persona: yo, ciudad: ciudad.trim().slice(0, 120), lat, lon, zona, updated_at: new Date().toISOString() }),
     );
     return Response.json({ ok: true });
   } catch (e) {

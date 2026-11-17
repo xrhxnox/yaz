@@ -10,7 +10,7 @@ import Corazon from "./Corazon";
 
 type Momento = { id: number; fecha: string; titulo: string; descripcion: string | null; foto: string | null; creado_por: Persona };
 
-function Formulario({ yo, codigo, alTerminar }: { yo: Persona; codigo: string; alTerminar: (guardado: boolean) => void }) {
+function Formulario({ alTerminar }: { alTerminar: (guardado: boolean) => void }) {
   const [fecha, setFecha] = useState(hoyCompartido());
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -25,12 +25,11 @@ function Formulario({ yo, codigo, alTerminar }: { yo: Persona; codigo: string; a
     setError("");
     try {
       const form = new FormData();
-      form.set("persona", yo);
       form.set("fecha", fecha);
       form.set("titulo", titulo);
       form.set("descripcion", descripcion);
       if (foto) form.set("foto", await comprimirImagen(foto), "momento.jpg");
-      await api(codigo, "/api/momentos", form);
+      await api("/api/momentos", form);
       alTerminar(true);
     } catch (err) {
       setError((err as Error).message);
@@ -68,26 +67,26 @@ function Formulario({ yo, codigo, alTerminar }: { yo: Persona; codigo: string; a
   );
 }
 
-export default function Momentos({ yo, codigo }: { yo: Persona; codigo: string }) {
+export default function Momentos() {
   const [momentos, setMomentos] = useState<Momento[] | null>(null);
   const [agregando, setAgregando] = useState(false);
   const [error, setError] = useState("");
 
   const cargar = useCallback(async () => {
     try {
-      setMomentos((await api<{ momentos: Momento[] }>(codigo, "/api/momentos")).momentos);
+      setMomentos((await api<{ momentos: Momento[] }>("/api/momentos")).momentos);
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [codigo]);
+  }, []);
 
   useCarga(cargar);
 
   async function borrar(m: Momento) {
     if (!confirm(`¿Borrar "${m.titulo}"?`)) return;
     try {
-      await api(codigo, `/api/momentos?id=${m.id}`, undefined, "DELETE");
+      await api(`/api/momentos?id=${m.id}`, undefined, "DELETE");
     } catch (e) {
       setError((e as Error).message);
     }
@@ -98,8 +97,7 @@ export default function Momentos({ yo, codigo }: { yo: Persona; codigo: string }
     <div className="space-y-3">
       {agregando ? (
         <Formulario
-          yo={yo}
-          codigo={codigo}
+         
           alTerminar={(guardado) => {
             setAgregando(false);
             if (guardado) cargar();

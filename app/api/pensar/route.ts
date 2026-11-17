@@ -1,12 +1,12 @@
-import { db, error, invalido, noAutorizado, notificar, revisar } from "@/lib/servidor";
-import { MAX_MENSAJE, NOMBRES, esPersona, otra } from "@/lib/config";
+import { db, error, autenticar, notificar, revisar } from "@/lib/servidor";
+import { MAX_MENSAJE, NOMBRES, otra } from "@/lib/config";
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { de, mensaje } = await req.json().catch(() => ({}));
-  if (!esPersona(de)) return invalido("Persona inválida");
+  const { mensaje } = await req.json().catch(() => ({}));
+  const de = yo;
   const texto = typeof mensaje === "string" && mensaje.trim() ? mensaje.trim().slice(0, MAX_MENSAJE) : "Pensé en ti";
 
   try {

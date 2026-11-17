@@ -1,19 +1,18 @@
-import { db, error, noAutorizado } from "@/lib/servidor";
-import { esPersona } from "@/lib/config";
+import { db, error, autenticar } from "@/lib/servidor";
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, subscription } = await req.json().catch(() => ({}));
-  if (!esPersona(persona) || typeof subscription?.endpoint !== "string") {
+  const { subscription } = await req.json().catch(() => ({}));
+  if (typeof subscription?.endpoint !== "string") {
     return Response.json({ error: "Datos inválidos" }, { status: 400 });
   }
 
   try {
     const { error: e } = await db()
       .from("suscripciones")
-      .upsert({ endpoint: subscription.endpoint, persona, data: subscription }, { onConflict: "endpoint" });
+      .upsert({ endpoint: subscription.endpoint, persona: yo, data: subscription }, { onConflict: "endpoint" });
     if (e) throw new Error(e.message);
     return Response.json({ ok: true });
   } catch (e) {

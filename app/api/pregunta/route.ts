@@ -1,5 +1,5 @@
-import { db, error, invalido, noAutorizado, notificar, revisar } from "@/lib/servidor";
-import { NOMBRES, esPersona, hoyCompartido, otra } from "@/lib/config";
+import { db, error, invalido, autenticar, notificar, revisar } from "@/lib/servidor";
+import { NOMBRES, hoyCompartido, otra } from "@/lib/config";
 import { preguntaDe } from "@/lib/preguntas";
 
 const MAX_RESPUESTA = 1000;
@@ -7,11 +7,10 @@ const MAX_RESPUESTA = 1000;
 type Fila = { fecha: string; persona: "a" | "b"; respuesta: string };
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const persona = new URL(req.url).searchParams.get("persona");
-  if (!esPersona(persona)) return invalido("Persona inválida");
+  const persona = yo;
   const hoy = hoyCompartido();
 
   try {
@@ -46,11 +45,12 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
-  const { persona, respuesta } = await req.json().catch(() => ({}));
-  if (!esPersona(persona) || typeof respuesta !== "string" || !respuesta.trim()) return invalido();
+  const { respuesta } = await req.json().catch(() => ({}));
+  const persona = yo;
+  if (typeof respuesta !== "string" || !respuesta.trim()) return invalido();
   const hoy = hoyCompartido();
 
   try {

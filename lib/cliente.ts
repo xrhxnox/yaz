@@ -1,6 +1,8 @@
 import { CLAVE_SESION, type Persona } from "./config";
+import { tokenActual } from "./cuenta";
 
-export type Sesion = { persona: Persona; codigo: string };
+// Quién eres en este dispositivo (la sesión real la guarda Supabase Auth)
+export type Sesion = { persona: Persona };
 
 export type Pensamiento = { id: number; de: Persona; mensaje: string; created_at: string };
 
@@ -36,7 +38,7 @@ export function leerSesion(): Sesion | null {
     crudoCache = crudo;
     try {
       const s = JSON.parse(crudo || "null");
-      sesionCache = s?.persona && s?.codigo ? s : null;
+      sesionCache = s?.persona === "a" || s?.persona === "b" ? { persona: s.persona } : null;
     } catch {
       sesionCache = null;
     }
@@ -61,11 +63,14 @@ export function guardarSesion(s: Sesion | null) {
   oyentes.forEach((o) => o());
 }
 
-export async function api<T>(codigo: string, ruta: string, cuerpo?: unknown, metodo?: "PATCH" | "DELETE"): Promise<T> {
+export async function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PATCH" | "DELETE"): Promise<T> {
+  const token = await tokenActual();
+  if (!token) throw Object.assign(new Error("Inicia sesión"), { status: 401 });
   const esForm = cuerpo instanceof FormData;
+  const auth = { authorization: `Bearer ${token}` };
   const res = await fetch(ruta, {
     method: metodo ?? (cuerpo === undefined ? "GET" : "POST"),
-    headers: esForm ? { "x-codigo": codigo } : { "x-codigo": codigo, "content-type": "application/json" },
+    headers: esForm ? auth : { ...auth, "content-type": "application/json" },
     body: cuerpo === undefined ? undefined : esForm ? cuerpo : JSON.stringify(cuerpo),
     cache: "no-store",
   });

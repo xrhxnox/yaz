@@ -89,13 +89,11 @@ function BuscarCiudad({ alElegir, alCancelar }: { alElegir: (r: Resultado) => Pr
 
 export default function HoraClima({
   yo,
-  codigo,
   ubicaciones,
   ahora,
   alCambiar,
 }: {
   yo: Persona;
-  codigo: string;
   ubicaciones: Record<Persona, Ubicacion | null> | undefined;
   ahora: Date;
   alCambiar: () => Promise<void>;
@@ -154,8 +152,7 @@ export default function HoraClima({
         <BuscarCiudad
           alCancelar={() => setEditando(false)}
           alElegir={async (r) => {
-            await api(codigo, "/api/ubicacion", {
-              persona: yo,
+            await api("/api/ubicacion", {
               ciudad: r.name,
               lat: r.latitude,
               lon: r.longitude,

@@ -43,7 +43,7 @@ function Fila({ p, alMarcar, alBorrar }: { p: Pendiente; alMarcar: () => void; a
   );
 }
 
-export default function Pendientes({ yo, codigo }: { yo: Persona; codigo: string }) {
+export default function Pendientes() {
   const [lista, setLista] = useState<Pendiente[] | null>(null);
   const [filtro, setFiltro] = useState<Categoria | "todo">("todo");
   const [texto, setTexto] = useState("");
@@ -53,12 +53,12 @@ export default function Pendientes({ yo, codigo }: { yo: Persona; codigo: string
 
   const cargar = useCallback(async () => {
     try {
-      setLista((await api<{ pendientes: Pendiente[] }>(codigo, "/api/pendientes")).pendientes);
+      setLista((await api<{ pendientes: Pendiente[] }>("/api/pendientes")).pendientes);
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [codigo]);
+  }, []);
 
   useCarga(cargar, 30000);
 
@@ -76,18 +76,18 @@ export default function Pendientes({ yo, codigo }: { yo: Persona; codigo: string
     if (!texto.trim()) return;
     const t = texto;
     setTexto("");
-    await hacer(api(codigo, "/api/pendientes", { persona: yo, texto: t, categoria }));
+    await hacer(api("/api/pendientes", { texto: t, categoria }));
   }
 
   function marcar(p: Pendiente) {
     setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, hecho: !p.hecho } : x)) ?? null);
-    hacer(api(codigo, "/api/pendientes", { id: p.id, hecho: !p.hecho }, "PATCH"));
+    hacer(api("/api/pendientes", { id: p.id, hecho: !p.hecho }, "PATCH"));
   }
 
   function borrar(p: Pendiente) {
     if (!confirm(`¿Borrar "${p.texto}"?`)) return;
     setLista((l) => l?.filter((x) => x.id !== p.id) ?? null);
-    hacer(api(codigo, `/api/pendientes?id=${p.id}`, undefined, "DELETE"));
+    hacer(api(`/api/pendientes?id=${p.id}`, undefined, "DELETE"));
   }
 
   const visibles = (lista ?? []).filter((p) => filtro === "todo" || p.categoria === filtro);

@@ -24,7 +24,7 @@ function Respuesta({ quien, texto }: { quien: string; texto: string }) {
   );
 }
 
-export default function Pregunta({ yo, codigo }: { yo: Persona; codigo: string }) {
+export default function Pregunta({ yo }: { yo: Persona }) {
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
   const [texto, setTexto] = useState("");
@@ -34,12 +34,12 @@ export default function Pregunta({ yo, codigo }: { yo: Persona; codigo: string }
 
   const cargar = useCallback(async () => {
     try {
-      setDatos(await api<Datos>(codigo, `/api/pregunta?persona=${yo}`));
+      setDatos(await api<Datos>("/api/pregunta"));
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [codigo, yo]);
+  }, []);
 
   useCarga(cargar, 30000);
 
@@ -48,7 +48,7 @@ export default function Pregunta({ yo, codigo }: { yo: Persona; codigo: string }
     if (!texto.trim()) return;
     setEnviando(true);
     try {
-      await api(codigo, "/api/pregunta", { persona: yo, respuesta: texto });
+      await api("/api/pregunta", { respuesta: texto });
       setEditando(false);
       await cargar();
     } catch (err) {

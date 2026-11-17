@@ -1,12 +1,12 @@
-import { borrarImagenes, db, error, firmar, invalido, noAutorizado, notificar, revisar, subirImagen } from "@/lib/servidor";
-import { NOMBRES, esPersona, hoyCompartido, otra, type Persona } from "@/lib/config";
+import { borrarImagenes, db, error, firmar, invalido, autenticar, notificar, revisar, subirImagen } from "@/lib/servidor";
+import { NOMBRES, hoyCompartido, otra, type Persona } from "@/lib/config";
 
 type Fila = { fecha: string; persona: Persona; path: string; nota: string | null };
 type Foto = { url: string; nota: string | null };
 
 export async function GET(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   try {
     const filas: Fila[] = revisar(
@@ -31,13 +31,13 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const no = noAutorizado(req);
-  if (no) return no;
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
 
   const form = await req.formData().catch(() => null);
-  const persona = form?.get("persona");
   const nota = form?.get("nota");
-  if (!form || !esPersona(persona)) return invalido();
+  if (!form) return invalido();
+  const persona = yo;
   const hoy = hoyCompartido();
 
   try {

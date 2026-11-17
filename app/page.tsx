@@ -5,6 +5,7 @@ import { NOMBRES, otra } from "@/lib/config";
 import { api, guardarSesion, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { aplicarTema } from "@/lib/tema";
+import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
 import Juntos from "./componentes/Juntos";
 import Reencuentro from "./componentes/Reencuentro";
@@ -80,6 +81,7 @@ export default function Inicio() {
   }, []);
 
   const salir = useCallback(() => {
+    cerrarSesion();
     guardarSesion(null);
     setEstado(null);
     ultimoVisto.current = null;
@@ -88,7 +90,7 @@ export default function Inicio() {
   const cargar = useCallback(async () => {
     if (!sesion) return;
     try {
-      const e = await api<Estado>(sesion.codigo, `/api/estado?desde=${encodeURIComponent(medianocheLocal())}`);
+      const e = await api<Estado>(`/api/estado?desde=${encodeURIComponent(medianocheLocal())}`);
       // Si llegó algo nuevo de la otra persona mientras la app está abierta, celebramos
       const ultimoSuyo = e.recientes.find((p) => p.de === otra(sesion.persona))?.id ?? 0;
       if (ultimoVisto.current !== null && ultimoSuyo > ultimoVisto.current) {
@@ -109,7 +111,6 @@ export default function Inicio() {
   if (!ahora) return null;
 
   const yo = sesion.persona;
-  const { codigo } = sesion;
 
   return (
     <>
@@ -134,14 +135,14 @@ export default function Inicio() {
 
         {seccion === "inicio" && (
           <>
-            <Notificaciones yo={yo} codigo={codigo} />
+            <Notificaciones yo={yo} />
             <Juntos ahora={ahora} />
-            <HoraClima yo={yo} codigo={codigo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
+            <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
             <Reencuentro
               fecha={estado?.proximoEncuentro ?? null}
               ahora={ahora}
               alGuardar={async (fecha) => {
-                await api(codigo, "/api/proximo", { fecha });
+                await api("/api/proximo", { fecha });
                 await cargar();
               }}
             />
@@ -152,7 +153,7 @@ export default function Inicio() {
               alEnviar={async (mensaje) => {
                 lanzarCorazones();
                 try {
-                  await api(codigo, "/api/pensar", { de: yo, mensaje });
+                  await api("/api/pensar", { mensaje });
                   mostrarAviso(`Enviado a ${NOMBRES[otra(yo)]}`);
                   await cargar();
                 } catch (e) {
@@ -162,11 +163,11 @@ export default function Inicio() {
             />
           </>
         )}
-        {seccion === "pregunta" && <Pregunta yo={yo} codigo={codigo} />}
-        {seccion === "lista" && <Pendientes yo={yo} codigo={codigo} />}
-        {seccion === "fotos" && <Fotos yo={yo} codigo={codigo} />}
-        {seccion === "momentos" && <Momentos yo={yo} codigo={codigo} />}
-        {seccion === "perfil" && <Perfil yo={yo} codigo={codigo} temaActual={estado?.temas?.[yo] ?? null} alCambiarTema={cargar} alSalir={salir} />}
+        {seccion === "pregunta" && <Pregunta yo={yo} />}
+        {seccion === "lista" && <Pendientes />}
+        {seccion === "fotos" && <Fotos yo={yo} />}
+        {seccion === "momentos" && <Momentos />}
+        {seccion === "perfil" && <Perfil yo={yo} temaActual={estado?.temas?.[yo] ?? null} alCambiarTema={cargar} alSalir={salir} />}
       </main>
 
       <Navegacion actual={seccion} />
