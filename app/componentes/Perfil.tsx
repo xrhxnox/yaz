@@ -159,7 +159,7 @@ function mover<T>(lista: T[], desde: number, hacia: number): T[] {
   return copia;
 }
 
-// ---------- Favoritos ----------
+// ---------- Datos y favoritos ----------
 
 type Favorito = { titulo: string; valor: string };
 
@@ -181,6 +181,11 @@ const SUGERENCIAS = [
   "Flor",
   "Perfume",
   "Lugar",
+  // Datos
+  "Alergias",
+  "No me gusta",
+  "Signo",
+  "Tipo de sangre",
 ];
 
 function SeccionFavoritos({
@@ -217,7 +222,7 @@ function SeccionFavoritos({
     const usados = new Set(borrador.map((f) => f.titulo.trim().toLowerCase()));
     return (
       <form onSubmit={guardar} className={`${caja} space-y-3`}>
-        <p className={tituloSeccion}>Mis favoritos</p>
+        <p className={tituloSeccion}>Mis datos y favoritos</p>
         {borrador.length === 0 && <p className="text-sm text-suave">Agrega el primero con las ideas de abajo o con “Agregar otro”.</p>}
         <ul className="space-y-2">
           {borrador.map((f, i) => (
@@ -289,7 +294,7 @@ function SeccionFavoritos({
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        {!sinTitulo && <p className={tituloSeccion}>Favoritos</p>}
+        {!sinTitulo && <p className={tituloSeccion}>Datos y favoritos</p>}
         {editable && (
           <button onClick={() => setBorrador(favoritos.length ? favoritos.map((f) => ({ ...f })) : [])} className={enlace}>
             {favoritos.length ? "Editar" : "Agregar"}
@@ -297,7 +302,7 @@ function SeccionFavoritos({
         )}
       </div>
       {favoritos.length === 0 ? (
-        <p className="mt-2 text-sm text-suave">{editable ? "Todavía no agregas tus favoritos." : "Todavía no agrega sus favoritos."}</p>
+        <p className="mt-2 text-sm text-suave">{editable ? "Todavía no agregas tus datos ni favoritos." : "Todavía no agrega sus datos ni favoritos."}</p>
       ) : (
         <dl className="mt-2 divide-y divide-borde">
           {favoritos.map((f, i) => (
@@ -974,7 +979,7 @@ export default function Perfil({
 }) {
   const NOMBRES = useNombres();
   const [viendo, setViendo] = useState<Persona>(yo);
-  // Al ver el perfil del otro, tallas / favoritos / wishlist van en pestañas
+  // Al ver el perfil del otro, tallas / datos y favoritos / wishlist van en pestañas
   const [pestana, setPestana] = useState<"tallas" | "favoritos" | "wishlist">("tallas");
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
@@ -1030,11 +1035,11 @@ export default function Perfil({
       <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-12 lg:space-y-0">
       <div className={`space-y-6 ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl [&>section]:border-t-0 [&>section]:pt-0"}`}>
       {datos && viendo !== yo && (
-        <div role="tablist" aria-label="Secciones del perfil" className="flex gap-6 border-b border-borde">
+        <div role="tablist" aria-label="Secciones del perfil" className="flex gap-4 border-b border-borde sm:gap-6">
           {(
             [
               ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
-              ["favoritos", "Favoritos", (datos.perfiles[viendo].favoritos ?? []).length],
+              ["favoritos", "Datos y favoritos", (datos.perfiles[viendo].favoritos ?? []).length],
               ["wishlist", "Wishlist", deseos.length],
             ] as const
           ).map(([id, nombre, cuantos]) => (
