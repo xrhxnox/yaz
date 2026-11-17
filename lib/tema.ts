@@ -2,7 +2,7 @@ import { CLAVE_FUENTE, CLAVE_MINUSCULAS, CLAVE_SESION, CLAVE_TEMA, type Fuente, 
 import { derivarTema, type Tema } from "./colores";
 
 // Variables que pusimos en <html style> la última vez, para poder quitarlas
-const PROPIEDADES = ["color-scheme", "--fondo", "--tarjeta", "--texto", "--suave", "--borde", "--relleno", "--acento", "--sobre-acento", "--acento-texto", "--acento-suave"];
+const PROPIEDADES = ["color-scheme", "--fondo", "--tarjeta", "--texto", "--suave", "--borde", "--relleno", "--acento", "--sobre-acento", "--acento-texto", "--acento-suave", "--barra", "--barra-texto", "--barra-suave", "--barra-borde"];
 
 /**
  * Aplica el tema de quien está usando la app.

@@ -1,6 +1,7 @@
-// A partir de dos colores (fondo y acento) calcula todos los colores de la interfaz
+// A partir de dos colores (fondo y acento) calcula todos los colores de la interfaz.
+// barra (opcional): color de la barra de navegación del celular
 
-export type Tema = { fondo: string; acento: string };
+export type Tema = { fondo: string; acento: string; barra?: string };
 
 export function esHex(v: unknown): v is string {
   return typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v);
@@ -44,7 +45,12 @@ function legible(color: string, fondo: string, hacia: string, minimo: number): s
   return hacia;
 }
 
-export function derivarTema({ fondo, acento }: Tema): Record<string, string> {
+// Texto que se lee bien sobre un color (claro sobre oscuro, oscuro sobre claro)
+function textoSobre(color: string) {
+  return luminancia(color) < 0.18 ? mezclar(color, "#ffffff", 0.94) : mezclar(color, "#000000", 0.84);
+}
+
+export function derivarTema({ fondo, acento, barra }: Tema): Record<string, string> {
   const oscuro = luminancia(fondo) < 0.18;
   const texto = oscuro ? mezclar(fondo, "#ffffff", 0.94) : mezclar(fondo, "#000000", 0.84);
   const tarjeta = oscuro ? mezclar(fondo, "#ffffff", 0.06) : mezclar(fondo, "#ffffff", 0.75);
@@ -63,5 +69,12 @@ export function derivarTema({ fondo, acento }: Tema): Record<string, string> {
     // El acento se usa tal cual, sin ajustarlo aunque contraste poco con el fondo
     "--acento-texto": acento,
     "--acento-suave": mezclar(tarjeta, acento, 0.2),
+    // Sin color propio, la barra usa el de las tarjetas (ver globals.css)
+    ...(barra
+      ? (() => {
+          const t = textoSobre(barra);
+          return { "--barra": barra, "--barra-texto": t, "--barra-suave": mezclar(barra, t, 0.6), "--barra-borde": mezclar(barra, t, 0.13) };
+        })()
+      : {}),
   };
 }

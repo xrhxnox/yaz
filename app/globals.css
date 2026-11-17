@@ -79,9 +79,21 @@
   --color-sobre-acento: var(--sobre-acento);
   --color-acento-texto: var(--acento-texto);
   --color-acento-suave: var(--acento-suave);
+  --color-barra: var(--barra);
+  --color-barra-texto: var(--barra-texto);
+  --color-barra-suave: var(--barra-suave);
+  --color-barra-borde: var(--barra-borde);
   --font-sans: var(--letra-texto);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--letra-titulos);
+}
+
+/* Barra de navegación del celular: por defecto, del color de las tarjetas */
+:root {
+  --barra: var(--tarjeta);
+  --barra-texto: var(--texto);
+  --barra-suave: var(--suave);
+  --barra-borde: var(--borde);
 }
 
 /* Letra: títulos y números (font-serif) y texto (font-sans). Se elige en el perfil.

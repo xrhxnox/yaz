@@ -3,7 +3,7 @@ import { TALLAS, type Persona, type Tallas, esFuente } from "@/lib/config";
 import { esHex } from "@/lib/colores";
 
 type Favorito = { titulo: string; valor: string };
-type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string } | null; favoritos?: Favorito[] };
+type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string; barra?: string } | null; favoritos?: Favorito[] };
 
 const MAX_FAVORITOS = 40;
 // Cumpleaños: "MM-DD" (se acepta el 29 de febrero)
@@ -69,8 +69,12 @@ export async function POST(req: Request) {
   }
 
   if (tema !== undefined) {
-    if (tema !== null && (!esHex(tema?.fondo) || !esHex(tema?.acento))) return invalido("Colores inválidos");
-    cambios.tema = tema && { fondo: tema.fondo.toLowerCase(), acento: tema.acento.toLowerCase() };
+    if (tema !== null && (!esHex(tema?.fondo) || !esHex(tema?.acento) || (tema.barra != null && !esHex(tema.barra)))) return invalido("Colores inválidos");
+    cambios.tema = tema && {
+      fondo: tema.fondo.toLowerCase(),
+      acento: tema.acento.toLowerCase(),
+      ...(tema.barra ? { barra: tema.barra.toLowerCase() } : {}),
+    };
   }
 
   if (apodo !== undefined) {

@@ -9,7 +9,7 @@ import { BuscarCiudad, guardarCiudad } from "./HoraClima";
 import Notificaciones from "./Notificaciones";
 import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
-import type { Tema } from "@/lib/colores";
+import { derivarTema, type Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
 import Pestanas from "./Pestanas";
@@ -646,9 +646,13 @@ function SeccionTema({
   const original = TEMA_INICIAL[yo];
   const [borrador, setBorrador] = useState<Tema>(temaActual ?? original);
   const [guardando, setGuardando] = useState(false);
-  const [editando, setEditando] = useState<"fondo" | "acento">("acento");
-  const base = temaActual ?? original;
-  const cambiado = borrador.fondo !== base.fondo || borrador.acento !== base.acento;
+  const [editando, setEditando] = useState<"fondo" | "acento" | "barra">("acento");
+  const base: Tema = temaActual ?? original;
+  const cambiado = borrador.fondo !== base.fondo || borrador.acento !== base.acento || (borrador.barra ?? null) !== (base.barra ?? null);
+  // Sin color propio, la barra se ve del color de las tarjetas
+  const barraActual = borrador.barra ?? derivarTema(borrador)["--tarjeta"];
+  const esOriginal = (t: Tema) => t.fondo === original.fondo && t.acento === original.acento && !t.barra;
+  const colorDe = (cual: typeof editando) => (cual === "barra" ? barraActual : borrador[cual]);
 
   // Al salir sin guardar, regresa al tema que estaba
   const guardado = useRef(temaActual);
@@ -660,7 +664,7 @@ function SeccionTema({
   function probar(t: Tema) {
     setBorrador(t);
     // Si es igual al original no hace falta calcular nada: se usan los colores de globals.css
-    aplicarTema(yo, t.fondo === original.fondo && t.acento === original.acento ? null : t, false);
+    aplicarTema(yo, esOriginal(t) ? null : t, false);
   }
 
   async function guardar(t: Tema | null) {
@@ -678,11 +682,12 @@ function SeccionTema({
       <p className="mt-0.5 text-xs text-suave">Solo cambia cómo la ves tú. Los cambios se ven en vivo.</p>
 
       {/* Qué color estás eligiendo: fondo o acento, cada uno con su muestra */}
-      <div className="mt-4 grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
+      <div className="mt-4 grid grid-cols-3 gap-1 rounded-full bg-relleno p-1">
         {(
           [
             ["fondo", "Fondo"],
-            ["acento", "Color de acento"],
+            ["acento", "Acento"],
+            ["barra", "Barra"],
           ] as const
         ).map(([id, nombre]) => (
           <button
@@ -692,26 +697,32 @@ function SeccionTema({
               editando === id ? "bg-tarjeta font-medium shadow-sm" : "text-suave hover:text-texto"
             }`}
           >
-            <span className="h-4 w-4 rounded-full border border-borde" style={{ background: borrador[id] }} />
+            <span className="h-4 w-4 rounded-full border border-borde" style={{ background: colorDe(id) }} />
             {nombre}
           </button>
         ))}
       </div>
 
+      {editando === "barra" && <p className="mt-2 text-xs text-suave">La barra de abajo con las secciones, en el celular.</p>}
       <RuedaColor
         key={editando}
-        nombre={editando === "fondo" ? "el fondo" : "el acento"}
-        valor={borrador[editando]}
+        nombre={editando === "fondo" ? "el fondo" : editando === "acento" ? "el acento" : "la barra"}
+        valor={colorDe(editando)}
         alCambiar={(color) => probar({ ...borrador, [editando]: color })}
       />
 
       <p className="mt-4 text-xs text-suave">Sugerencias</p>
       <Muestras
-        colores={editando === "fondo" ? FONDOS : ACENTOS}
-        actual={borrador[editando]}
-        etiquetaColor={editando === "fondo" ? "Fondo" : "Acento"}
+        colores={editando === "acento" ? ACENTOS : editando === "fondo" ? FONDOS : [borrador.acento, ...FONDOS.filter((c) => c !== borrador.acento)]}
+        actual={colorDe(editando)}
+        etiquetaColor={editando === "fondo" ? "Fondo" : editando === "acento" ? "Acento" : "Barra"}
         alElegir={(color) => probar({ ...borrador, [editando]: color })}
       />
+      {editando === "barra" && borrador.barra && (
+        <button onClick={() => probar({ fondo: borrador.fondo, acento: borrador.acento })} className={`${enlace} mt-2 block text-xs`}>
+          Que combine con el fondo
+        </button>
+      )}
 
       <div className="mt-4 flex items-center gap-2 rounded-xl bg-relleno p-3">
         <span className="rounded-full bg-acento px-3 py-1.5 text-sm font-medium text-sobre-acento">Botón</span>
@@ -722,7 +733,7 @@ function SeccionTema({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           disabled={!cambiado || guardando}
-          onClick={() => guardar(borrador.fondo === original.fondo && borrador.acento === original.acento ? null : borrador)}
+          onClick={() => guardar(esOriginal(borrador) ? null : borrador)}
           className={botonPrimario}
         >
           {guardando ? "Guardando…" : "Guardar colores"}
