@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   const finExclusivo = new Date(Date.parse(fin + "T00:00:00Z") + 864e5).toISOString().slice(0, 10);
 
   try {
-    const [mensajes, fotos, momentos, respuestas, pendientes, visitas, cartas] = await Promise.all([
+    const [mensajes, fotos, momentos, respuestas, pendientes, visitas, cartas, diario, canciones] = await Promise.all([
       opcional<{ de: Persona }>(db().from("pensamientos").select("de").gte("created_at", inicio).lt("created_at", finExclusivo)),
       opcional<{ persona: Persona; path: string; nota: string | null; fecha: string }>(
         db().from("fotos").select("persona, path, nota, fecha").gte("fecha", inicio).lte("fecha", fin).order("fecha"),
@@ -52,7 +52,21 @@ export async function GET(req: Request) {
         db().from("visitas").select("inicio, fin, ciudad").lte("inicio", fin).gte("fin", inicio).order("inicio"),
       ),
       opcional<{ id: number }>(db().from("cartas").select("id").gte("created_at", inicio).lt("created_at", finExclusivo)),
+      opcional<{ persona: Persona }>(db().from("diario").select("persona").gte("fecha", inicio).lte("fecha", fin)),
+      opcional<{ titulo: string; artista: string | null; url: string; persona: Persona; corazon_a: boolean; corazon_b: boolean; created_at: string }>(
+        db()
+          .from("canciones")
+          .select("titulo, artista, url, persona, corazon_a, corazon_b, created_at")
+          .gte("created_at", inicio)
+          .lt("created_at", finExclusivo)
+          .order("created_at"),
+      ),
     ]);
+
+    // La canción del mes: la que tiene más corazones (si empatan, la primera que agregaron)
+    const corazones = (c: (typeof canciones)[number]) => Number(c.corazon_a) + Number(c.corazon_b);
+    const favorita = canciones.reduce<(typeof canciones)[number] | null>((mejor, c) => (!mejor || corazones(c) > corazones(mejor) ? c : mejor), null);
+    const sinCorazones = (c: (typeof canciones)[number]) => ({ titulo: c.titulo, artista: c.artista, url: c.url, persona: c.persona });
 
     // Preguntas que respondieron los dos
     const porDia = new Map<string, Partial<Record<Persona, string>>>();
@@ -89,6 +103,11 @@ export async function GET(req: Request) {
       pendientes: pendientes.map((p) => p.texto),
       visitas,
       cartas: cartas.length,
+      diario: { a: diario.filter((d) => d.persona === "a").length, b: diario.filter((d) => d.persona === "b").length },
+      canciones: {
+        lista: canciones.map(sinCorazones),
+        favorita: favorita && corazones(favorita) > 0 ? { ...sinCorazones(favorita), corazones: corazones(favorita) } : null,
+      },
     });
   } catch (e) {
     return error(e);

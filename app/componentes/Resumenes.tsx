@@ -21,6 +21,11 @@ type Resumen = {
   pendientes: string[];
   visitas: { inicio: string; fin: string; ciudad: string | null }[];
   cartas: number;
+  diario?: Record<Persona, number>;
+  canciones?: {
+    lista: { titulo: string; artista: string | null; url: string; persona: Persona }[];
+    favorita: { titulo: string; artista: string | null; url: string; persona: Persona; corazones: number } | null;
+  };
 };
 
 const corto = { day: "numeric", month: "short" } as const;
@@ -124,6 +129,38 @@ function ResumenMes({ r }: { r: Resumen }) {
             ))}
           </ul>
         </section>
+      )}
+
+      {!!r.canciones?.lista.length && (
+        <section className={tarjeta}>
+          <p className={tituloSeccion}>Lo que escucharon</p>
+          {r.canciones.favorita && (
+            <a href={r.canciones.favorita.url} target="_blank" rel="noreferrer" className="mt-2 block border-l-2 pl-3" style={{ borderColor: acentos[r.canciones.favorita.persona] }}>
+              <span className={etiqueta}>La canción del mes {r.canciones.favorita.corazones === 2 ? "· les gustó a los dos" : ""}</span>
+              <span className="block font-serif text-2xl leading-tight">{r.canciones.favorita.titulo}</span>
+              {r.canciones.favorita.artista && <span className="text-xs text-suave">{r.canciones.favorita.artista}</span>}
+            </a>
+          )}
+          <ul className="mt-3 space-y-1">
+            {r.canciones.lista.slice(0, 6).map((c) => (
+              <li key={c.url + c.titulo} className="flex items-baseline gap-2">
+                <span className="h-2 w-2 shrink-0 translate-y-[-1px] rounded-full" style={{ backgroundColor: acentos[c.persona] }} />
+                <a href={c.url} target="_blank" rel="noreferrer" className="min-w-0 truncate font-serif text-lg hover:underline">
+                  {c.titulo}
+                </a>
+                {c.artista && <span className="shrink-0 text-xs text-suave">{c.artista}</span>}
+              </li>
+            ))}
+          </ul>
+          {r.canciones.lista.length > 6 && <p className="mt-1 text-xs text-suave">y {r.canciones.lista.length - 6} más en la playlist</p>}
+        </section>
+      )}
+
+      {!!r.diario && r.diario.a + r.diario.b > 0 && (
+        <p className="text-center font-serif text-lg leading-snug">
+          Anotaron {r.diario.a + r.diario.b} {r.diario.a + r.diario.b === 1 ? "cosa" : "cosas"} en el diario:{" "}
+          <span style={{ color: acentos.a }}>{nombres.a}</span> {r.diario.a} y <span style={{ color: acentos.b }}>{nombres.b}</span> {r.diario.b}.
+        </p>
       )}
 
       {r.cartas > 0 && (
