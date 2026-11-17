@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         }),
     );
     const cuando = abrir_desde ? `Se abre el ${formatearFecha(abrir_desde, { day: "numeric", month: "long" })}` : "Ya la puedes abrir";
-    await notificar(otra(yo), "Una carta para ti", `${(await nombresActuales())[yo]} te escribió una carta. ${cuando}.`, "/#momentos/cartas");
+    await notificar(otra(yo), "Una carta para ti", `${(await nombresActuales())[yo]} te escribió una carta. ${cuando}.`, "/#buzon");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

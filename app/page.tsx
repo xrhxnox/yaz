@@ -14,7 +14,8 @@ import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import HoraClima from "./componentes/HoraClima";
 import Pregunta from "./componentes/Pregunta";
-import SeccionPendientes from "./componentes/SeccionPendientes";
+import Pendientes from "./componentes/Pendientes";
+import Cartas from "./componentes/Cartas";
 import Fotos from "./componentes/Fotos";
 import Recuerdos from "./componentes/Recuerdos";
 import Buscar from "./componentes/Buscar";
@@ -199,9 +200,14 @@ export default function Inicio() {
           </>
         )}
         {seccion === "pregunta" && <Pregunta yo={yo} />}
-        {seccion === "lista" && <SeccionPendientes yo={yo} />}
+        {seccion === "lista" && <Pendientes />}
         {seccion === "fotos" && <Fotos yo={yo} />}
-        {seccion === "momentos" && <Recuerdos yo={yo} />}
+        {seccion === "momentos" && <Recuerdos />}
+        {seccion === "buzon" && (
+          <div className="lg:mx-auto lg:max-w-2xl">
+            <Cartas yo={yo} />
+          </div>
+        )}
         {seccion === "buscar" && <Buscar />}
         {seccion === "perfil" && <Perfil
             yo={yo}

@@ -6,8 +6,8 @@ Nuestro espacio a distancia:
 - **Pregunta del día:** la misma pregunta para los dos; la respuesta del otro se ve hasta que contestas la tuya.
 - **Lista:** pendientes compartidos (películas y series, lugares, planes).
 - **Fotos:** varias fotos al día de cada uno (hasta 12) y el álbum de días anteriores.
-- **Recuerdos:** línea del tiempo (momentos con fotos), visitas, cartas con fecha y el resumen de cada mes.
-- **Esto o aquello** (en Pendientes): votan opciones por separado y ven en qué coincidieron.
+- **Recuerdos:** línea del tiempo (momentos con fotos), visitas y el resumen de cada mes.
+- **Buzón:** cartas que se abren en una fecha o en un momento especial.
 - **Inicio:** también el ánimo de cada uno, rachas y los planes para el próximo reencuentro.
 - **Buscar** en mensajes, respuestas, momentos, pendientes, wishlist, visitas y cartas.
 - **Recordatorios:** a las 10 a.m. y 10 p.m., si nadie ha mandado nada, llega un aviso (necesita `CRON_SECRET` en Vercel).

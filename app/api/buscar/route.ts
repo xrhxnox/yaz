@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       // Cartas: solo las que escribiste o las que ya abriste
       ...cartas
         .filter((c) => c.de === yo || c.abierta_at)
-        .map((c) => ({ tipo: "Carta", texto: c.titulo, detalle: null, fecha: c.created_at.slice(0, 10), seccion: "momentos" })),
+        .map((c) => ({ tipo: "Carta", texto: c.titulo, detalle: null, fecha: c.created_at.slice(0, 10), seccion: "buzon" })),
     ];
 
     return Response.json({ resultados });

@@ -169,26 +169,6 @@ create table if not exists cartas (
   created_at timestamptz not null default now()
 );
 
--- Esto o aquello: rondas de opciones, votos de cada quien
-create table if not exists rondas (
-  id bigserial primary key,
-  titulo text not null,
-  creado_por text not null check (creado_por in ('a', 'b')),
-  created_at timestamptz not null default now()
-);
-create table if not exists opciones (
-  id bigserial primary key,
-  ronda_id bigint not null references rondas (id) on delete cascade,
-  texto text not null
-);
-create index if not exists opciones_ronda on opciones (ronda_id);
-create table if not exists votos (
-  opcion_id bigint not null references opciones (id) on delete cascade,
-  persona text not null check (persona in ('a', 'b')),
-  si boolean not null,
-  primary key (opcion_id, persona)
-);
-
 -- Sin políticas: solo el servidor (con la service role key) puede leer y escribir
 alter table ajustes enable row level security;
 alter table pensamientos enable row level security;
@@ -204,9 +184,6 @@ alter table deseos enable row level security;
 alter table animos enable row level security;
 alter table visitas enable row level security;
 alter table cartas enable row level security;
-alter table rondas enable row level security;
-alter table opciones enable row level security;
-alter table votos enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.

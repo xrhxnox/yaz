@@ -1,6 +1,6 @@
 "use client";
 
-export const SECCIONES = ["inicio", "pregunta", "lista", "fotos", "momentos"] as const;
+export const SECCIONES = ["inicio", "pregunta", "lista", "fotos", "buzon", "momentos"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
 const ICONOS: Record<Seccion, React.ReactNode> = {
@@ -18,6 +18,12 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
       <circle cx="12" cy="13" r="3.5" />
     </>
   ),
+  buzon: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </>
+  ),
   momentos: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -31,19 +37,20 @@ export const NOMBRES_SECCION: Record<Seccion, string> = {
   pregunta: "Pregunta",
   lista: "Pendientes",
   fotos: "Fotos",
+  buzon: "Buzón",
   momentos: "Recuerdos",
 };
 
 export default function Navegacion({ actual }: { actual: string }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t lg:hidden border-borde bg-tarjeta/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="mx-auto grid max-w-md grid-cols-5">
+      <ul className="mx-auto grid max-w-md grid-cols-6">
         {SECCIONES.map((s) => (
           <li key={s}>
             <a
               href={`#${s}`}
               aria-current={actual === s ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2 text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
+              className={`flex flex-col items-center gap-0.5 py-2 text-[10px] min-[360px]:text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actual === s ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 {ICONOS[s]}

@@ -4,7 +4,7 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 
-const TABLAS = ["ajustes", "pensamientos", "suscripciones", "respuestas", "ubicaciones", "pendientes", "fotos", "momentos", "momento_fotos", "perfiles", "deseos", "animos", "visitas", "cartas", "rondas", "opciones", "votos"];
+const TABLAS = ["ajustes", "pensamientos", "suscripciones", "respuestas", "ubicaciones", "pendientes", "fotos", "momentos", "momento_fotos", "perfiles", "deseos", "animos", "visitas", "cartas"];
 
 let fallas = 0;
 const ok = (m) => console.log(`  ✓ ${m}`);
