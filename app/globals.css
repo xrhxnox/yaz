@@ -84,6 +84,14 @@
   --font-serif: var(--font-fraunces), Georgia, serif;
 }
 
+/* Preferencia "todo en minúsculas": se ve así, pero lo que escribes se queda igual */
+:root[data-minusculas] body {
+  text-transform: lowercase;
+}
+:root[data-minusculas] :is(input, textarea, select) {
+  text-transform: none;
+}
+
 body {
   background: var(--fondo);
   color: var(--texto);

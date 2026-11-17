@@ -16,6 +16,12 @@ export async function GET(req: Request) {
       return q;
     };
 
+    // Si todavía no existe la columna estilo, se lee el perfil sin ella
+    const leerPerfiles = async () => {
+      const r = await db().from("perfiles").select("persona, tema, apodo, cumple, avatar_path, estilo");
+      return r.error && /estilo/.test(r.error.message) ? await db().from("perfiles").select("persona, tema, apodo, cumple, avatar_path") : r;
+    };
+
     const [ajustes, recientes, hoyA, hoyB, totalA, totalB, lugares, perfiles] = await Promise.all([
       db().from("ajustes").select("proximo_encuentro").eq("id", 1).maybeSingle(),
       db().from("pensamientos").select("id, de, mensaje, created_at").order("created_at", { ascending: false }).limit(15),
@@ -24,7 +30,7 @@ export async function GET(req: Request) {
       contar("a"),
       contar("b"),
       db().from("ubicaciones").select("persona, ciudad, lat, lon, zona"),
-      db().from("perfiles").select("persona, tema, apodo, cumple, avatar_path"),
+      leerPerfiles(),
     ]);
 
     const fallo = [ajustes, recientes, hoyA, hoyB, totalA, totalB, lugares, perfiles].find((r) => r.error)?.error;
@@ -38,12 +44,14 @@ export async function GET(req: Request) {
     const nombres: Record<Persona, string> = { ...NOMBRES };
     const cumples: Record<Persona, string | null> = { a: null, b: null };
     const avatarPath: Record<Persona, string | null> = { a: null, b: null };
+    const estilos: Record<Persona, { minusculas?: boolean }> = { a: {}, b: {} };
     for (const p of perfiles.data ?? []) {
       const persona = p.persona as Persona;
       temas[persona] = p.tema;
       if (p.apodo) nombres[persona] = p.apodo;
       cumples[persona] = p.cumple;
       avatarPath[persona] = p.avatar_path;
+      if ("estilo" in p && p.estilo) estilos[persona] = p.estilo as { minusculas?: boolean };
     }
     const urls = await firmar([avatarPath.a, avatarPath.b]);
     const avatares: Record<Persona, string | null> = {
@@ -56,6 +64,7 @@ export async function GET(req: Request) {
       nombres,
       cumples,
       avatares,
+      estilos,
       ubicaciones,
       proximoEncuentro: ajustes.data?.proximo_encuentro ?? null,
       recientes: recientes.data ?? [],

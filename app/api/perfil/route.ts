@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { tallas, tema, apodo, cumple, quitarFoto, favoritos } = await req.json().catch(() => ({}));
+  const { tallas, tema, apodo, cumple, quitarFoto, favoritos, estilo } = await req.json().catch(() => ({}));
   const persona = yo;
 
   const cambios: Record<string, unknown> = { persona, updated_at: new Date().toISOString() };
@@ -76,6 +76,11 @@ export async function POST(req: Request) {
       .filter((f) => typeof f?.titulo === "string" && typeof f?.valor === "string" && f.titulo.trim() && f.valor.trim())
       .slice(0, MAX_FAVORITOS)
       .map((f) => ({ titulo: f.titulo.trim().slice(0, 60), valor: f.valor.trim().slice(0, 120) }));
+  }
+
+  if (estilo !== undefined) {
+    if (typeof estilo !== "object" || estilo === null) return invalido();
+    cambios.estilo = { minusculas: estilo.minusculas === true };
   }
 
   if (cumple !== undefined) {

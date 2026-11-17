@@ -118,6 +118,8 @@ alter table perfiles add column if not exists cumple text;
 alter table perfiles add column if not exists avatar_path text;
 -- Favoritos: lista de { titulo, valor } (ej. "Equipo de fútbol" → "Real Madrid")
 alter table perfiles add column if not exists favoritos jsonb not null default '[]';
+-- Preferencias de cómo se ve la app para cada quien (ej. { "minusculas": true })
+alter table perfiles add column if not exists estilo jsonb not null default '{}';
 
 -- Wishlist: links de cosas que nos gustan
 create table if not exists deseos (

@@ -5,7 +5,7 @@ import { PAREJA, otra } from "@/lib/config";
 import { PAREJA_INICIAL, ProveedorPareja, type Pareja } from "@/lib/pareja";
 import { api, guardarSesion, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { aplicarTema } from "@/lib/tema";
+import { aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
 import Juntos from "./componentes/Juntos";
@@ -80,6 +80,16 @@ export default function Inicio() {
   useEffect(() => {
     document.title = sesion ? titulo : PAREJA;
   }, [titulo, sesion]);
+
+  // Textos normales o todo en minúsculas (preferencia guardada en el perfil)
+  const minusculas = !!(persona && estado?.estilos?.[persona]?.minusculas);
+  const estiloCargado = !!estado;
+  useEffect(() => {
+    if (persona === undefined) return;
+    if (persona === null) return aplicarMinusculas(null, false);
+    // Mientras carga el estado se queda lo guardado en el dispositivo
+    if (estiloCargado) aplicarMinusculas(persona, minusculas);
+  }, [persona, minusculas, estiloCargado]);
 
   const lanzarCorazones = useCallback(() => {
     const nuevos = crearCorazones();
@@ -174,6 +184,7 @@ export default function Inicio() {
         {seccion === "perfil" && <Perfil
             yo={yo}
             temaActual={estado?.temas?.[yo] ?? null}
+            minusculas={minusculas}
             ubicacion={estado?.ubicaciones?.[yo] ?? null}
             alCambiarTema={cargar}
             alCambiarDatos={cargar}

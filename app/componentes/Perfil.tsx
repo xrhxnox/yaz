@@ -7,7 +7,7 @@ import Avatar from "./Avatar";
 import { api, type Ubicacion, comprimirImagen } from "@/lib/cliente";
 import { BuscarCiudad, guardarCiudad } from "./HoraClima";
 import Notificaciones from "./Notificaciones";
-import { aplicarTema } from "@/lib/tema";
+import { aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
@@ -462,7 +462,61 @@ function Muestras({ colores, actual, alElegir, etiquetaColor }: { colores: strin
   );
 }
 
-function SeccionTema({ yo, temaActual, alGuardar }: { yo: Persona; temaActual: Tema | null; alGuardar: (t: Tema | null) => Promise<void> }) {
+// Textos normales o todo en minúsculas; se aplica y se guarda al tocarlo
+function OpcionTexto({ yo, minusculas, alGuardar }: { yo: Persona; minusculas: boolean; alGuardar: (minusculas: boolean) => Promise<void> }) {
+  const [guardando, setGuardando] = useState(false);
+
+  async function elegir(valor: boolean) {
+    if (valor === minusculas || guardando) return;
+    aplicarMinusculas(yo, valor);
+    setGuardando(true);
+    try {
+      await alGuardar(valor);
+    } catch {
+      aplicarMinusculas(yo, minusculas);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className="mt-5">
+      <p className={etiqueta}>Texto</p>
+      <div className="mt-2 grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
+        {[
+          { valor: false, nombre: "Normal" },
+          { valor: true, nombre: "todo en minúsculas" },
+        ].map((o) => (
+          <button
+            key={o.nombre}
+            onClick={() => elegir(o.valor)}
+            disabled={guardando}
+            style={{ textTransform: "none" }}
+            className={`rounded-full py-2 text-sm transition ${
+              minusculas === o.valor ? "bg-acento font-medium text-sobre-acento" : "text-suave hover:text-texto"
+            }`}
+          >
+            {o.nombre}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SeccionTema({
+  yo,
+  temaActual,
+  minusculas,
+  alGuardar,
+  alGuardarTexto,
+}: {
+  yo: Persona;
+  temaActual: Tema | null;
+  minusculas: boolean;
+  alGuardar: (t: Tema | null) => Promise<void>;
+  alGuardarTexto: (minusculas: boolean) => Promise<void>;
+}) {
   const original = TEMA_INICIAL[yo];
   const [borrador, setBorrador] = useState<Tema>(temaActual ?? original);
   const [guardando, setGuardando] = useState(false);
@@ -527,6 +581,7 @@ function SeccionTema({ yo, temaActual, alGuardar }: { yo: Persona; temaActual: T
           </button>
         )}
       </div>
+      <OpcionTexto yo={yo} minusculas={minusculas} alGuardar={alGuardarTexto} />
     </section>
   );
 }
@@ -827,6 +882,7 @@ function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; edit
 export default function Perfil({
   yo,
   temaActual,
+  minusculas,
   ubicacion,
   alCambiarTema,
   alCambiarDatos,
@@ -834,6 +890,7 @@ export default function Perfil({
 }: {
   yo: Persona;
   temaActual: Tema | null;
+  minusculas: boolean;
   ubicacion: Ubicacion | null;
   alCambiarTema: () => Promise<void>;
   alCambiarDatos: () => Promise<void>;
@@ -932,6 +989,11 @@ export default function Perfil({
         <SeccionTema
           yo={yo}
           temaActual={temaActual}
+          minusculas={minusculas}
+          alGuardarTexto={async (valor) => {
+            await hacer(api("/api/perfil", { estilo: { minusculas: valor } }));
+            await alCambiarTema();
+          }}
           alGuardar={async (tema) => {
             await hacer(api("/api/perfil", { tema }));
             await alCambiarTema();

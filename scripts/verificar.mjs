@@ -114,7 +114,7 @@ if (url && llave && llaveOk) {
 
   // Columnas que se agregaron después de crear las tablas
   if (conectado) {
-    for (const [tabla, columna] of [["pendientes", "foto_path"], ["perfiles", "apodo"], ["perfiles", "cumple"], ["perfiles", "avatar_path"], ["perfiles", "favoritos"]]) {
+    for (const [tabla, columna] of [["pendientes", "foto_path"], ["perfiles", "apodo"], ["perfiles", "cumple"], ["perfiles", "avatar_path"], ["perfiles", "favoritos"], ["perfiles", "estilo"]]) {
       const { error } = await db.from(tabla).select(columna).limit(1);
       if (error) mal(`Falta la columna ${tabla}.${columna}`, "Corre de nuevo supabase/schema.sql (o solo la línea alter table de esa columna)");
     }

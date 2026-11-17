@@ -1,4 +1,4 @@
-import { CLAVE_SESION, CLAVE_TEMA, type Persona } from "./config";
+import { CLAVE_MINUSCULAS, CLAVE_SESION, CLAVE_TEMA, type Persona } from "./config";
 import { derivarTema, type Tema } from "./colores";
 
 // Variables que pusimos en <html style> la última vez, para poder quitarlas
@@ -30,5 +30,17 @@ export function aplicarTema(persona: Persona | null, tema: Tema | null, guardar 
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", fondo));
 }
 
+// Mostrar todos los textos en minúsculas (preferencia de cada quien)
+export function aplicarMinusculas(persona: Persona | null, activo: boolean, guardar = true) {
+  const raiz = document.documentElement;
+  if (persona && activo) raiz.dataset.minusculas = "";
+  else delete raiz.dataset.minusculas;
+  if (!guardar) return;
+  try {
+    if (persona && activo) localStorage.setItem(CLAVE_MINUSCULAS, persona);
+    else localStorage.removeItem(CLAVE_MINUSCULAS);
+  } catch {}
+}
+
 // Se ejecuta en <head> antes de pintar, para que no parpadee el tema
-export const SCRIPT_TEMA = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_SESION)})||"null");if(s&&(s.persona==="a"||s.persona==="b")){var r=document.documentElement;r.dataset.tema=s.persona;var t=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})||"null");if(t&&t.persona===s.persona)for(var k in t.vars)r.style.setProperty(k,t.vars[k])}}catch(e){}`;
+export const SCRIPT_TEMA = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_SESION)})||"null");if(s&&(s.persona==="a"||s.persona==="b")){var r=document.documentElement;r.dataset.tema=s.persona;var t=JSON.parse(localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})||"null");if(t&&t.persona===s.persona)for(var k in t.vars)r.style.setProperty(k,t.vars[k]);if(localStorage.getItem(${JSON.stringify(CLAVE_MINUSCULAS)})===s.persona)r.dataset.minusculas=""}}catch(e){}`;
