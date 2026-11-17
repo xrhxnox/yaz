@@ -36,13 +36,18 @@ export function aplicarTema(persona: Persona | null, tema: Tema | null, guardar 
 }
 
 // iPhone guarda el color de lo que está detrás de la barra de estado y no lo actualiza
-// cuando solo cambia el color: se oculta la franja un par de cuadros para que lo vuelva a tomar
+// cuando solo cambia el color: se oculta la franja un par de cuadros para que lo vuelva a tomar.
+// Se espera a que deje de cambiar (al arrastrar en la rueda de colores) para no parpadear.
+let esperaFranja: ReturnType<typeof setTimeout> | undefined;
 function refrescarFranja(acento: string) {
   const franja = document.querySelector<HTMLElement>(".franja-app");
   if (!franja) return;
   franja.style.background = acento;
-  franja.style.visibility = "hidden";
-  requestAnimationFrame(() => requestAnimationFrame(() => franja.style.removeProperty("visibility")));
+  clearTimeout(esperaFranja);
+  esperaFranja = setTimeout(() => {
+    franja.style.visibility = "hidden";
+    requestAnimationFrame(() => requestAnimationFrame(() => franja.style.removeProperty("visibility")));
+  }, 250);
 }
 
 // Mostrar todos los textos en minúsculas (preferencia de cada quien)

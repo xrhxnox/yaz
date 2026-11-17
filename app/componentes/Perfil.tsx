@@ -13,6 +13,7 @@ import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
 import Pestanas from "./Pestanas";
+import RuedaColor from "./RuedaColor";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
@@ -534,15 +535,10 @@ function Muestras({ colores, actual, alElegir, etiquetaColor }: { colores: strin
           key={c}
           onClick={() => alElegir(c)}
           aria-label={`${etiquetaColor} ${c}`}
-          className={`h-8 w-8 rounded-full border transition ${actual.toLowerCase() === c ? "ring-2 ring-texto ring-offset-2 ring-offset-tarjeta" : "border-borde"}`}
+          className={`h-7 w-7 rounded-full border transition ${actual.toLowerCase() === c ? "ring-2 ring-texto ring-offset-2 ring-offset-tarjeta" : "border-borde"}`}
           style={{ background: c }}
         />
       ))}
-      <label className="relative flex h-8 items-center gap-2 rounded-full border border-borde pr-3 pl-1 text-xs text-suave">
-        <span className="h-6 w-6 rounded-full border border-borde" style={{ background: actual }} />
-        {actual.toLowerCase()}
-        <input type="color" value={actual} onChange={(e) => alElegir(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={`${etiquetaColor} personalizado`} />
-      </label>
     </div>
   );
 }
@@ -650,6 +646,7 @@ function SeccionTema({
   const original = TEMA_INICIAL[yo];
   const [borrador, setBorrador] = useState<Tema>(temaActual ?? original);
   const [guardando, setGuardando] = useState(false);
+  const [editando, setEditando] = useState<"fondo" | "acento">("acento");
   const base = temaActual ?? original;
   const cambiado = borrador.fondo !== base.fondo || borrador.acento !== base.acento;
 
@@ -680,11 +677,41 @@ function SeccionTema({
       <p className={tituloSeccion}>Personalizar mi app</p>
       <p className="mt-0.5 text-xs text-suave">Solo cambia cómo la ves tú. Los cambios se ven en vivo.</p>
 
-      <p className={`${etiqueta} mt-4`}>Fondo</p>
-      <Muestras colores={FONDOS} actual={borrador.fondo} etiquetaColor="Fondo" alElegir={(fondo) => probar({ ...borrador, fondo })} />
+      {/* Qué color estás eligiendo: fondo o acento, cada uno con su muestra */}
+      <div className="mt-4 grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
+        {(
+          [
+            ["fondo", "Fondo"],
+            ["acento", "Color de acento"],
+          ] as const
+        ).map(([id, nombre]) => (
+          <button
+            key={id}
+            onClick={() => setEditando(id)}
+            className={`flex items-center justify-center gap-2 rounded-full py-2 text-sm transition ${
+              editando === id ? "bg-tarjeta font-medium shadow-sm" : "text-suave hover:text-texto"
+            }`}
+          >
+            <span className="h-4 w-4 rounded-full border border-borde" style={{ background: borrador[id] }} />
+            {nombre}
+          </button>
+        ))}
+      </div>
 
-      <p className={`${etiqueta} mt-4`}>Color de acento</p>
-      <Muestras colores={ACENTOS} actual={borrador.acento} etiquetaColor="Acento" alElegir={(acento) => probar({ ...borrador, acento })} />
+      <RuedaColor
+        key={editando}
+        nombre={editando === "fondo" ? "el fondo" : "el acento"}
+        valor={borrador[editando]}
+        alCambiar={(color) => probar({ ...borrador, [editando]: color })}
+      />
+
+      <p className="mt-4 text-xs text-suave">Sugerencias</p>
+      <Muestras
+        colores={editando === "fondo" ? FONDOS : ACENTOS}
+        actual={borrador[editando]}
+        etiquetaColor={editando === "fondo" ? "Fondo" : "Acento"}
+        alElegir={(color) => probar({ ...borrador, [editando]: color })}
+      />
 
       <div className="mt-4 flex items-center gap-2 rounded-xl bg-relleno p-3">
         <span className="rounded-full bg-acento px-3 py-1.5 text-sm font-medium text-sobre-acento">Botón</span>
