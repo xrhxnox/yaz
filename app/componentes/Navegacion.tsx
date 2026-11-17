@@ -29,7 +29,7 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
 export const NOMBRES_SECCION: Record<Seccion, string> = {
   inicio: "Inicio",
   pregunta: "Pregunta",
-  lista: "Lista",
+  lista: "Pendientes",
   fotos: "Fotos",
   momentos: "Momentos",
 };
