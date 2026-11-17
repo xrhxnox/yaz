@@ -76,6 +76,21 @@ export function formatearFecha(fecha: string, opciones: Intl.DateTimeFormatOptio
   return new Date(a, m - 1, d).toLocaleDateString("es-MX", opciones);
 }
 
+// "Meses" de la relación: el mes 1 va del 15 de febrero al 14 de marzo, el 2 del 15 de marzo al 14 de abril…
+export function periodoMes(n: number): { inicio: string; fin: string } {
+  const [a, m, d] = FECHA_INICIO.split("-").map(Number);
+  const inicio = new Date(Date.UTC(a, m - 1 + (n - 1), d));
+  const fin = new Date(Date.UTC(a, m - 1 + n, d) - 864e5);
+  return { inicio: inicio.toISOString().slice(0, 10), fin: fin.toISOString().slice(0, 10) };
+}
+
+// En qué mes de la relación cae una fecha (1 = el primero)
+export function mesDe(fecha: string): number {
+  let n = 1;
+  while (periodoMes(n + 1).inicio <= fecha) n++;
+  return n;
+}
+
 export function otra(p: Persona): Persona {
   return p === "a" ? "b" : "a";
 }

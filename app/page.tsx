@@ -14,9 +14,13 @@ import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import HoraClima from "./componentes/HoraClima";
 import Pregunta from "./componentes/Pregunta";
-import Pendientes from "./componentes/Pendientes";
+import SeccionPendientes from "./componentes/SeccionPendientes";
 import Fotos from "./componentes/Fotos";
-import Momentos from "./componentes/Momentos";
+import Recuerdos from "./componentes/Recuerdos";
+import Buscar from "./componentes/Buscar";
+import Animo from "./componentes/Animo";
+import Rachas from "./componentes/Rachas";
+import AvisoResumen from "./componentes/AvisoResumen";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
 import Cabecera from "./componentes/Cabecera";
@@ -24,11 +28,12 @@ import Cumpleanos from "./componentes/Cumpleanos";
 import Corazones, { crearCorazones, type Particula } from "./componentes/Corazones";
 
 // La sección actual vive en el #hash de la URL (así las notificaciones pueden abrir una sección)
-type Vista = Seccion | "perfil";
+type Vista = Seccion | "perfil" | "buscar";
 
 function leerSeccion(): Vista {
-  const h = window.location.hash.slice(1);
-  return h === "perfil" || (SECCIONES as readonly string[]).includes(h) ? (h as Vista) : "inicio";
+  // #seccion o #seccion/pestaña (ej. #momentos/cartas)
+  const h = window.location.hash.slice(1).split("/")[0];
+  return h === "perfil" || h === "buscar" || (SECCIONES as readonly string[]).includes(h) ? (h as Vista) : "inicio";
 }
 
 function suscribirSeccion(oyente: () => void) {
@@ -153,15 +158,20 @@ export default function Inicio() {
         {seccion === "inicio" && (
           <>
             <Cumpleanos yo={yo} />
+            <AvisoResumen />
+            <Animo yo={yo} animos={estado?.animos} alCambiar={cargar} />
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas, como la portada de un periódico */}
             <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
             <div className="space-y-6 lg:col-span-7 lg:space-y-10">
             <Juntos ahora={ahora} />
+            <Rachas rachas={estado?.rachas} />
             <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
             <Reencuentro
               fecha={estado?.proximoEncuentro ?? null}
               ahora={ahora}
+              planes={estado?.planes}
+              visitas={estado?.visitas}
               alGuardar={async (fecha) => {
                 await api("/api/proximo", { fecha });
                 await cargar();
@@ -189,9 +199,10 @@ export default function Inicio() {
           </>
         )}
         {seccion === "pregunta" && <Pregunta yo={yo} />}
-        {seccion === "lista" && <Pendientes />}
+        {seccion === "lista" && <SeccionPendientes yo={yo} />}
         {seccion === "fotos" && <Fotos yo={yo} />}
-        {seccion === "momentos" && <Momentos />}
+        {seccion === "momentos" && <Recuerdos yo={yo} />}
+        {seccion === "buscar" && <Buscar />}
         {seccion === "perfil" && <Perfil
             yo={yo}
             temaActual={estado?.temas?.[yo] ?? null}

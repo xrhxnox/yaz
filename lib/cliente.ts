@@ -9,6 +9,10 @@ export type Pensamiento = { id: number; de: Persona; mensaje: string; created_at
 export type Ubicacion = { ciudad: string; lat: number; lon: number; zona: string };
 
 export type Estado = {
+  animos?: Record<Persona, { texto: string; updated_at: string } | null>;
+  rachas?: { preguntas: number; fotos: number };
+  visitas?: { veces: number; dias: number } | null;
+  planes?: { id: number; texto: string }[];
   nombres: Record<Persona, string>;
   cumples: Record<Persona, string | null>;
   avatares: Record<Persona, string | null>;

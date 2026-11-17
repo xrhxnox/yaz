@@ -16,6 +16,7 @@ type Pendiente = {
   creado_por: Persona;
   hecho_at: string | null;
   foto: string | null;
+  para_reencuentro?: boolean;
 };
 
 // Miniatura tipo póster; si no hay imagen, un botón para agregarla
@@ -52,12 +53,14 @@ function Fila({
   alReabrir,
   alBorrar,
   alFoto,
+  alReencuentro,
 }: {
   p: Pendiente;
   alCompletar: (fecha: string) => void;
   alReabrir: () => void;
   alBorrar: () => void;
   alFoto: (archivo: File) => void;
+  alReencuentro: () => void;
 }) {
   const NOMBRES = useNombres();
   // Antes de marcarlo como hecho, pedimos confirmar y la fecha en que lo hicieron
@@ -86,6 +89,7 @@ function Fila({
           <p className="font-serif text-lg leading-snug break-words">{p.texto}</p>
           <p className="text-xs text-suave">
             {CATEGORIAS.find((c) => c.id === p.categoria)?.nombre} · {NOMBRES[p.creado_por]}
+            {p.para_reencuentro && !p.hecho && <span className="text-acento-texto"> · Para el reencuentro</span>}
           </p>
           {p.hecho && p.hecho_at && (
             <p className="mt-0.5 font-serif text-sm italic text-acento-texto">
@@ -93,6 +97,19 @@ function Fila({
             </p>
           )}
         </div>
+        {!p.hecho && (
+          <button
+            onClick={alReencuentro}
+            aria-pressed={!!p.para_reencuentro}
+            aria-label={p.para_reencuentro ? "Quitar del próximo reencuentro" : "Hacerlo en el próximo reencuentro"}
+            title={p.para_reencuentro ? "Quitar del próximo reencuentro" : "Hacerlo en el próximo reencuentro"}
+            className={`shrink-0 p-1 transition ${p.para_reencuentro ? "text-acento-texto" : "text-suave opacity-60 hover:opacity-100"}`}
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={p.para_reencuentro ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
+              <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={alBorrar}
           aria-label="Borrar"
@@ -223,6 +240,12 @@ export default function Pendientes() {
     hacer(api("/api/pendientes", { id: p.id, hecho: true, fecha }, "PATCH"));
   }
 
+  // Marcar o desmarcar para hacerlo en el próximo reencuentro
+  function paraReencuentro(p: Pendiente) {
+    setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, para_reencuentro: !p.para_reencuentro } : x)) ?? null);
+    hacer(api("/api/pendientes", { id: p.id, para_reencuentro: !p.para_reencuentro }, "PATCH"));
+  }
+
   function reabrir(p: Pendiente) {
     setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, hecho: false, hecho_at: null } : x)) ?? null);
     hacer(api("/api/pendientes", { id: p.id, hecho: false }, "PATCH"));
@@ -246,6 +269,7 @@ export default function Pendientes() {
       alReabrir={() => reabrir(p)}
       alBorrar={() => borrar(p)}
       alFoto={(a) => ponerFoto(p, a)}
+      alReencuentro={() => paraReencuentro(p)}
     />
   );
 

@@ -14,10 +14,14 @@ const boton = "rounded-full px-4 py-2 text-sm font-medium transition disabled:op
 export default function Reencuentro({
   fecha,
   ahora,
+  planes,
+  visitas,
   alGuardar,
 }: {
   fecha: string | null;
   ahora: Date;
+  planes?: { id: number; texto: string }[];
+  visitas?: { veces: number; dias: number } | null;
   alGuardar: (fecha: string | null) => Promise<void>;
 }) {
   const [editando, setEditando] = useState(false);
@@ -118,6 +122,30 @@ export default function Reencuentro({
     <section className={tarjeta}>
       <p className={titulo}>Próximo reencuentro</p>
       {contenido}
+
+      {/* Lo que marcaron en Pendientes para hacer cuando se vean */}
+      {!editando && planes && planes.length > 0 && (
+        <div className="mt-5 border-t border-borde pt-4">
+          <p className="text-xs tracking-wide text-suave">Planes para vernos</p>
+          <ul className="mt-1.5 space-y-1">
+            {planes.map((p) => (
+              <li key={p.id} className="flex items-baseline gap-2 font-serif text-lg leading-snug">
+                <span className="text-acento-texto" aria-hidden>
+                  —
+                </span>
+                {p.texto}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {visitas && visitas.veces > 0 && (
+        <a href="#momentos/visitas" className="mt-4 block text-sm text-suave hover:text-texto">
+          Nos hemos visto <span className="font-serif text-lg text-acento-texto">{visitas.veces}</span> {visitas.veces === 1 ? "vez" : "veces"} ·{" "}
+          <span className="font-serif text-lg text-acento-texto">{visitas.dias}</span> {visitas.dias === 1 ? "día" : "días"} juntos en persona
+        </a>
+      )}
     </section>
   );
 }

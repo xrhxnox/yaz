@@ -6,7 +6,11 @@ Nuestro espacio a distancia:
 - **Pregunta del día:** la misma pregunta para los dos; la respuesta del otro se ve hasta que contestas la tuya.
 - **Lista:** pendientes compartidos (películas y series, lugares, planes).
 - **Fotos:** varias fotos al día de cada uno (hasta 12) y el álbum de días anteriores.
-- **Momentos:** línea del tiempo de la relación, con fotos.
+- **Recuerdos:** línea del tiempo (momentos con fotos), visitas, cartas con fecha y el resumen de cada mes.
+- **Esto o aquello** (en Pendientes): votan opciones por separado y ven en qué coincidieron.
+- **Inicio:** también el ánimo de cada uno, rachas y los planes para el próximo reencuentro.
+- **Buscar** en mensajes, respuestas, momentos, pendientes, wishlist, visitas y cartas.
+- **Recordatorios:** a las 10 a.m. y 10 p.m., si nadie ha mandado nada, llega un aviso (necesita `CRON_SECRET` en Vercel).
 - **Perfiles** (botón arriba a la derecha): tallas, wishlist con links (el otro puede marcar "Ya lo compré" sin que el dueño lo vea) y colores personalizados de fondo y acento para tu app.
 
 Hecha con Next.js, Supabase (base de datos y fotos), Web Push (PWA) y Open-Meteo (clima, sin llave).

@@ -4,7 +4,7 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 
-const TABLAS = ["ajustes", "pensamientos", "suscripciones", "respuestas", "ubicaciones", "pendientes", "fotos", "momentos", "momento_fotos", "perfiles", "deseos"];
+const TABLAS = ["ajustes", "pensamientos", "suscripciones", "respuestas", "ubicaciones", "pendientes", "fotos", "momentos", "momento_fotos", "perfiles", "deseos", "animos", "visitas", "cartas", "rondas", "opciones", "votos"];
 
 let fallas = 0;
 const ok = (m) => console.log(`  ✓ ${m}`);
@@ -114,7 +114,7 @@ if (url && llave && llaveOk) {
 
   // Columnas que se agregaron después de crear las tablas
   if (conectado) {
-    for (const [tabla, columna] of [["pendientes", "foto_path"], ["perfiles", "apodo"], ["perfiles", "cumple"], ["perfiles", "avatar_path"], ["perfiles", "favoritos"], ["perfiles", "estilo"], ["deseos", "orden"]]) {
+    for (const [tabla, columna] of [["pendientes", "foto_path"], ["perfiles", "apodo"], ["perfiles", "cumple"], ["perfiles", "avatar_path"], ["perfiles", "favoritos"], ["perfiles", "estilo"], ["deseos", "orden"], ["pendientes", "para_reencuentro"]]) {
       const { error } = await db.from(tabla).select(columna).limit(1);
       if (error) mal(`Falta la columna ${tabla}.${columna}`, "Corre de nuevo supabase/schema.sql (o solo la línea alter table de esa columna)");
     }

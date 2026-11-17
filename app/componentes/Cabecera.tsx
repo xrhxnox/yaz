@@ -45,10 +45,26 @@ export default function Cabecera({
           Núm. <span className="font-serif text-sm text-acento-texto lg:text-base">{diasJuntos(ahora)}</span>
         </span>
         <div className="flex items-center gap-2">
+        <a
+          href={seccion === "buscar" ? "#inicio" : "#buscar"}
+          aria-label={seccion === "buscar" ? "Cerrar búsqueda" : "Buscar"}
+          title="Buscar"
+          className={`flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs transition lg:h-9 lg:px-4 lg:text-sm ${
+            seccion === "buscar" ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:text-texto"
+          }`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <span className="hidden sm:inline">Buscar</span>
+        </a>
         <button
           onClick={actualizar}
+          aria-label="Actualizar"
+          title="Actualizar"
           disabled={actualizando}
-          className="flex h-7 items-center gap-1.5 rounded-full border border-borde px-3 text-xs transition hover:text-texto disabled:opacity-50 lg:h-9 lg:px-4 lg:text-sm"
+          className="flex h-7 items-center gap-1.5 rounded-full border border-borde px-2.5 text-xs transition hover:text-texto disabled:opacity-50 sm:px-3 lg:h-9 lg:px-4 lg:text-sm"
         >
           <svg
             width="14"
@@ -65,7 +81,7 @@ export default function Cabecera({
             <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
             <path d="M21 3v5h-5" />
           </svg>
-          Actualizar
+          <span className="hidden sm:inline">Actualizar</span>
         </button>
         <a
           href={enPerfil ? "#inicio" : "#perfil"}

@@ -10,6 +10,7 @@ type Fila = {
   created_at: string;
   hecho_at: string | null;
   foto_path: string | null;
+  para_reencuentro?: boolean;
 };
 
 function hayFoto(v: FormDataEntryValue | null): v is File {
@@ -21,13 +22,12 @@ export async function GET(req: Request) {
   if (yo instanceof Response) return yo;
 
   try {
-    const filas: Fila[] =
-      revisar(
-        await db()
-          .from("pendientes")
-          .select("id, texto, categoria, hecho, creado_por, created_at, hecho_at, foto_path")
-          .order("created_at", { ascending: false }),
-      ) ?? [];
+    // Si todavía no existe la columna para_reencuentro, se lee sin ella
+    const campos = "id, texto, categoria, hecho, creado_por, created_at, hecho_at, foto_path";
+    type Respuesta = { data: unknown; error: { message: string } | null };
+    let r: Respuesta = await db().from("pendientes").select(campos + ", para_reencuentro").order("created_at", { ascending: false });
+    if (r.error && /para_reencuentro/.test(r.error.message)) r = await db().from("pendientes").select(campos).order("created_at", { ascending: false });
+    const filas: Fila[] = (revisar(r) as Fila[] | null) ?? [];
     const urls = await firmar(filas.map((f) => f.foto_path));
     return Response.json({
       pendientes: filas.map(({ foto_path, ...p }) => ({ ...p, foto: foto_path ? (urls[foto_path] ?? null) : null })),
@@ -83,7 +83,18 @@ export async function PATCH(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { id, hecho, fecha } = await req.json().catch(() => ({}));
+  const { id, hecho, fecha, para_reencuentro } = await req.json().catch(() => ({}));
+
+  // { id, para_reencuentro } → marcar o desmarcar para el próximo reencuentro
+  if (Number.isInteger(id) && typeof para_reencuentro === "boolean" && hecho === undefined) {
+    try {
+      revisar(await db().from("pendientes").update({ para_reencuentro }).eq("id", id));
+      return Response.json({ ok: true });
+    } catch (e) {
+      return error(e);
+    }
+  }
+
   if (!Number.isInteger(id) || typeof hecho !== "boolean") return invalido();
   if (fecha !== undefined && !esFecha(fecha)) return invalido("Fecha inválida");
   // Se guarda a mediodía UTC para que la fecha no cambie por zona horaria
