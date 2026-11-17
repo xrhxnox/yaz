@@ -22,6 +22,8 @@ type Partida = {
 type Datos = {
   actual: Record<TipoJuego, Partida | null>;
   marcador: Record<TipoJuego, { a: number; b: number; empate: number }>;
+  hoy?: Record<TipoJuego, number>;
+  limite?: number;
 };
 
 const PESTANAS = [
@@ -90,10 +92,12 @@ function TableroConecta4({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: b
   );
 }
 
-function JuegoActual({ tipo, p, yo, alJugar, alNueva, alAbandonar }: {
+function JuegoActual({ tipo, p, yo, hoy, limite, alJugar, alNueva, alAbandonar }: {
   tipo: TipoJuego;
   p: Partida | null;
   yo: Persona;
+  hoy: number;
+  limite: number;
   alJugar: (posicion: number) => void;
   alNueva: () => void;
   alAbandonar: (p: Partida) => void;
@@ -101,13 +105,20 @@ function JuegoActual({ tipo, p, yo, alJugar, alNueva, alAbandonar }: {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
 
+  const quedan = limite - hoy;
+  const sinPartidas = <p className="font-serif italic text-suave">Ya jugaron {limite} partidas hoy. Mañana hay más.</p>;
+
   if (!p) {
     return (
       <div className="py-6 text-center">
         <p className="font-serif text-xl italic text-suave">Todavía no han jugado {JUEGOS[tipo].nombre.toLowerCase()}.</p>
-        <button onClick={alNueva} className={`${botonPrimario} mt-4 px-6 py-2.5`}>
-          Empezar partida
-        </button>
+        {quedan > 0 ? (
+          <button onClick={alNueva} className={`${botonPrimario} mt-4 px-6 py-2.5`}>
+            Empezar partida
+          </button>
+        ) : (
+          <div className="mt-4">{sinPartidas}</div>
+        )}
       </div>
     );
   }
@@ -151,11 +162,18 @@ function JuegoActual({ tipo, p, yo, alJugar, alNueva, alAbandonar }: {
         )}
         {" · "}Empezó {p.empieza === yo ? "tú" : nombres[p.empieza]}
       </p>
+      <p className="text-center text-xs text-suave">
+        Partida {Math.max(hoy, 1)} de {limite} de hoy
+      </p>
       <div className="flex justify-center">
         {p.ganador ? (
-          <button onClick={alNueva} className={`${botonPrimario} px-6 py-2.5`}>
-            Revancha
-          </button>
+          quedan > 0 ? (
+            <button onClick={alNueva} className={`${botonPrimario} px-6 py-2.5`}>
+              Revancha
+            </button>
+          ) : (
+            sinPartidas
+          )
         ) : (
           <button onClick={() => alAbandonar(p)} className={`${enlace} text-xs`}>
             Abandonar partida
@@ -253,6 +271,8 @@ export default function Juegos({ yo }: { yo: Persona }) {
           tipo={tipo}
           p={p}
           yo={yo}
+          hoy={datos.hoy?.[tipo] ?? 0}
+          limite={datos.limite ?? 3}
           alJugar={(posicion) => p && jugar(p, posicion)}
           alNueva={() => hacer(api("/api/juegos", { tipo }))}
           alAbandonar={(x) => {

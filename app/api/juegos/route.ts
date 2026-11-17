@@ -1,6 +1,6 @@
 import { db, error, invalido, autenticar, nombresActuales, notificar, revisar } from "@/lib/servidor";
-import { otra, type Persona } from "@/lib/config";
-import { JUEGOS, buscarGanador, caidaEnColumna, esTipoJuego, tableroVacio, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
+import { horaLocal, hoyCompartido, otra, type Persona } from "@/lib/config";
+import { JUEGOS, PARTIDAS_POR_DIA, buscarGanador, caidaEnColumna, esTipoJuego, tableroVacio, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
 
 type Partida = {
   id: number;
@@ -34,7 +34,11 @@ export async function GET(req: Request) {
       gato: partidas.find((p) => p.tipo === "gato") ?? null,
       conecta4: partidas.find((p) => p.tipo === "conecta4") ?? null,
     };
-    return Response.json({ actual, marcador });
+    // Cuántas partidas de cada juego se han empezado hoy (hora local)
+    const desde = Date.parse(horaLocal(hoyCompartido(), 0));
+    const deHoy = (t: TipoJuego) => partidas.filter((p) => p.tipo === t && Date.parse(p.created_at) >= desde).length;
+    const hoy: Record<TipoJuego, number> = { gato: deHoy("gato"), conecta4: deHoy("conecta4") };
+    return Response.json({ actual, marcador, hoy, limite: PARTIDAS_POR_DIA });
   } catch (e) {
     return error(e);
   }
@@ -53,6 +57,15 @@ export async function POST(req: Request) {
       await db().from("partidas").select("id, empieza, ganador").eq("tipo", tipo).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ) as { id: number; empieza: Persona; ganador: Resultado | null } | null;
     if (anterior && !anterior.ganador) return invalido("Ya hay una partida en curso");
+
+    const { count } = await db()
+      .from("partidas")
+      .select("*", { count: "exact", head: true })
+      .eq("tipo", tipo)
+      .gte("created_at", horaLocal(hoyCompartido(), 0));
+    if ((count ?? 0) >= PARTIDAS_POR_DIA) {
+      return invalido(`Ya jugaron ${PARTIDAS_POR_DIA} partidas de ${JUEGOS[tipo].nombre} hoy. Mañana hay más`);
+    }
 
     const empieza: Persona = anterior ? otra(anterior.empieza) : yo;
     revisar(await db().from("partidas").insert({ tipo, tablero: tableroVacio(tipo), empieza, turno: empieza }));

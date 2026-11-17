@@ -11,6 +11,9 @@ export const JUEGOS: Record<TipoJuego, { nombre: string; filas: number; columnas
   conecta4: { nombre: "Conecta 4", filas: 6, columnas: 7, enLinea: 4 },
 };
 
+// Partidas que se pueden empezar al día, por juego
+export const PARTIDAS_POR_DIA = 3;
+
 export function esTipoJuego(v: unknown): v is TipoJuego {
   return v === "gato" || v === "conecta4";
 }

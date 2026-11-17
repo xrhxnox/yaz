@@ -66,6 +66,16 @@ export function hoyCompartido(d = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: ZONA_COMPARTIDA, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
+// Momento exacto (UTC, ISO) de una hora local en la zona compartida. Ej: horaLocal("2026-11-17", 0) = medianoche local
+export function horaLocal(fecha: string, hora: number) {
+  const desfase = new Intl.DateTimeFormat("en-US", { timeZone: ZONA_COMPARTIDA, timeZoneName: "shortOffset" })
+    .formatToParts(new Date(fecha + "T12:00:00Z"))
+    .find((p) => p.type === "timeZoneName")?.value; // ej. "GMT-7"
+  const [, signo, h, m] = desfase?.match(/GMT([+-])(\d+)(?::(\d+))?/) ?? [, "+", "0", "0"];
+  const minutos = (Number(h) * 60 + Number(m ?? 0)) * (signo === "-" ? -1 : 1);
+  return new Date(Date.parse(fecha + "T00:00:00Z") + hora * 3600e3 - minutos * 60e3).toISOString();
+}
+
 export function esFecha(v: unknown): v is string {
   return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v));
 }
