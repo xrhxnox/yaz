@@ -82,10 +82,10 @@ export default function Pregunta({ yo }: { yo: Persona }) {
   );
 
   return (
-    <div className="space-y-6">
-      <section className={tarjeta}>
+    <div className="space-y-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
+      <section className={`${tarjeta} lg:col-span-7`}>
         <p className={etiqueta}>Pregunta del día · {formatearFecha(datos.fecha, { day: "numeric", month: "long" })}</p>
-        <p className="mt-2 font-serif text-[1.85rem] leading-tight tracking-tight">{datos.pregunta}</p>
+        <p className="mt-2 font-serif text-[1.85rem] lg:text-5xl leading-tight tracking-tight">{datos.pregunta}</p>
 
         {!datos.mia || editando ? (
           formulario
@@ -112,7 +112,7 @@ export default function Pregunta({ yo }: { yo: Persona }) {
       </section>
 
       {datos.historial.length > 0 && (
-        <>
+        <div className="space-y-6 lg:col-span-5 lg:border-l lg:border-borde lg:pl-12">
           <p className={`${titulo} pt-2`}>Días anteriores</p>
           {datos.historial.map((h) => (
             <section key={h.fecha} className={tarjeta}>
@@ -124,7 +124,7 @@ export default function Pregunta({ yo }: { yo: Persona }) {
               </div>
             </section>
           ))}
-        </>
+        </div>
       )}
     </div>
   );

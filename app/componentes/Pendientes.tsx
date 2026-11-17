@@ -95,7 +95,9 @@ export default function Pendientes() {
   const hechos = visibles.filter((p) => p.hecho);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
+      {/* En escritorio, el formulario y los filtros quedan fijos a la izquierda */}
+      <div className="space-y-5 lg:sticky lg:top-8 lg:col-span-4">
       <form onSubmit={agregar} className={`${caja} space-y-2`}>
         <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={200} placeholder="Agregar a la lista" className={campo} />
         <div className="flex gap-2">
@@ -116,7 +118,7 @@ export default function Pendientes() {
         </div>
       </form>
 
-      <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 [scrollbar-width:none]">
+      <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
         {[{ id: "todo" as const, nombre: "Todo" }, ...CATEGORIAS].map((c) => (
           <button
             key={c.id}
@@ -129,8 +131,9 @@ export default function Pendientes() {
           </button>
         ))}
       </div>
+      </div>
 
-      <section className={tarjeta}>
+      <section className={`${tarjeta} lg:col-span-8`}>
         {lista === null ? (
           <p className="text-sm text-suave">{error || "Cargando…"}</p>
         ) : porHacer.length === 0 ? (

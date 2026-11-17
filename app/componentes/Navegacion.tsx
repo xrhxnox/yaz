@@ -26,7 +26,7 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
   ),
 };
 
-const NOMBRES: Record<Seccion, string> = {
+export const NOMBRES_SECCION: Record<Seccion, string> = {
   inicio: "Inicio",
   pregunta: "Pregunta",
   lista: "Lista",
@@ -36,7 +36,7 @@ const NOMBRES: Record<Seccion, string> = {
 
 export default function Navegacion({ actual }: { actual: string }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-tarjeta/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t lg:hidden border-borde bg-tarjeta/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {SECCIONES.map((s) => (
           <li key={s}>
@@ -48,7 +48,7 @@ export default function Navegacion({ actual }: { actual: string }) {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actual === s ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 {ICONOS[s]}
               </svg>
-              {NOMBRES[s]}
+              {NOMBRES_SECCION[s]}
             </a>
           </li>
         ))}

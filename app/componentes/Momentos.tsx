@@ -94,7 +94,7 @@ export default function Momentos() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:mx-auto lg:max-w-2xl">
       {agregando ? (
         <Formulario
          

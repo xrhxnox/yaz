@@ -114,12 +114,15 @@ export default function Inicio() {
 
   return (
     <>
-      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} enPerfil={seccion === "perfil"} />
+      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
+        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} />
 
         {seccion === "inicio" && (
           <>
             <Notificaciones yo={yo} />
+            {/* En escritorio: dos columnas, como la portada de un periódico */}
+            <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
+            <div className="space-y-6 lg:col-span-7 lg:space-y-10">
             <Juntos ahora={ahora} />
             <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
             <Reencuentro
@@ -130,6 +133,8 @@ export default function Inicio() {
                 await cargar();
               }}
             />
+            </div>
+            <div className="lg:col-span-5 lg:border-l lg:border-borde lg:pl-12">
             <PenseEnTi
               yo={yo}
               estado={estado}
@@ -145,6 +150,8 @@ export default function Inicio() {
                 }
               }}
             />
+            </div>
+            </div>
           </>
         )}
         {seccion === "pregunta" && <Pregunta yo={yo} />}
@@ -157,7 +164,7 @@ export default function Inicio() {
       <Navegacion actual={seccion} />
       <Corazones lista={corazones} />
       {aviso && (
-        <div className="fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4">
+        <div className="fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-8">
           <p className="rounded-full bg-texto px-4 py-2 text-sm font-medium text-fondo shadow-lg">{aviso}</p>
         </div>
       )}

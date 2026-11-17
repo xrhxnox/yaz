@@ -84,8 +84,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
   const anteriores = datos.dias.filter((d) => d.fecha !== datos.hoy);
 
   return (
-    <div className="space-y-6">
-      <section className={tarjeta}>
+    <div className="space-y-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
+      <section className={`${tarjeta} lg:sticky lg:top-8 lg:col-span-5`}>
         <p className={etiqueta}>Foto del día · {formatearFecha(datos.hoy, { day: "numeric", month: "long" })}</p>
 
         {nueva ? (
@@ -118,8 +118,10 @@ export default function Fotos({ yo }: { yo: Persona }) {
       </section>
 
       {anteriores.length > 0 && (
-        <>
-          <p className={`${titulo} pt-2`}>Álbum</p>
+        <div className="space-y-6 lg:col-span-7 lg:border-l lg:border-borde lg:pl-12">
+          <p className={`${titulo} pt-2 lg:pt-0`}>Álbum</p>
+          {/* En escritorio, dos días por fila */}
+          <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-8 lg:space-y-0">
           {anteriores.map((d) => (
             <section key={d.fecha} className={tarjeta}>
               <p className={etiqueta}>{formatearFecha(d.fecha, { weekday: "long", day: "numeric", month: "long" })}</p>
@@ -129,7 +131,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
               </div>
             </section>
           ))}
-        </>
+          </div>
+        </div>
       )}
     </div>
   );

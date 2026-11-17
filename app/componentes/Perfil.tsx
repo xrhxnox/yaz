@@ -477,7 +477,7 @@ export default function Perfil({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
+      <div className="grid grid-cols-2 gap-1 rounded-full bg-relleno p-1 lg:mx-auto lg:max-w-md">
         {([yo, otra(yo)] as Persona[]).map((p) => (
           <button
             key={p}
@@ -492,6 +492,9 @@ export default function Perfil({
       {error && <p className="text-sm text-acento-texto">{error}</p>}
       {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
 
+      {/* En escritorio: tallas y wishlist a la izquierda, ajustes a la derecha */}
+      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-12 lg:space-y-0">
+      <div className={`space-y-6 ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl"}`}>
       {datos && (
         <>
           <SeccionTallas
@@ -516,8 +519,10 @@ export default function Perfil({
           />
         </>
       )}
+      </div>
 
       {viendo === yo && (
+      <div className="space-y-6 lg:border-l lg:border-borde lg:pl-12">
         <SeccionTema
           yo={yo}
           temaActual={temaActual}
@@ -526,9 +531,10 @@ export default function Perfil({
             await alCambiarTema();
           }}
         />
+        <SeccionCuenta />
+      </div>
       )}
-
-      {viendo === yo && <SeccionCuenta />}
+      </div>
 
       <button
         onClick={() => {
