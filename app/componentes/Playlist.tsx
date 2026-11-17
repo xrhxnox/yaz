@@ -134,7 +134,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
   const [url, setUrl] = useState("");
   const [nota, setNota] = useState("");
   const [nombre, setNombre] = useState("");
-  const [pedirNombre, setPedirNombre] = useState(false);
+  const [artista, setArtista] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -163,18 +163,15 @@ export default function Playlist({ yo }: { yo: Persona }) {
     if (!url.trim()) return;
     setGuardando(true);
     try {
-      await api("/api/canciones", { url, nota, titulo: pedirNombre ? nombre : undefined });
+      await api("/api/canciones", { url, nota, titulo: nombre, artista });
       setUrl("");
       setNota("");
       setNombre("");
-      setPedirNombre(false);
+      setArtista("");
       setError("");
       await cargar();
     } catch (e) {
-      const mensaje = (e as Error).message;
-      // Links sin datos públicos (Apple Music, etc.): se pide el nombre a mano
-      if (/Escribe el nombre/.test(mensaje)) setPedirNombre(true);
-      setError(mensaje);
+      setError((e as Error).message);
     } finally {
       setGuardando(false);
     }
@@ -192,21 +189,21 @@ export default function Playlist({ yo }: { yo: Persona }) {
         <p className={titulo}>Agregar canción</p>
         <input
           value={url}
-          onChange={(e) => {
-            setUrl(e.target.value);
-            setPedirNombre(false);
-          }}
+          onChange={(e) => setUrl(e.target.value)}
           type="url"
           inputMode="url"
           maxLength={500}
           placeholder="Link de Spotify, YouTube, Apple Music…"
           className={`${campo} sin-mayuscula text-sm`}
         />
-        {pedirNombre && (
-          <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={200} placeholder="Nombre de la canción" className={`${campo} text-sm`} autoFocus />
-        )}
+        {/* Con Spotify y YouTube se llenan solos; aquí se pueden escribir o corregir */}
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={200} placeholder="Nombre de la canción" className={`${campo} text-sm`} />
+          <input value={artista} onChange={(e) => setArtista(e.target.value)} maxLength={120} placeholder="Artista" className={`${campo} text-sm`} />
+        </div>
+        <p className="text-xs text-suave">Con links de Spotify o YouTube, el nombre, el artista y la portada se llenan solos si los dejas vacíos.</p>
         <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={300} placeholder="¿Por qué la agregas? (opcional)" className={`${campo} text-sm`} />
-        <button disabled={guardando || !url.trim() || (pedirNombre && !nombre.trim())} className={`${botonPrimario} w-full py-2.5`}>
+        <button disabled={guardando || !url.trim()} className={`${botonPrimario} w-full py-2.5`}>
           {guardando ? "Buscando la canción…" : "Agregar a la playlist"}
         </button>
         {error && <p className="text-sm text-acento-texto">{error}</p>}

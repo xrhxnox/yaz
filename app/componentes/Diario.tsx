@@ -46,7 +46,7 @@ function Lista({
   async function aPlaylist(e: Entrada) {
     setEnPlaylist((x) => ({ ...x, [e.id]: "guardando" }));
     try {
-      await api("/api/canciones", { url: e.link, nota: e.texto, titulo: e.texto });
+      await api("/api/canciones", { url: e.link, nota: e.texto, respaldo: e.texto });
       setEnPlaylist((x) => ({ ...x, [e.id]: "listo" }));
     } catch (err) {
       setEnPlaylist((x) => ({ ...x, [e.id]: (err as Error).message }));

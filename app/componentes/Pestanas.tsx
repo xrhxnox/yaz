@@ -15,11 +15,26 @@ export default function Pestanas<T extends string>({
   etiqueta: string;
 }) {
   const lista = useRef<HTMLDivElement>(null);
+  const montada = useRef(false);
   useEffect(() => {
-    const activa = lista.current?.querySelector<HTMLElement>('[aria-selected="true"]');
-    const caja = lista.current;
-    if (!activa || !caja || caja.scrollWidth <= caja.clientWidth) return;
-    caja.scrollTo({ left: activa.offsetLeft - caja.offsetLeft - 20, behavior: "smooth" });
+    // Recorre la fila lo justo para que la pestaña activa se vea completa
+    // Al tocar una pestaña se desliza suave; al abrir o al cambiar de tamaño, directo
+    const acomodar = (suave = false) => {
+      const caja = lista.current;
+      const activa = caja?.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!caja || !activa || caja.scrollWidth <= caja.clientWidth) return;
+      const c = caja.getBoundingClientRect();
+      const a = activa.getBoundingClientRect();
+      const margen = 20;
+      if (a.right > c.right - margen) caja.scrollBy({ left: a.right - c.right + margen, behavior: suave ? "smooth" : "auto" });
+      else if (a.left < c.left + margen) caja.scrollBy({ left: a.left - c.left - margen, behavior: suave ? "smooth" : "auto" });
+    };
+    acomodar(montada.current);
+    montada.current = true;
+    // Si cambian de tamaño (por ejemplo, cuando termina de cargar la letra), se vuelve a acomodar
+    const observador = new ResizeObserver(() => acomodar());
+    if (lista.current) for (const hijo of lista.current.children) observador.observe(hijo);
+    return () => observador.disconnect();
   }, [actual]);
 
   return (

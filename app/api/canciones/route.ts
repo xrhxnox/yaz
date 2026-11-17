@@ -22,11 +22,28 @@ async function leerCancion(url: string): Promise<{ titulo: string; artista: stri
     const d = await r.json();
     const titulo = typeof d.title === "string" ? d.title.trim().slice(0, 200) : "";
     if (!titulo) return null;
+    let artista = typeof d.author_name === "string" && d.author_name.trim() ? d.author_name.trim() : null;
+    if (!artista && host.endsWith("spotify.com")) artista = await artistaSpotify(url);
     return {
       titulo,
-      artista: typeof d.author_name === "string" && d.author_name.trim() ? d.author_name.trim().slice(0, 120) : null,
+      artista: artista ? artista.slice(0, 120) : null,
       portada: typeof d.thumbnail_url === "string" && /^https:\/\//.test(d.thumbnail_url) ? d.thumbnail_url : null,
     };
+  } catch {
+    return null;
+  }
+}
+
+// Spotify no manda el artista en su oEmbed; la página de la canción lo trae en og:description ("Artista · Álbum · Song · Año")
+async function artistaSpotify(url: string): Promise<string | null> {
+  if (!/\/track\//.test(url)) return null;
+  try {
+    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return null;
+    const html = await r.text();
+    const desc = html.match(/<meta property="og:description" content="([^"]*)"/)?.[1];
+    const artista = desc?.split(" · ")[0]?.trim();
+    return artista ? artista.replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'") : null;
   } catch {
     return null;
   }
@@ -46,18 +63,21 @@ export async function GET(req: Request) {
   }
 }
 
-// Agregar una canción: { url, nota?, titulo? } (titulo solo se usa si no se pudo leer del link)
+// Agregar una canción: { url, nota?, titulo?, artista?, respaldo? }
+// titulo y artista escritos a mano ganan; si no, se usa lo leído del link; respaldo = nombre si no hay nada más (desde el diario)
 export async function POST(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { url, nota, titulo } = await req.json().catch(() => ({}));
+  const { url, nota, titulo, artista, respaldo } = await req.json().catch(() => ({}));
   const link = typeof url === "string" ? url.trim() : "";
   if (!/^https?:\/\/\S+$/i.test(link)) return invalido("Pega el link de la canción (https://…)");
 
   const leida = await leerCancion(link);
-  const nombre = typeof titulo === "string" ? titulo.trim() : "";
-  if (!leida && !nombre) return invalido("No pude leer la canción de ese link. Escribe el nombre.");
+  const texto = (x: unknown) => (typeof x === "string" ? x.trim() : "");
+  const nombre = texto(titulo) || leida?.titulo || texto(respaldo);
+  if (!nombre) return invalido("No pude leer la canción de ese link. Escribe el nombre.");
+  const quien = texto(artista) || leida?.artista || null;
 
   try {
     revisar(
@@ -66,14 +86,14 @@ export async function POST(req: Request) {
         .insert({
           persona: yo,
           url: link.slice(0, 500),
-          titulo: (leida?.titulo || nombre).slice(0, 200),
-          artista: leida?.artista ?? null,
+          titulo: nombre.slice(0, 200),
+          artista: quien ? quien.slice(0, 120) : null,
           portada: leida?.portada ?? null,
           nota: typeof nota === "string" && nota.trim() ? nota.trim().slice(0, 300) : null,
         }),
     );
     const nombres = await nombresActuales();
-    await notificar(otra(yo), "Playlist", `${nombres[yo]} agregó “${leida?.titulo || nombre}”`, "/#momentos/playlist");
+    await notificar(otra(yo), "Playlist", `${nombres[yo]} agregó “${nombre}”`, "/#momentos/playlist");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);
