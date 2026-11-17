@@ -6,7 +6,10 @@ import { useNombres } from "@/lib/pareja";
 import Avatar from "./Avatar";
 import type { Estado } from "@/lib/cliente";
 import Corazon from "./Corazon";
-import { campo, numero, tarjeta, titulo } from "@/lib/estilos";
+import { campo, enlace, numero, tarjeta, titulo } from "@/lib/estilos";
+
+// Mensajes recientes que se ven sin abrir la lista completa
+const VISIBLES = 3;
 
 function hace(iso: string, ahora: Date) {
   const min = Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000);
@@ -33,6 +36,7 @@ export default function PenseEnTi({
   const [personalizado, setPersonalizado] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [pulso, setPulso] = useState(0);
+  const [verTodos, setVerTodos] = useState(false);
   const tu = otra(yo);
   const texto = personalizado.trim() || mensaje;
 
@@ -98,8 +102,11 @@ export default function PenseEnTi({
           </div>
 
           {estado.recientes.length > 0 && (
-            <ul className="mt-5 space-y-4">
-              {estado.recientes.map((p) => (
+            <ul
+              className={`mt-5 space-y-4 ${verTodos ? "-mr-2 max-h-80 overflow-y-auto overscroll-contain pr-2" : ""}`}
+              aria-label="Mensajes recientes"
+            >
+              {(verTodos ? estado.recientes : estado.recientes.slice(0, VISIBLES)).map((p) => (
                 <li key={p.id} className={`border-l-2 pl-3 ${p.de === yo ? "border-borde" : "border-acento-texto"}`}>
                   <p className="font-serif text-lg leading-snug break-words">“{p.mensaje}”</p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-suave">
@@ -109,6 +116,11 @@ export default function PenseEnTi({
                 </li>
               ))}
             </ul>
+          )}
+          {estado.recientes.length > VISIBLES && (
+            <button onClick={() => setVerTodos((v) => !v)} className={`${enlace} mt-4 text-xs`}>
+              {verTodos ? "Ver menos" : `Ver más (${estado.recientes.length - VISIBLES})`}
+            </button>
           )}
           <p className="mt-5 text-xs text-suave">{estado.total.a + estado.total.b} mensajes desde el principio</p>
         </>
