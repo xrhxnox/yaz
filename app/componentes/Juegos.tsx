@@ -47,7 +47,7 @@ function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boole
             } ${libre ? "hover:bg-relleno" : ""} ${enLinea ? "bg-acento-suave" : ""}`}
             style={{ color: f ? acentos[f] : undefined }}
           >
-            {f === "a" ? "×" : f === "b" ? <Corazon size={52} className="h-1/2 w-1/2" /> : ""}
+            {f === "a" ? "×" : f === "b" ? <Corazon size={52} contorno className="h-1/2 w-1/2" /> : ""}
           </button>
         );
       })}
@@ -165,7 +165,7 @@ function JuegoActual({ tipo, p, yo, hoy, limite, alJugar, alNueva, alAbandonar }
         {tipo === "gato" ? (
           <>
             <span style={{ color: acentos.a }}>× {nombres.a}</span> · <span style={{ color: acentos.b }}>
-              <Corazon size={10} className="inline align-[-1px]" /> {nombres.b}
+              <Corazon size={10} contorno className="inline align-[-1px]" /> {nombres.b}
             </span>
           </>
         ) : (
