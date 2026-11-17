@@ -111,6 +111,14 @@ if (url && llave && llaveOk) {
   }
   if (faltantes) console.log("    → Corre supabase/schema.sql en Supabase → SQL Editor");
 
+  // Columnas que se agregaron después de crear las tablas
+  if (conectado) {
+    for (const [tabla, columna] of [["pendientes", "foto_path"]]) {
+      const { error } = await db.from(tabla).select(columna).limit(1);
+      if (error) mal(`Falta la columna ${tabla}.${columna}`, "Corre de nuevo supabase/schema.sql (o solo la línea alter table de esa columna)");
+    }
+  }
+
   titulo("Cuentas");
   if (!conectado) aviso("Me las salto hasta que funcione la conexión");
   else {

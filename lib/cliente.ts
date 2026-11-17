@@ -63,7 +63,7 @@ export function guardarSesion(s: Sesion | null) {
   oyentes.forEach((o) => o());
 }
 
-export async function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PATCH" | "DELETE"): Promise<T> {
+export async function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
   const token = await tokenActual();
   if (!token) throw Object.assign(new Error("Inicia sesión"), { status: 401 });
   const esForm = cuerpo instanceof FormData;

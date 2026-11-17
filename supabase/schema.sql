@@ -57,6 +57,8 @@ create table if not exists pendientes (
   created_at timestamptz not null default now(),
   hecho_at timestamptz
 );
+-- Imagen opcional (póster de la película, foto del lugar…)
+alter table pendientes add column if not exists foto_path text;
 
 -- Foto del día (una por persona por día)
 create table if not exists fotos (
