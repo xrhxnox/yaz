@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import webpush from "web-push";
-import type { Persona } from "./config";
+import { NOMBRES, type Persona } from "./config";
 
 let cliente: SupabaseClient | null = null;
 
@@ -123,9 +123,37 @@ export async function borrarImagenes(paths: string[]) {
 }
 
 // Las fotos son privadas: generamos links temporales para verlas
+// Guardamos los links unas horas: si cambiaran en cada consulta, el navegador volvería a descargar las fotos
+const firmados = new Map<string, { url: string; vence: number }>();
+const DURACION = 60 * 60 * 6; // segundos
+
 export async function firmar(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
   const unicos = [...new Set(paths.filter((p): p is string => !!p))];
-  if (!unicos.length) return {};
-  const firmados = revisar(await db().storage.from(BUCKET).createSignedUrls(unicos, 60 * 60 * 6)) ?? [];
-  return Object.fromEntries(firmados.filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]));
+  const ahora = Date.now();
+  const resultado: Record<string, string> = {};
+  const faltan: string[] = [];
+  for (const p of unicos) {
+    const c = firmados.get(p);
+    // Se renueva si le queda menos de una hora
+    if (c && c.vence - ahora > 60 * 60 * 1000) resultado[p] = c.url;
+    else faltan.push(p);
+  }
+  if (faltan.length) {
+    const nuevos = revisar(await db().storage.from(BUCKET).createSignedUrls(faltan, DURACION)) ?? [];
+    if (firmados.size > 2000) firmados.clear();
+    for (const f of nuevos) {
+      if (!f.signedUrl || !f.path) continue;
+      resultado[f.path] = f.signedUrl;
+      firmados.set(f.path, { url: f.signedUrl, vence: ahora + DURACION * 1000 });
+    }
+  }
+  return resultado;
+}
+
+// Nombre que se muestra de cada quien: su apodo si lo puso, o el de la configuración
+export async function nombresActuales(): Promise<Record<Persona, string>> {
+  const filas: { persona: Persona; apodo: string | null }[] = revisar(await db().from("perfiles").select("persona, apodo")) ?? [];
+  const nombres = { ...NOMBRES };
+  for (const f of filas) if (f.apodo) nombres[f.persona] = f.apodo;
+  return nombres;
 }

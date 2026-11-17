@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NOMBRES, TALLAS, TEMA_INICIAL, otra, type Persona, type Tallas } from "@/lib/config";
-import { api, type Ubicacion } from "@/lib/cliente";
+import { TALLAS, TEMA_INICIAL, otra, type Persona, type Tallas } from "@/lib/config";
+import { useNombres, usePareja } from "@/lib/pareja";
+import Avatar from "./Avatar";
+import { api, type Ubicacion, comprimirImagen } from "@/lib/cliente";
 import { BuscarCiudad, guardarCiudad } from "./HoraClima";
 import Notificaciones from "./Notificaciones";
 import { aplicarTema } from "@/lib/tema";
@@ -137,6 +139,7 @@ function SeccionDeseos({
   alBorrar: (d: Deseo) => void;
   alMarcar: (d: Deseo) => void;
 }) {
+  const NOMBRES = useNombres();
   const [agregando, setAgregando] = useState(false);
   const [url, setUrl] = useState("");
   const [titulo, setTitulo] = useState("");
@@ -476,6 +479,148 @@ function SeccionAjustes({ yo, ubicacion, alCambiar }: { yo: Persona; ubicacion: 
   );
 }
 
+// ---------- Foto, apodo y cumpleaños ----------
+
+const MESES = Array.from({ length: 12 }, (_, i) => new Date(2024, i, 1).toLocaleDateString("es-MX", { month: "long" }));
+
+function textoCumple(cumple: string) {
+  const [m, d] = cumple.split("-").map(Number);
+  return `${d} de ${MESES[m - 1]}`;
+}
+
+function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; editable: boolean; alCambiar: () => Promise<void> }) {
+  const { nombres, cumples } = usePareja();
+  const [editando, setEditando] = useState(false);
+  const [apodo, setApodo] = useState("");
+  const [dia, setDia] = useState("");
+  const [mes, setMes] = useState("");
+  const [ocupado, setOcupado] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const cumple = cumples[persona];
+
+  function abrir() {
+    setApodo(nombres[persona]);
+    const [m, d] = cumple ? cumple.split("-") : ["", ""];
+    setMes(m);
+    setDia(d);
+    setError("");
+    setEditando(true);
+  }
+
+  async function hacer(texto: string, accion: () => Promise<unknown>) {
+    setOcupado(texto);
+    setError("");
+    try {
+      await accion();
+      await alCambiar();
+      return true;
+    } catch (e) {
+      setError((e as Error).message);
+      return false;
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    if ((dia && !mes) || (!dia && mes)) return setError("Elige día y mes, o deja los dos vacíos");
+    const ok = await hacer("Guardando…", () =>
+      api("/api/perfil", { apodo, cumple: dia && mes ? `${mes}-${dia.padStart(2, "0")}` : null }),
+    );
+    if (ok) setEditando(false);
+  }
+
+  async function cambiarFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    await hacer("Subiendo foto…", async () => {
+      const form = new FormData();
+      form.set("foto", await comprimirImagen(archivo, 600), "perfil.jpg");
+      await api("/api/perfil", form, "PUT");
+    });
+  }
+
+  return (
+    <section className={tarjeta}>
+      <div className="flex items-center gap-4">
+        <Avatar persona={persona} size={72} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-serif text-3xl leading-tight tracking-tight">{nombres[persona]}</p>
+          <p className="font-serif text-sm italic text-suave">
+            {cumple ? `Cumpleaños: ${textoCumple(cumple)}` : editable ? "Agrega tu cumpleaños" : "Sin cumpleaños todavía"}
+          </p>
+        </div>
+        {editable && !editando && (
+          <button onClick={abrir} className={`${enlace} shrink-0`}>
+            Editar
+          </button>
+        )}
+      </div>
+
+      {editable && editando && (
+        <form onSubmit={guardar} className="mt-5 space-y-4">
+          <div>
+            <p className={etiqueta}>Foto de perfil</p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <label className={`${botonSecundario} cursor-pointer`}>
+                {ocupado === "Subiendo foto…" ? ocupado : "Elegir foto"}
+                <input type="file" accept="image/*" onChange={cambiarFoto} disabled={!!ocupado} className="hidden" />
+              </label>
+              <button
+                type="button"
+                disabled={!!ocupado}
+                onClick={() => hacer("Quitando…", () => api("/api/perfil", { quitarFoto: true }))}
+                className={enlace}
+              >
+                Quitar foto
+              </button>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className={etiqueta}>Apodo (cómo te ves en la app)</span>
+            <input value={apodo} onChange={(e) => setApodo(e.target.value)} maxLength={30} className={`${campo} mt-1`} />
+          </label>
+
+          <div>
+            <p className={etiqueta}>Cumpleaños (sin año)</p>
+            <div className="mt-1 grid grid-cols-[6rem_1fr] gap-2">
+              <select value={dia} onChange={(e) => setDia(e.target.value)} className={campo} aria-label="Día">
+                <option value="">Día</option>
+                {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0")).map((d) => (
+                  <option key={d} value={d}>
+                    {Number(d)}
+                  </option>
+                ))}
+              </select>
+              <select value={mes} onChange={(e) => setMes(e.target.value)} className={campo} aria-label="Mes">
+                <option value="">Mes</option>
+                {MESES.map((nombre, i) => (
+                  <option key={nombre} value={String(i + 1).padStart(2, "0")}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-acento-texto">{error}</p>}
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setEditando(false)} disabled={!!ocupado} className={botonSecundario}>
+              Cerrar
+            </button>
+            <button disabled={!!ocupado} className={`${botonPrimario} flex-1`}>
+              {ocupado === "Guardando…" ? ocupado : "Guardar"}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
 // ---------- Perfil ----------
 
 export default function Perfil({
@@ -493,6 +638,7 @@ export default function Perfil({
   alCambiarDatos: () => Promise<void>;
   alSalir: () => void;
 }) {
+  const NOMBRES = useNombres();
   const [viendo, setViendo] = useState<Persona>(yo);
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
@@ -531,10 +677,15 @@ export default function Perfil({
             onClick={() => setViendo(p)}
             className={`rounded-full py-2 text-sm font-medium transition ${viendo === p ? "bg-tarjeta shadow-sm" : "text-suave hover:text-texto"}`}
           >
-            {p === yo ? `Yo (${NOMBRES[p]})` : NOMBRES[p]}
+            <span className="inline-flex items-center gap-2">
+              <Avatar persona={p} size={22} />
+              {p === yo ? `Yo (${NOMBRES[p]})` : NOMBRES[p]}
+            </span>
           </button>
         ))}
       </div>
+
+      <SeccionDatos key={`datos-${viendo}`} persona={viendo} editable={viendo === yo} alCambiar={alCambiarDatos} />
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
       {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}

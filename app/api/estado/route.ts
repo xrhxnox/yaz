@@ -1,5 +1,5 @@
-import { db, error, autenticar } from "@/lib/servidor";
-import type { Persona } from "@/lib/config";
+import { db, error, autenticar, firmar } from "@/lib/servidor";
+import { NOMBRES, type Persona } from "@/lib/config";
 
 export async function GET(req: Request) {
   const yo = await autenticar(req);
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       contar("a"),
       contar("b"),
       db().from("ubicaciones").select("persona, ciudad, lat, lon, zona"),
-      db().from("perfiles").select("persona, tema"),
+      db().from("perfiles").select("persona, tema, apodo, cumple, avatar_path"),
     ]);
 
     const fallo = [ajustes, recientes, hoyA, hoyB, totalA, totalB, lugares, perfiles].find((r) => r.error)?.error;
@@ -33,12 +33,29 @@ export async function GET(req: Request) {
     const ubicaciones: Record<Persona, unknown> = { a: null, b: null };
     for (const { persona, ...u } of lugares.data ?? []) ubicaciones[persona as Persona] = u;
 
-    // Colores personalizados de cada quien (null = tema original)
+    // Colores personalizados (null = tema original), apodos, cumpleaños y fotos de perfil
     const temas: Record<Persona, unknown> = { a: null, b: null };
-    for (const p of perfiles.data ?? []) temas[p.persona as Persona] = p.tema;
+    const nombres: Record<Persona, string> = { ...NOMBRES };
+    const cumples: Record<Persona, string | null> = { a: null, b: null };
+    const avatarPath: Record<Persona, string | null> = { a: null, b: null };
+    for (const p of perfiles.data ?? []) {
+      const persona = p.persona as Persona;
+      temas[persona] = p.tema;
+      if (p.apodo) nombres[persona] = p.apodo;
+      cumples[persona] = p.cumple;
+      avatarPath[persona] = p.avatar_path;
+    }
+    const urls = await firmar([avatarPath.a, avatarPath.b]);
+    const avatares: Record<Persona, string | null> = {
+      a: avatarPath.a ? (urls[avatarPath.a] ?? null) : null,
+      b: avatarPath.b ? (urls[avatarPath.b] ?? null) : null,
+    };
 
     return Response.json({
       temas,
+      nombres,
+      cumples,
+      avatares,
       ubicaciones,
       proximoEncuentro: ajustes.data?.proximo_encuentro ?? null,
       recientes: recientes.data ?? [],

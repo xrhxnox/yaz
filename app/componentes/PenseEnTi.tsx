@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MAX_MENSAJE, MENSAJES, NOMBRES, otra, type Persona } from "@/lib/config";
+import { MAX_MENSAJE, MENSAJES, otra, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
+import Avatar from "./Avatar";
 import type { Estado } from "@/lib/cliente";
 import Corazon from "./Corazon";
 import { campo, etiqueta, numero, tarjeta } from "@/lib/estilos";
@@ -26,6 +28,7 @@ export default function PenseEnTi({
   ahora: Date;
   alEnviar: (mensaje: string) => Promise<void>;
 }) {
+  const NOMBRES = useNombres();
   const [mensaje, setMensaje] = useState(MENSAJES[0]);
   const [personalizado, setPersonalizado] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -99,8 +102,9 @@ export default function PenseEnTi({
               {estado.recientes.map((p) => (
                 <li key={p.id} className={`border-l-2 pl-3 ${p.de === yo ? "border-borde" : "border-acento-texto"}`}>
                   <p className="font-serif text-lg leading-snug break-words">“{p.mensaje}”</p>
-                  <p className="mt-0.5 text-xs text-suave">
-                    — {p.de === yo ? "Tú" : NOMBRES[p.de]}, {hace(p.created_at, ahora)}
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-suave">
+                    <Avatar persona={p.de} size={18} />
+                    {p.de === yo ? "Tú" : NOMBRES[p.de]}, {hace(p.created_at, ahora)}
                   </p>
                 </li>
               ))}

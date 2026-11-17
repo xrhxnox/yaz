@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NOMBRES, formatearFecha, type Persona } from "@/lib/config";
+import { formatearFecha, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
@@ -57,6 +58,7 @@ function Galeria({
 }
 
 export default function Fotos({ yo }: { yo: Persona }) {
+  const NOMBRES = useNombres();
   const [datos, setDatos] = useState<{ hoy: string; maximo: number; dias: Dia[] } | null>(null);
   const [error, setError] = useState("");
   const [elegidas, setElegidas] = useState<Elegida[]>([]);

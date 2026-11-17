@@ -1,6 +1,8 @@
 "use client";
 
-import { FECHA_INICIO, NOMBRES } from "@/lib/config";
+import { useState } from "react";
+import { FECHA_INICIO } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import type { Ubicacion } from "@/lib/cliente";
 import { NOMBRES_SECCION, SECCIONES } from "./Navegacion";
 
@@ -20,7 +22,19 @@ export default function Cabecera({
   ubicaciones?: { a: Ubicacion | null; b: Ubicacion | null };
   seccion: string;
 }) {
+  const NOMBRES = useNombres();
   const enPerfil = seccion === "perfil";
+  const [actualizando, setActualizando] = useState(false);
+
+  // Recarga la app; en la versión instalada también busca una versión nueva primero
+  async function actualizar() {
+    setActualizando(true);
+    try {
+      const registro = await navigator.serviceWorker?.getRegistration();
+      await registro?.update();
+    } catch {}
+    window.location.reload();
+  }
   const fecha = ahora.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
   const ruta = ubicaciones?.a && ubicaciones?.b ? `${ubicaciones.b.ciudad} — ${ubicaciones.a.ciudad}` : null;
 
@@ -30,6 +44,29 @@ export default function Cabecera({
         <span>
           Núm. <span className="font-serif text-sm text-acento-texto lg:text-base">{diasJuntos(ahora)}</span>
         </span>
+        <div className="flex items-center gap-2">
+        <button
+          onClick={actualizar}
+          disabled={actualizando}
+          className="flex h-7 items-center gap-1.5 rounded-full border border-borde px-3 text-xs transition hover:text-texto disabled:opacity-50 lg:h-9 lg:px-4 lg:text-sm"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={actualizando ? "animate-spin" : ""}
+            aria-hidden
+          >
+            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
+          Actualizar
+        </button>
         <a
           href={enPerfil ? "#inicio" : "#perfil"}
           className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs transition lg:h-9 lg:px-4 lg:text-sm ${
@@ -42,6 +79,7 @@ export default function Cabecera({
           </svg>
           {enPerfil ? "Volver" : "Perfil"}
         </a>
+        </div>
       </div>
       <h1 className="mt-1 text-center font-serif text-[2.6rem] leading-none tracking-tight lg:mt-0 lg:text-[5.5rem]">
         {NOMBRES.b} <span className="text-acento-texto italic">&amp;</span> {NOMBRES.a}

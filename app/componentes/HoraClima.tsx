@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { NOMBRES, type Persona } from "@/lib/config";
+import { type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import { api, type Ubicacion } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
@@ -103,6 +104,7 @@ export default function HoraClima({
   ahora: Date;
   alCambiar: () => Promise<void>;
 }) {
+  const NOMBRES = useNombres();
   const [clima, setClima] = useState<Partial<Record<Persona, Clima>>>({});
   const [editando, setEditando] = useState(false);
   const a = ubicaciones?.a;

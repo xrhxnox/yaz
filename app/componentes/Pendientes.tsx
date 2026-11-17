@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CATEGORIAS, NOMBRES, formatearFecha, hoyCompartido, type Categoria, type Persona } from "@/lib/config";
+import { CATEGORIAS, formatearFecha, hoyCompartido, type Categoria, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
@@ -58,6 +59,7 @@ function Fila({
   alBorrar: () => void;
   alFoto: (archivo: File) => void;
 }) {
+  const NOMBRES = useNombres();
   // Antes de marcarlo como hecho, pedimos confirmar y la fecha en que lo hicieron
   const [confirmando, setConfirmando] = useState(false);
   const [fecha, setFecha] = useState(() => hoyCompartido());

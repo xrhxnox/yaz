@@ -1,5 +1,5 @@
-import { borrarImagenes, db, error, firmar, invalido, autenticar, notificar, revisar, subirImagen } from "@/lib/servidor";
-import { NOMBRES, hoyCompartido, otra, type Persona } from "@/lib/config";
+import { borrarImagenes, db, error, firmar, invalido, autenticar, nombresActuales, notificar, revisar, subirImagen } from "@/lib/servidor";
+import { hoyCompartido, otra, type Persona } from "@/lib/config";
 
 type Fila = { id: number; fecha: string; persona: Persona; path: string; nota: string | null };
 type Foto = { id: number; url: string; nota: string | null };
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         .insert({ fecha: hoy, persona: yo, path, nota: typeof nota === "string" && nota.trim() ? nota.trim().slice(0, 200) : null }),
     );
     // Solo avisamos con la primera foto del día, para no llenar de notificaciones
-    if (!count) await notificar(otra(yo), "Fotos del día", `${NOMBRES[yo]} subió fotos de hoy`, "/#fotos");
+    if (!count) await notificar(otra(yo), "Fotos del día", `${(await nombresActuales())[yo]} subió fotos de hoy`, "/#fotos");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

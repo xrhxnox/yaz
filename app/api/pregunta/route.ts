@@ -1,5 +1,5 @@
-import { db, error, invalido, autenticar, notificar, revisar } from "@/lib/servidor";
-import { NOMBRES, hoyCompartido, otra } from "@/lib/config";
+import { db, error, invalido, autenticar, notificar, revisar, nombresActuales } from "@/lib/servidor";
+import { hoyCompartido, otra } from "@/lib/config";
 import { preguntaDe } from "@/lib/preguntas";
 
 const MAX_RESPUESTA = 1000;
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         .from("respuestas")
         .upsert({ fecha: hoy, persona, respuesta: respuesta.trim().slice(0, MAX_RESPUESTA) }, { onConflict: "fecha,persona" }),
     );
-    if (!previa) await notificar(otra(persona), "Pregunta del día", `${NOMBRES[persona]} ya respondió`, "/#pregunta");
+    if (!previa) await notificar(otra(persona), "Pregunta del día", `${(await nombresActuales())[persona]} ya respondió`, "/#pregunta");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

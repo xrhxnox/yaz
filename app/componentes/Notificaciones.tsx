@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { NOMBRES, otra, type Persona } from "@/lib/config";
+import { otra, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import { api } from "@/lib/cliente";
 
 function base64AUint8(base64: string) {
@@ -13,6 +14,7 @@ function base64AUint8(base64: string) {
 type Situacion = "cargando" | "activas" | "inactivas" | "bloqueadas" | "instalar-ios" | "sin-soporte";
 
 export default function Notificaciones({ yo, enPerfil }: { yo: Persona; enPerfil?: boolean }) {
+  const NOMBRES = useNombres();
   const [situacion, setSituacion] = useState<Situacion>("cargando");
   const [error, setError] = useState("");
 

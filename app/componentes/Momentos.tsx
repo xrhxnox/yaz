@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NOMBRES, formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
+import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, enlace, titulo as tituloSeccion } from "@/lib/estilos";
@@ -150,6 +151,7 @@ function Formulario({ maximo, alTerminar }: { maximo: number; alTerminar: (guard
 }
 
 export default function Momentos() {
+  const NOMBRES = useNombres();
   const [datos, setDatos] = useState<{ maximo: number; momentos: Momento[] } | null>(null);
   const [agregando, setAgregando] = useState(false);
   const [subiendo, setSubiendo] = useState<{ id: number; texto: string } | null>(null);

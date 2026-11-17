@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { NOMBRES, formatearFecha, otra, type Persona } from "@/lib/config";
+import { formatearFecha, otra, type Persona } from "@/lib/config";
+import { useNombres } from "@/lib/pareja";
+import Avatar from "./Avatar";
 import { api } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, enlace, etiqueta, tarjeta, titulo } from "@/lib/estilos";
@@ -15,16 +17,20 @@ type Datos = {
   historial: { fecha: string; pregunta: string; a: string; b: string }[];
 };
 
-function Respuesta({ quien, texto, destacada }: { quien: string; texto: string; destacada?: boolean }) {
+function Respuesta({ quien, persona, texto, destacada }: { quien: string; persona: Persona; texto: string; destacada?: boolean }) {
   return (
     <div className={`border-l-2 pl-3 ${destacada ? "border-acento-texto" : "border-borde"}`}>
       <p className="font-serif text-lg leading-snug whitespace-pre-wrap break-words">{texto}</p>
-      <p className="mt-1 text-xs text-suave">— {quien}</p>
+      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-suave">
+        <Avatar persona={persona} size={18} />
+        {quien}
+      </p>
     </div>
   );
 }
 
 export default function Pregunta({ yo }: { yo: Persona }) {
+  const NOMBRES = useNombres();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
   const [texto, setTexto] = useState("");
@@ -91,9 +97,9 @@ export default function Pregunta({ yo }: { yo: Persona }) {
           formulario
         ) : (
           <div className="mt-6 space-y-5">
-            <Respuesta quien="Tú" texto={datos.mia} />
+            <Respuesta quien="Tú" persona={yo} texto={datos.mia} />
             {datos.suya ? (
-              <Respuesta quien={NOMBRES[tu]} texto={datos.suya} destacada />
+              <Respuesta quien={NOMBRES[tu]} persona={tu} texto={datos.suya} destacada />
             ) : (
               <p className="font-serif italic text-suave">Esperando la respuesta de {NOMBRES[tu]}…</p>
             )}
@@ -119,8 +125,8 @@ export default function Pregunta({ yo }: { yo: Persona }) {
               <p className={etiqueta}>{formatearFecha(h.fecha)}</p>
               <p className="mt-1 font-serif text-xl leading-snug">{h.pregunta}</p>
               <div className="mt-4 space-y-4">
-                <Respuesta quien={yo === "a" ? "Tú" : NOMBRES.a} texto={h.a} destacada={yo !== "a"} />
-                <Respuesta quien={yo === "b" ? "Tú" : NOMBRES.b} texto={h.b} destacada={yo !== "b"} />
+                <Respuesta quien={yo === "a" ? "Tú" : NOMBRES.a} persona="a" texto={h.a} destacada={yo !== "a"} />
+                <Respuesta quien={yo === "b" ? "Tú" : NOMBRES.b} persona="b" texto={h.b} destacada={yo !== "b"} />
               </div>
             </section>
           ))}

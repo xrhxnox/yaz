@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { NOMBRES, otra } from "@/lib/config";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { PAREJA, otra } from "@/lib/config";
+import { PAREJA_INICIAL, ProveedorPareja, type Pareja } from "@/lib/pareja";
 import { api, guardarSesion, leerSesion, medianocheLocal, suscribirSesion, type Estado } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { aplicarTema } from "@/lib/tema";
@@ -19,6 +20,7 @@ import Momentos from "./componentes/Momentos";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
 import Cabecera from "./componentes/Cabecera";
+import Cumpleanos from "./componentes/Cumpleanos";
 import Corazones, { crearCorazones, type Particula } from "./componentes/Corazones";
 
 // La sección actual vive en el #hash de la URL (así las notificaciones pueden abrir una sección)
@@ -69,6 +71,16 @@ export default function Inicio() {
     else aplicarTema(persona, JSON.parse(temaGuardado));
   }, [persona, temaGuardado]);
 
+  // Apodos, fotos de perfil y cumpleaños que comparten todas las pantallas
+  const pareja: Pareja = useMemo(
+    () => (estado ? { nombres: estado.nombres, avatares: estado.avatares, cumples: estado.cumples } : PAREJA_INICIAL),
+    [estado],
+  );
+  const titulo = `${pareja.nombres.b} & ${pareja.nombres.a}`;
+  useEffect(() => {
+    document.title = sesion ? titulo : PAREJA;
+  }, [titulo, sesion]);
+
   const lanzarCorazones = useCallback(() => {
     const nuevos = crearCorazones();
     setCorazones((c) => [...c, ...nuevos]);
@@ -95,7 +107,7 @@ export default function Inicio() {
       const ultimoSuyo = e.recientes.find((p) => p.de === otra(sesion.persona))?.id ?? 0;
       if (ultimoVisto.current !== null && ultimoSuyo > ultimoVisto.current) {
         lanzarCorazones();
-        mostrarAviso(`${NOMBRES[otra(sesion.persona)]} te mandó un mensaje`);
+        mostrarAviso(`${e.nombres[otra(sesion.persona)]} te mandó un mensaje`);
       }
       ultimoVisto.current = ultimoSuyo;
       setEstado(e);
@@ -113,12 +125,13 @@ export default function Inicio() {
   const yo = sesion.persona;
 
   return (
-    <>
+    <ProveedorPareja value={pareja}>
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
         <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} />
 
         {seccion === "inicio" && (
           <>
+            <Cumpleanos yo={yo} />
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas, como la portada de un periódico */}
             <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
@@ -143,7 +156,7 @@ export default function Inicio() {
                 lanzarCorazones();
                 try {
                   await api("/api/pensar", { mensaje });
-                  mostrarAviso(`Enviado a ${NOMBRES[otra(yo)]}`);
+                  mostrarAviso(`Enviado a ${pareja.nombres[otra(yo)]}`);
                   await cargar();
                 } catch (e) {
                   mostrarAviso(`No se pudo enviar: ${(e as Error).message}`);
@@ -175,6 +188,6 @@ export default function Inicio() {
           <p className="rounded-full bg-texto px-4 py-2 text-sm font-medium text-fondo shadow-lg">{aviso}</p>
         </div>
       )}
-    </>
+    </ProveedorPareja>
   );
 }

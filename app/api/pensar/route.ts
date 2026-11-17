@@ -1,5 +1,5 @@
-import { db, error, autenticar, notificar, revisar } from "@/lib/servidor";
-import { MAX_MENSAJE, NOMBRES, otra } from "@/lib/config";
+import { db, error, autenticar, nombresActuales, notificar, revisar } from "@/lib/servidor";
+import { MAX_MENSAJE, otra } from "@/lib/config";
 
 export async function POST(req: Request) {
   const yo = await autenticar(req);
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   try {
     revisar(await db().from("pensamientos").insert({ de, mensaje: texto }));
-    const enviadas = await notificar(otra(de), NOMBRES[de], texto);
+    const enviadas = await notificar(otra(de), (await nombresActuales())[de], texto);
     return Response.json({ ok: true, enviadas });
   } catch (e) {
     return error(e);
