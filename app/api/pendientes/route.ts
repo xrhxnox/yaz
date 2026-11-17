@@ -1,5 +1,5 @@
 import { borrarImagenes, db, error, firmar, invalido, autenticar, revisar, subirImagen } from "@/lib/servidor";
-import { esCategoria } from "@/lib/config";
+import { esCategoria, esFecha } from "@/lib/config";
 
 type Fila = {
   id: number;
@@ -83,14 +83,17 @@ export async function PATCH(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const { id, hecho } = await req.json().catch(() => ({}));
+  const { id, hecho, fecha } = await req.json().catch(() => ({}));
   if (!Number.isInteger(id) || typeof hecho !== "boolean") return invalido();
+  if (fecha !== undefined && !esFecha(fecha)) return invalido("Fecha inválida");
+  // Se guarda a mediodía UTC para que la fecha no cambie por zona horaria
+  const hecho_at = hecho ? (fecha ? `${fecha}T12:00:00Z` : new Date().toISOString()) : null;
 
   try {
     revisar(
       await db()
         .from("pendientes")
-        .update({ hecho, hecho_at: hecho ? new Date().toISOString() : null })
+        .update({ hecho, hecho_at })
         .eq("id", id),
     );
     return Response.json({ ok: true });

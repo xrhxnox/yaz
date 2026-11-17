@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CATEGORIAS, NOMBRES, type Categoria, type Persona } from "@/lib/config";
+import { CATEGORIAS, NOMBRES, formatearFecha, hoyCompartido, type Categoria, type Persona } from "@/lib/config";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, caja, campo, tarjeta } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, caja, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
 
 type Pendiente = {
@@ -47,46 +47,94 @@ function Miniatura({ p, alElegir }: { p: Pendiente; alElegir: (archivo: File) =>
 
 function Fila({
   p,
-  alMarcar,
+  alCompletar,
+  alReabrir,
   alBorrar,
   alFoto,
 }: {
   p: Pendiente;
-  alMarcar: () => void;
+  alCompletar: (fecha: string) => void;
+  alReabrir: () => void;
   alBorrar: () => void;
   alFoto: (archivo: File) => void;
 }) {
+  // Antes de marcarlo como hecho, pedimos confirmar y la fecha en que lo hicieron
+  const [confirmando, setConfirmando] = useState(false);
+  const [fecha, setFecha] = useState(() => hoyCompartido());
+
   return (
-    <li className="group flex items-center gap-3 py-3">
-      <button
-        onClick={alMarcar}
-        aria-label={p.hecho ? "Marcar como pendiente" : "Marcar como hecho"}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
-          p.hecho ? "border-acento bg-acento text-sobre-acento" : "border-suave hover:border-texto"
-        }`}
-      >
-        {p.hecho && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
-            <path d="M5 12l5 5 9-10" />
+    <li className="py-3">
+      <div className="group flex items-center gap-3">
+        <button
+          onClick={() => {
+            if (p.hecho) {
+              if (confirm(`¿Regresar "${p.texto}" a pendientes?`)) alReabrir();
+            } else setConfirmando((c) => !c);
+          }}
+          aria-label={p.hecho ? "Regresar a pendientes" : "Marcar como hecho"}
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
+            p.hecho || confirmando ? "border-acento bg-acento text-sobre-acento" : "border-suave hover:border-texto"
+          }`}
+        >
+          {(p.hecho || confirmando) && (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+              <path d="M5 12l5 5 9-10" />
+            </svg>
+          )}
+        </button>
+        <Miniatura p={p} alElegir={alFoto} />
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-lg leading-snug break-words">{p.texto}</p>
+          <p className="text-xs text-suave">
+            {CATEGORIAS.find((c) => c.id === p.categoria)?.nombre} · {NOMBRES[p.creado_por]}
+          </p>
+          {p.hecho && p.hecho_at && (
+            <p className="mt-0.5 font-serif text-sm italic text-acento-texto">
+              Completado el {formatearFecha(p.hecho_at.slice(0, 10), { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={alBorrar}
+          aria-label="Borrar"
+          className="shrink-0 p-1 text-suave opacity-60 transition hover:text-acento-texto hover:opacity-100"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M6 6l12 12M18 6L6 18" />
           </svg>
-        )}
-      </button>
-      <Miniatura p={p} alElegir={alFoto} />
-      <div className="min-w-0 flex-1">
-        <p className={`font-serif text-lg leading-snug break-words ${p.hecho ? "text-suave line-through" : ""}`}>{p.texto}</p>
-        <p className="text-xs text-suave">
-          {CATEGORIAS.find((c) => c.id === p.categoria)?.nombre} · {NOMBRES[p.creado_por]}
-        </p>
+        </button>
       </div>
-      <button
-        onClick={alBorrar}
-        aria-label="Borrar"
-        className="shrink-0 p-1 text-suave opacity-60 transition hover:text-acento-texto hover:opacity-100"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path d="M6 6l12 12M18 6L6 18" />
-        </svg>
-      </button>
+
+      {confirmando && (
+        <div className="mt-3 ml-9 rounded-xl bg-relleno p-3">
+          <p className="font-serif">¿Ya lo hicieron?</p>
+          <label className="mt-2 flex items-center gap-2 text-sm text-suave">
+            Fecha
+            <input
+              type="date"
+              value={fecha}
+              max={hoyCompartido()}
+              onChange={(e) => setFecha(e.target.value)}
+              className="rounded-lg border border-borde bg-tarjeta px-3 py-1.5 text-texto outline-none focus:border-suave"
+            />
+          </label>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => setConfirmando(false)} className={botonSecundario}>
+              Cancelar
+            </button>
+            <button
+              disabled={!fecha}
+              onClick={() => {
+                setConfirmando(false);
+                alCompletar(fecha);
+              }}
+              className={`${botonPrimario} flex-1`}
+            >
+              Sí, completado
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
@@ -96,7 +144,6 @@ export default function Pendientes() {
   const [filtro, setFiltro] = useState<Categoria | "todo">("todo");
   const [texto, setTexto] = useState("");
   const [categoria, setCategoria] = useState<Categoria>("pelis");
-  const [verHechos, setVerHechos] = useState(false);
   const [foto, setFoto] = useState<{ archivo: File; vista: string } | null>(null);
   const [error, setError] = useState("");
 
@@ -151,9 +198,14 @@ export default function Pendientes() {
     );
   }
 
-  function marcar(p: Pendiente) {
-    setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, hecho: !p.hecho } : x)) ?? null);
-    hacer(api("/api/pendientes", { id: p.id, hecho: !p.hecho }, "PATCH"));
+  function completar(p: Pendiente, fecha: string) {
+    setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, hecho: true, hecho_at: `${fecha}T12:00:00Z` } : x)) ?? null);
+    hacer(api("/api/pendientes", { id: p.id, hecho: true, fecha }, "PATCH"));
+  }
+
+  function reabrir(p: Pendiente) {
+    setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, hecho: false, hecho_at: null } : x)) ?? null);
+    hacer(api("/api/pendientes", { id: p.id, hecho: false }, "PATCH"));
   }
 
   function borrar(p: Pendiente) {
@@ -164,7 +216,18 @@ export default function Pendientes() {
 
   const visibles = (lista ?? []).filter((p) => filtro === "todo" || p.categoria === filtro);
   const porHacer = visibles.filter((p) => !p.hecho);
-  const hechos = visibles.filter((p) => p.hecho);
+  // Lo más reciente primero
+  const hechos = visibles.filter((p) => p.hecho).sort((x, y) => (y.hecho_at ?? "").localeCompare(x.hecho_at ?? ""));
+  const fila = (p: Pendiente) => (
+    <Fila
+      key={p.id}
+      p={p}
+      alCompletar={(fecha) => completar(p, fecha)}
+      alReabrir={() => reabrir(p)}
+      alBorrar={() => borrar(p)}
+      alFoto={(a) => ponerFoto(p, a)}
+    />
+  );
 
   return (
     <div className="space-y-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
@@ -242,34 +305,28 @@ export default function Pendientes() {
       </div>
       </div>
 
-      <section className={`${tarjeta} lg:col-span-8`}>
-        {lista === null ? (
-          <p className="text-sm text-suave">{error || "Cargando…"}</p>
-        ) : porHacer.length === 0 ? (
-          <p className="font-serif italic text-suave">Nada pendiente aquí.</p>
-        ) : (
-          <ul className="-my-2.5 divide-y divide-borde">
-            {porHacer.map((p) => (
-              <Fila key={p.id} p={p} alMarcar={() => marcar(p)} alBorrar={() => borrar(p)} alFoto={(a) => ponerFoto(p, a)} />
-            ))}
-          </ul>
-        )}
+      <div className="space-y-8 lg:col-span-8">
+        <section className={tarjeta}>
+          <p className={etiqueta}>Por hacer{porHacer.length > 0 && ` · ${porHacer.length}`}</p>
+          {lista === null ? (
+            <p className="mt-2 text-sm text-suave">{error || "Cargando…"}</p>
+          ) : porHacer.length === 0 ? (
+            <p className="mt-2 font-serif italic text-suave">Nada pendiente aquí.</p>
+          ) : (
+            <ul className="mt-1 divide-y divide-borde">{porHacer.map(fila)}</ul>
+          )}
+          {error && lista && <p className="mt-2 text-sm text-acento-texto">{error}</p>}
+        </section>
+
         {hechos.length > 0 && (
-          <div className="mt-4 border-t border-borde pt-3">
-            <button onClick={() => setVerHechos((v) => !v)} className="text-sm text-suave hover:text-texto">
-              {verHechos ? "Ocultar" : "Ver"} completados ({hechos.length})
-            </button>
-            {verHechos && (
-              <ul className="mt-1 divide-y divide-borde">
-                {hechos.map((p) => (
-                  <Fila key={p.id} p={p} alMarcar={() => marcar(p)} alBorrar={() => borrar(p)} alFoto={(a) => ponerFoto(p, a)} />
-                ))}
-              </ul>
-            )}
-          </div>
+          <section className={tarjeta}>
+            <p className={titulo}>
+              Ya lo hicimos <span className="text-acento-texto">· {hechos.length}</span>
+            </p>
+            <ul className="mt-1 divide-y divide-borde">{hechos.map(fila)}</ul>
+          </section>
         )}
-        {error && lista && <p className="mt-2 text-sm text-acento-texto">{error}</p>}
-      </section>
+      </div>
     </div>
   );
 }
