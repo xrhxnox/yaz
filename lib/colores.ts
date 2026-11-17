@@ -60,7 +60,8 @@ export function derivarTema({ fondo, acento }: Tema): Record<string, string> {
     "--relleno": mezclar(tarjeta, texto, 0.06),
     "--acento": acento,
     "--sobre-acento": sobreAcento,
-    "--acento-texto": legible(acento, tarjeta, texto, 3.5),
+    // El acento se usa tal cual, sin ajustarlo aunque contraste poco con el fondo
+    "--acento-texto": acento,
     "--acento-suave": mezclar(tarjeta, acento, 0.2),
   };
 }
