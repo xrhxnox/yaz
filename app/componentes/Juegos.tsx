@@ -7,6 +7,7 @@ import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { JUEGOS, caidaEnColumna, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
 import { botonPrimario, enlace, numero } from "@/lib/estilos";
+import Corazon from "./Corazon";
 
 type Partida = {
   id: number;
@@ -25,7 +26,7 @@ type Datos = {
   limite?: number;
 };
 
-// Gato: × para Ric (a), ○ para Yaz (b), cada quien en su color
+// Gato: × para Ric (a), corazón para Yaz (b), cada quien en su color
 function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (posicion: number) => void }) {
   const { acentos } = usePareja();
   return (
@@ -46,7 +47,7 @@ function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boole
             } ${libre ? "hover:bg-relleno" : ""} ${enLinea ? "bg-acento-suave" : ""}`}
             style={{ color: f ? acentos[f] : undefined }}
           >
-            {f === "a" ? "×" : f === "b" ? "○" : ""}
+            {f === "a" ? "×" : f === "b" ? <Corazon size={52} className="h-1/2 w-1/2" /> : ""}
           </button>
         );
       })}
@@ -86,7 +87,11 @@ function TableroConecta4({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: b
                     } ${enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""} ${ultima ? "ficha-cae" : ""}`}
                     style={f ? { backgroundColor: acentos[f], ...(ultima ? ({ "--filas": fila + 1 } as React.CSSProperties) : {}) } : undefined}
                   >
-                    {ultima && <span className="h-1/3 w-1/3 rounded-full bg-fondo/80" aria-label="Última jugada" />}
+                    {ultima && (
+                      <span className="flex h-1/2 w-1/2 items-center justify-center text-fondo/85" aria-label="Última jugada">
+                        <Corazon size={16} className="h-full w-full" />
+                      </span>
+                    )}
                   </span>
                 );
               })}
@@ -159,7 +164,9 @@ function JuegoActual({ tipo, p, yo, hoy, limite, alJugar, alNueva, alAbandonar }
       <p className="text-center text-xs text-suave">
         {tipo === "gato" ? (
           <>
-            <span style={{ color: acentos.a }}>× {nombres.a}</span> · <span style={{ color: acentos.b }}>○ {nombres.b}</span>
+            <span style={{ color: acentos.a }}>× {nombres.a}</span> · <span style={{ color: acentos.b }}>
+              <Corazon size={10} className="inline align-[-1px]" /> {nombres.b}
+            </span>
           </>
         ) : (
           <>
