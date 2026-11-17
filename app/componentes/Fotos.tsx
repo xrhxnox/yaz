@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatearFecha, type Persona } from "@/lib/config";
-import { useNombres } from "@/lib/pareja";
+import { useNombres, usePareja } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
@@ -15,20 +15,25 @@ type Elegida = { blob: Blob; vista: string };
 // Las fotos de una persona en un día, en cuadrícula
 function Galeria({
   fotos,
+  persona,
   nombre,
   propias,
   alBorrar,
 }: {
   fotos: Foto[];
+  persona: Persona;
   nombre: string;
   propias?: boolean;
   alBorrar?: (f: Foto) => void;
 }) {
+  // Cada quien con su color de acento
+  const color = usePareja().acentos[persona];
   return (
     <div>
-      <p className="mb-2 text-xs text-suave">
-        {nombre}
-        {fotos.length > 1 && ` · ${fotos.length} fotos`}
+      <p className="mb-2 flex items-center gap-1.5 text-xs text-suave">
+        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        <span style={{ color }}>{nombre}</span>
+        {fotos.length > 1 && `· ${fotos.length} fotos`}
       </p>
       {fotos.length === 0 ? (
         <p className="font-serif text-sm italic text-suave">Sin fotos todavía.</p>
@@ -199,8 +204,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
         ) : (
           <>
             <div className="mt-4 space-y-5">
-              <Galeria fotos={hoy[yo]} nombre="Tú" propias alBorrar={borrar} />
-              <Galeria fotos={hoy[tu]} nombre={NOMBRES[tu]} />
+              <Galeria fotos={hoy[yo]} persona={yo} nombre="Tú" propias alBorrar={borrar} />
+              <Galeria fotos={hoy[tu]} persona={tu} nombre={NOMBRES[tu]} />
             </div>
             <button
               onClick={() => selector.current?.click()}
@@ -222,8 +227,8 @@ export default function Fotos({ yo }: { yo: Persona }) {
             <section key={d.fecha} className={tarjeta}>
               <p className={etiqueta}>{formatearFecha(d.fecha, { weekday: "long", day: "numeric", month: "long" })}</p>
               <div className="mt-3 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-                <Galeria fotos={d[yo]} nombre="Tú" propias alBorrar={borrar} />
-                <Galeria fotos={d[tu]} nombre={NOMBRES[tu]} />
+                <Galeria fotos={d[yo]} persona={yo} nombre="Tú" propias alBorrar={borrar} />
+                <Galeria fotos={d[tu]} persona={tu} nombre={NOMBRES[tu]} />
               </div>
             </section>
           ))}
