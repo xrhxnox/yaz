@@ -7,8 +7,9 @@ type Fila = {
   titulo: string;
   descripcion: string | null;
   creado_por: string;
-  momento_fotos: { id: number; path: string; created_at: string }[];
+  foto_path: string | null;
 };
+type FilaFoto = { id: number; momento_id: number; path: string };
 
 // Máximo de fotos por momento
 const MAX_FOTOS = 20;
@@ -18,23 +19,30 @@ export async function GET(req: Request) {
   if (yo instanceof Response) return yo;
 
   try {
+    // Momentos y sus fotos se leen por separado (no dependemos de la relación en el caché de Supabase)
     const filas: Fila[] =
       revisar(
         await db()
           .from("momentos")
-          .select("id, fecha, titulo, descripcion, creado_por, momento_fotos (id, path, created_at)")
+          .select("id, fecha, titulo, descripcion, creado_por, foto_path")
           .order("fecha", { ascending: false })
           .order("id", { ascending: false }),
       ) ?? [];
-    const urls = await firmar(filas.flatMap((f) => f.momento_fotos.map((x) => x.path)));
+    const r = await db().from("momento_fotos").select("id, momento_id, path").order("created_at", { ascending: true });
+    // Si todavía no existe la tabla nueva, usamos la foto guardada a la manera anterior (momentos.foto_path)
+    const fotos: FilaFoto[] = r.error
+      ? filas.filter((m) => m.foto_path).map((m) => ({ id: -m.id, momento_id: m.id, path: m.foto_path! }))
+      : (r.data ?? []);
+    const urls = await firmar(fotos.map((x) => x.path));
     return Response.json({
       maximo: MAX_FOTOS,
-      momentos: filas.map(({ momento_fotos, ...m }) => ({
-        ...m,
-        fotos: momento_fotos
-          .sort((x, y) => x.created_at.localeCompare(y.created_at))
-          .filter((x) => urls[x.path])
-          .map((x) => ({ id: x.id, url: urls[x.path] })),
+      momentos: filas.map((m) => ({
+        id: m.id,
+        fecha: m.fecha,
+        titulo: m.titulo,
+        descripcion: m.descripcion,
+        creado_por: m.creado_por,
+        fotos: fotos.filter((x) => x.momento_id === m.id && urls[x.path]).map((x) => ({ id: x.id, url: urls[x.path] })),
       })),
     });
   } catch (e) {

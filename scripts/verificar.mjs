@@ -94,7 +94,8 @@ if (url && llave && llaveOk) {
   let faltantes = 0;
   let conectado = true;
   for (const t of TABLAS) {
-    const { error, count } = await db.from(t).select("*", { count: "exact", head: true });
+    // Sin head: las consultas head no reportan cuando falta la tabla
+    const { error, count } = await db.from(t).select("*", { count: "exact" }).limit(1);
     if (!error) ok(`${t} (${count ?? 0} filas)`);
     else if (/does not exist|schema cache|PGRST205|42P01/i.test(`${error.code} ${error.message}`)) {
       faltantes++;

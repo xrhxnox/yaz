@@ -112,6 +112,10 @@ create table if not exists perfiles (
   tema jsonb,
   updated_at timestamptz not null default now()
 );
+-- Apodo (nombre que se muestra), cumpleaños sin año (MM-DD) y foto de perfil
+alter table perfiles add column if not exists apodo text;
+alter table perfiles add column if not exists cumple text;
+alter table perfiles add column if not exists avatar_path text;
 
 -- Wishlist: links de cosas que nos gustan
 create table if not exists deseos (
@@ -150,3 +154,6 @@ on conflict (id) do update
   set public = false,
       file_size_limit = excluded.file_size_limit,
       allowed_mime_types = excluded.allowed_mime_types;
+
+-- Que la API de Supabase vuelva a leer las tablas y relaciones nuevas
+notify pgrst, 'reload schema';
