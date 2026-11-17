@@ -39,7 +39,7 @@ function leerSeccion(): Vista {
     history.replaceState(null, "", "#juegos/pregunta");
     return "juegos";
   }
-  // Pendientes ahora es una pestaña de Recuerdos
+  // Pendientes ahora es una pestaña de Momentos
   if (h === "lista") {
     history.replaceState(null, "", "#momentos/pendientes");
     return "momentos";

@@ -44,7 +44,7 @@ export const NOMBRES_SECCION: Record<Seccion, string> = {
   fotos: "Fotos",
   juegos: "Juegos",
   buzon: "Buzón",
-  momentos: "Recuerdos",
+  momentos: "Momentos",
 };
 
 export default function Navegacion({ actual }: { actual: string }) {
