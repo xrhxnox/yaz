@@ -6,7 +6,7 @@ import { useNombres } from "@/lib/pareja";
 import Avatar from "./Avatar";
 import type { Estado } from "@/lib/cliente";
 import Corazon from "./Corazon";
-import { campo, etiqueta, numero, tarjeta } from "@/lib/estilos";
+import { campo, numero, tarjeta, titulo } from "@/lib/estilos";
 
 function hace(iso: string, ahora: Date) {
   const min = Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000);
@@ -49,7 +49,7 @@ export default function PenseEnTi({
 
   return (
     <section className={tarjeta}>
-      <p className={etiqueta}>Para {NOMBRES[tu]}</p>
+      <p className={titulo}>Para {NOMBRES[tu]}</p>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {MENSAJES.map((m) => (

@@ -5,7 +5,7 @@ import { formatearFecha, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, campo, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
 
 type Foto = { id: number; url: string; nota: string | null };
@@ -146,7 +146,9 @@ export default function Fotos({ yo }: { yo: Persona }) {
   return (
     <div className="space-y-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
       <section className={`${tarjeta} lg:sticky lg:top-8 lg:col-span-5`}>
-        <p className={etiqueta}>Fotos del día · {formatearFecha(datos.hoy, { day: "numeric", month: "long" })}</p>
+        <p className={titulo}>
+          Fotos del día<span className={junto}>{formatearFecha(datos.hoy, { day: "numeric", month: "long" })}</span>
+        </p>
 
         {elegidas.length > 0 ? (
           <div className="mt-3 space-y-3">

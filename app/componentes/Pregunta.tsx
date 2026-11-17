@@ -6,7 +6,7 @@ import { useNombres } from "@/lib/pareja";
 import Avatar from "./Avatar";
 import { api } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, campo, enlace, etiqueta, tarjeta, titulo } from "@/lib/estilos";
+import { botonPrimario, campo, enlace, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
 
 type Datos = {
   fecha: string;
@@ -90,7 +90,9 @@ export default function Pregunta({ yo }: { yo: Persona }) {
   return (
     <div className="space-y-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 lg:space-y-0">
       <section className={`${tarjeta} lg:col-span-7`}>
-        <p className={etiqueta}>Pregunta del día · {formatearFecha(datos.fecha, { day: "numeric", month: "long" })}</p>
+        <p className={titulo}>
+          Pregunta del día<span className={junto}>{formatearFecha(datos.fecha, { day: "numeric", month: "long" })}</span>
+        </p>
         <p className="mt-2 font-serif text-[1.85rem] lg:text-5xl leading-tight tracking-tight">{datos.pregunta}</p>
 
         {!datos.mia || editando ? (

@@ -73,7 +73,18 @@ export default function Inicio() {
 
   // Apodos, fotos de perfil y cumpleaños que comparten todas las pantallas
   const pareja: Pareja = useMemo(
-    () => (estado ? { nombres: estado.nombres, avatares: estado.avatares, cumples: estado.cumples } : PAREJA_INICIAL),
+    () =>
+      estado
+        ? {
+            nombres: estado.nombres,
+            avatares: estado.avatares,
+            cumples: estado.cumples,
+            acentos: {
+              a: estado.temas?.a?.acento ?? PAREJA_INICIAL.acentos.a,
+              b: estado.temas?.b?.acento ?? PAREJA_INICIAL.acentos.b,
+            },
+          }
+        : PAREJA_INICIAL,
     [estado],
   );
   const titulo = `${pareja.nombres.b} & ${pareja.nombres.a}`;

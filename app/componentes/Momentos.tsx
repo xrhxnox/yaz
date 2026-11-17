@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
-import { useNombres } from "@/lib/pareja";
+import { useNombres, usePareja } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo, enlace, titulo as tituloSeccion } from "@/lib/estilos";
@@ -100,6 +100,53 @@ function ElegirFotos({ archivos, alCambiar, maximo }: { archivos: File[]; alCamb
   );
 }
 
+// Editar fecha, título y detalles (las fotos se agregan o quitan aparte)
+function EditarMomento({ m, alTerminar }: { m: Momento; alTerminar: (guardado: boolean) => void }) {
+  const [fecha, setFecha] = useState(m.fecha);
+  const [titulo, setTitulo] = useState(m.titulo);
+  const [descripcion, setDescripcion] = useState(m.descripcion ?? "");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!titulo.trim() || !fecha) return;
+    setGuardando(true);
+    setError("");
+    try {
+      await api("/api/momentos", { id: m.id, fecha, titulo, descripcion }, "PATCH");
+      alTerminar(true);
+    } catch (err) {
+      setError((err as Error).message);
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <form onSubmit={guardar} className="mt-1 space-y-2">
+      <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={campo} />
+      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={120} placeholder="¿Qué pasó?" className={campo} autoFocus />
+      <textarea
+        value={descripcion}
+        onChange={(e) => setDescripcion(e.target.value)}
+        maxLength={1000}
+        rows={3}
+        placeholder="Detalles (opcional)"
+        className={`${campo} resize-none`}
+      />
+      {error && <p className="text-sm text-acento-texto">{error}</p>}
+      <div className="flex gap-2">
+        <button type="button" onClick={() => alTerminar(false)} className={botonSecundario}>
+          Cancelar
+        </button>
+        <button disabled={!titulo.trim() || !fecha || guardando} className={`${botonPrimario} flex-1`}>
+          {guardando ? "Guardando…" : "Guardar"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function Formulario({ maximo, alTerminar }: { maximo: number; alTerminar: (guardado: boolean) => void }) {
   const [fecha, setFecha] = useState(hoyCompartido());
   const [titulo, setTitulo] = useState("");
@@ -152,6 +199,8 @@ function Formulario({ maximo, alTerminar }: { maximo: number; alTerminar: (guard
 
 export default function Momentos() {
   const NOMBRES = useNombres();
+  const { acentos } = usePareja();
+  const [editando, setEditando] = useState<number | null>(null);
   const [datos, setDatos] = useState<{ maximo: number; momentos: Momento[] } | null>(null);
   const [agregando, setAgregando] = useState(false);
   const [subiendo, setSubiendo] = useState<{ id: number; texto: string } | null>(null);
@@ -234,20 +283,40 @@ export default function Momentos() {
         <ol className="relative ml-2 border-l border-borde pt-2">
           {momentos.map((m) => (
             <li key={m.id} className="relative pb-8 pl-6">
-              <span className="absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 border-fondo bg-acento" />
-              <p className="text-xs tracking-wide text-acento-texto">{formatearFecha(m.fecha)}</p>
+              {/* Cada momento lleva el color de acento de quien lo publicó */}
+              <span
+                className="absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 border-fondo"
+                style={{ backgroundColor: acentos[m.creado_por] }}
+              />
+              <p className="text-xs tracking-wide" style={{ color: acentos[m.creado_por] }}>
+                {formatearFecha(m.fecha)}
+              </p>
+              {editando === m.id ? (
+                <EditarMomento
+                  m={m}
+                  alTerminar={(guardado) => {
+                    setEditando(null);
+                    if (guardado) cargar();
+                  }}
+                />
+              ) : (
               <div className="mt-1">
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-serif text-2xl leading-tight tracking-tight">{m.titulo}</p>
-                  <button onClick={() => borrar(m)} aria-label="Borrar momento" className="shrink-0 text-suave hover:text-acento-texto">
-                    <Equis size={16} />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2 pt-1">
+                    <button onClick={() => setEditando(m.id)} className={`${enlace} text-xs`}>
+                      Editar
+                    </button>
+                    <button onClick={() => borrar(m)} aria-label="Borrar momento" className="text-suave hover:text-acento-texto">
+                      <Equis size={16} />
+                    </button>
+                  </div>
                 </div>
                 {m.descripcion && <p className="mt-1 text-sm whitespace-pre-wrap text-suave">{m.descripcion}</p>}
                 <Mosaico fotos={m.fotos} titulo={m.titulo} alBorrar={borrarFoto} />
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <p className="text-xs text-suave">
-                    Agregado por {NOMBRES[m.creado_por]}
+                    Agregado por <span style={{ color: acentos[m.creado_por] }}>{NOMBRES[m.creado_por]}</span>
                     {m.fotos.length > 1 && ` · ${m.fotos.length} fotos`}
                   </p>
                   {subiendo?.id === m.id ? (
@@ -269,6 +338,7 @@ export default function Momentos() {
                   )}
                 </div>
               </div>
+              )}
             </li>
           ))}
           <li className="relative pl-6">

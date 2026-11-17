@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
+import { campo, enlace, numero, tarjeta, titulo } from "@/lib/estilos";
 
 function aInputLocal(iso: string) {
   const d = new Date(iso);
@@ -116,7 +116,7 @@ export default function Reencuentro({
 
   return (
     <section className={tarjeta}>
-      <p className={etiqueta}>Próximo reencuentro</p>
+      <p className={titulo}>Próximo reencuentro</p>
       {contenido}
     </section>
   );

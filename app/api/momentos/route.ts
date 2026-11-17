@@ -78,6 +78,34 @@ export async function POST(req: Request) {
   }
 }
 
+// Editar fecha, título y detalles de un momento
+export async function PATCH(req: Request) {
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
+
+  const { id, fecha, titulo, descripcion } = await req.json().catch(() => ({}));
+  if (!Number.isInteger(id) || !esFecha(fecha) || typeof titulo !== "string" || !titulo.trim()) return invalido();
+
+  try {
+    const editado = revisar(
+      await db()
+        .from("momentos")
+        .update({
+          fecha,
+          titulo: titulo.trim().slice(0, 120),
+          descripcion: typeof descripcion === "string" && descripcion.trim() ? descripcion.trim().slice(0, 1000) : null,
+        })
+        .eq("id", id)
+        .select("id")
+        .maybeSingle(),
+    );
+    if (!editado) return invalido("Ese momento ya no existe");
+    return Response.json({ ok: true });
+  } catch (e) {
+    return error(e);
+  }
+}
+
 // Agregar UNA foto a un momento
 export async function PUT(req: Request) {
   const yo = await autenticar(req);

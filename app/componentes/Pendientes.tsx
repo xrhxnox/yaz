@@ -5,7 +5,7 @@ import { CATEGORIAS, formatearFecha, hoyCompartido, type Categoria, type Persona
 import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, caja, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, caja, campo, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
 
 type Pendiente = {
@@ -327,7 +327,9 @@ export default function Pendientes() {
 
       <div className="space-y-8 lg:col-span-8">
         <section className={tarjeta}>
-          <p className={etiqueta}>Por hacer{porHacer.length > 0 && ` · ${porHacer.length}`}</p>
+          <p className={titulo}>
+            Por hacer {porHacer.length > 0 && <span className="text-acento-texto">· {porHacer.length}</span>}
+          </p>
           {lista === null ? (
             <p className="mt-2 text-sm text-suave">{error || "Cargando…"}</p>
           ) : porHacer.length === 0 ? (

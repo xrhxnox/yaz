@@ -8,7 +8,9 @@ export const caja = "rounded-xl border border-borde bg-tarjeta p-5";
 // Etiqueta pequeña arriba de cada sección
 export const etiqueta = "text-xs tracking-wide text-acento-texto";
 // Título de sección en serif
-export const titulo = "font-serif text-xl leading-snug tracking-tight";
+export const titulo = "font-serif text-2xl leading-tight tracking-tight lg:text-[1.7rem]";
+// Fecha o dato pequeño junto a un título de sección
+export const junto = "ml-2 font-sans text-xs tracking-wide text-suave";
 // Números grandes en serif
 export const numero = "font-serif font-normal tabular-nums tracking-tight";
 
