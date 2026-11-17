@@ -1,5 +1,5 @@
-// contorno: solo el borde, sin relleno
-export default function Corazon({ className, size = 24, contorno = false }: { className?: string; size?: number; contorno?: boolean }) {
+// contorno: solo el borde, sin relleno (grosor en unidades de 24)
+export default function Corazon({ className, size = 24, contorno = false, grosor = 1.75 }: { className?: string; size?: number; contorno?: boolean; grosor?: number }) {
   return (
     <svg
       width={size}
@@ -7,7 +7,7 @@ export default function Corazon({ className, size = 24, contorno = false }: { cl
       viewBox="0 0 24 24"
       fill={contorno ? "none" : "currentColor"}
       stroke={contorno ? "currentColor" : undefined}
-      strokeWidth={contorno ? 1.75 : undefined}
+      strokeWidth={contorno ? grosor : undefined}
       strokeLinejoin="round"
       aria-hidden
       className={className}

@@ -26,7 +26,8 @@ type Datos = {
   limite?: number;
 };
 
-// Gato: × para Ric (a), corazón para Yaz (b), cada quien en su color
+// Gato: × para Ric (a), corazón para Yaz (b), cada quien en su color.
+// El corazón mide y pesa lo mismo que la × de Fraunces a 60px (~23px de ancho, trazo ~1.9px)
 function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (posicion: number) => void }) {
   const { acentos } = usePareja();
   return (
@@ -47,7 +48,7 @@ function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boole
             } ${libre ? "hover:bg-relleno" : ""} ${enLinea ? "bg-acento-suave" : ""}`}
             style={{ color: f ? acentos[f] : undefined }}
           >
-            {f === "a" ? "×" : f === "b" ? <Corazon size={52} contorno className="h-1/2 w-1/2" /> : ""}
+            {f === "a" ? "×" : f === "b" ? <Corazon size={26} contorno grosor={1.7} className="shrink-0" /> : ""}
           </button>
         );
       })}
