@@ -7,34 +7,34 @@
   --acento-texto  acento usado como texto o ícono sobre el fondo
 */
 
-/* Neutro: pantalla de entrada, antes de saber quién es */
+/* Neutro (papel cálido): pantalla de entrada, antes de saber quién es */
 :root {
   color-scheme: light;
-  --fondo: #f4f4f2;
-  --tarjeta: #ffffff;
-  --texto: #18181b;
-  --suave: #71717a;
-  --borde: #e4e4e7;
-  --relleno: #f4f4f5;
-  --acento: #18181b;
+  --fondo: #f6f2ec;
+  --tarjeta: #fbf9f5;
+  --texto: #2a2622;
+  --suave: #857b70;
+  --borde: #e2d9cd;
+  --relleno: #efe9e0;
+  --acento: #2a2622;
   --sobre-acento: #ffffff;
-  --acento-texto: #e5484d;
-  --acento-suave: #fdecec;
+  --acento-texto: #a8492f;
+  --acento-suave: #f3e4dc;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema]) {
     color-scheme: dark;
-    --fondo: #0e0e10;
-    --tarjeta: #18181b;
-    --texto: #f4f4f5;
-    --suave: #a1a1aa;
-    --borde: #27272a;
-    --relleno: #232326;
-    --acento: #f4f4f5;
-    --sobre-acento: #18181b;
-    --acento-texto: #ef5f63;
-    --acento-suave: #3a1d1f;
+    --fondo: #14120f;
+    --tarjeta: #1c1915;
+    --texto: #f1ece4;
+    --suave: #a39a8e;
+    --borde: #2e2a24;
+    --relleno: #25211c;
+    --acento: #f1ece4;
+    --sobre-acento: #14120f;
+    --acento-texto: #e0896d;
+    --acento-suave: #3a2219;
   }
 }
 
@@ -81,6 +81,7 @@
   --color-acento-suave: var(--acento-suave);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-fraunces), Georgia, serif;
 }
 
 body {

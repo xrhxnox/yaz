@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { NOMBRES, formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, campo, tarjeta } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, caja, campo, titulo as tituloSeccion } from "@/lib/estilos";
 import Imagen from "./Imagen";
 import Corazon from "./Corazon";
 
@@ -38,8 +38,8 @@ function Formulario({ alTerminar }: { alTerminar: (guardado: boolean) => void })
   }
 
   return (
-    <form onSubmit={guardar} className={`${tarjeta} space-y-2`}>
-      <p className="font-medium">Nuevo momento</p>
+    <form onSubmit={guardar} className={`${caja} space-y-2`}>
+      <p className={tituloSeccion}>Nuevo momento</p>
       <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={campo} />
       <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={120} placeholder="¿Qué pasó?" className={campo} />
       <textarea
@@ -94,7 +94,7 @@ export default function Momentos() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       {agregando ? (
         <Formulario
          
@@ -118,9 +118,9 @@ export default function Momentos() {
             <li key={m.id} className="relative pb-6 pl-6">
               <span className="absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 border-fondo bg-acento" />
               <p className="text-xs text-suave">{formatearFecha(m.fecha)}</p>
-              <div className={`${tarjeta} mt-1.5 p-4`}>
+              <div className="mt-1">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium">{m.titulo}</p>
+                  <p className="font-serif text-2xl leading-tight tracking-tight">{m.titulo}</p>
                   <button onClick={() => borrar(m)} aria-label="Borrar" className="shrink-0 text-suave hover:text-acento-texto">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <path d="M6 6l12 12M18 6L6 18" />

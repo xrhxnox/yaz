@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NOMBRES, formatearFecha, type Persona } from "@/lib/config";
 import { api, comprimirImagen } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, campo, etiqueta, tarjeta } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, campo, etiqueta, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
 
 type Foto = { url: string; nota: string | null };
@@ -20,8 +20,8 @@ function Celda({ foto, nombre }: { foto: Foto | null; nombre: string }) {
           Sin foto
         </div>
       )}
-      <p className="mt-1.5 text-xs font-medium">{nombre}</p>
-      {foto?.nota && <p className="text-xs break-words text-suave">{foto.nota}</p>}
+      <p className="mt-1.5 text-xs text-suave">{nombre}</p>
+      {foto?.nota && <p className="font-serif text-sm italic break-words">{foto.nota}</p>}
     </div>
   );
 }
@@ -84,7 +84,7 @@ export default function Fotos({ yo }: { yo: Persona }) {
   const anteriores = datos.dias.filter((d) => d.fecha !== datos.hoy);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <section className={tarjeta}>
         <p className={etiqueta}>Foto del día · {formatearFecha(datos.hoy, { day: "numeric", month: "long" })}</p>
 
@@ -119,7 +119,7 @@ export default function Fotos({ yo }: { yo: Persona }) {
 
       {anteriores.length > 0 && (
         <>
-          <p className="px-1 pt-3 text-sm font-medium">Álbum</p>
+          <p className={`${titulo} pt-2`}>Álbum</p>
           {anteriores.map((d) => (
             <section key={d.fecha} className={tarjeta}>
               <p className={etiqueta}>{formatearFecha(d.fecha, { weekday: "long", day: "numeric", month: "long" })}</p>

@@ -56,11 +56,11 @@ export default function Notificaciones({ yo }: { yo: Persona }) {
   if (situacion === "cargando" || situacion === "activas") return null;
 
   return (
-    <section className="rounded-2xl border border-borde bg-tarjeta p-5 text-sm">
+    <section className="rounded-xl bg-relleno p-4 text-sm">
       {situacion === "inactivas" && (
         <>
           <p>Activa las notificaciones para enterarte cuando {NOMBRES[otra(yo)]} te mande algo.</p>
-          <button onClick={activar} className="mt-3 rounded-xl bg-acento px-4 py-2 font-medium text-sobre-acento">
+          <button onClick={activar} className="mt-3 rounded-full bg-acento px-4 py-2 font-medium text-sobre-acento">
             Activar notificaciones
           </button>
           {error && <p className="mt-2 text-acento-texto">{error}</p>}

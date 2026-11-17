@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { NOMBRES, formatearFecha, otra, type Persona } from "@/lib/config";
 import { api } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, campo, enlace, etiqueta, tarjeta } from "@/lib/estilos";
+import { botonPrimario, campo, enlace, etiqueta, tarjeta, titulo } from "@/lib/estilos";
 
 type Datos = {
   fecha: string;
@@ -15,11 +15,11 @@ type Datos = {
   historial: { fecha: string; pregunta: string; a: string; b: string }[];
 };
 
-function Respuesta({ quien, texto }: { quien: string; texto: string }) {
+function Respuesta({ quien, texto, destacada }: { quien: string; texto: string; destacada?: boolean }) {
   return (
-    <div>
-      <p className="text-xs text-suave">{quien}</p>
-      <p className="mt-0.5 whitespace-pre-wrap">{texto}</p>
+    <div className={`border-l-2 pl-3 ${destacada ? "border-acento-texto" : "border-borde"}`}>
+      <p className="font-serif text-lg leading-snug whitespace-pre-wrap break-words">{texto}</p>
+      <p className="mt-1 text-xs text-suave">— {quien}</p>
     </div>
   );
 }
@@ -82,20 +82,20 @@ export default function Pregunta({ yo }: { yo: Persona }) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <section className={tarjeta}>
         <p className={etiqueta}>Pregunta del día · {formatearFecha(datos.fecha, { day: "numeric", month: "long" })}</p>
-        <p className="mt-2 text-xl font-semibold tracking-tight">{datos.pregunta}</p>
+        <p className="mt-2 font-serif text-[1.85rem] leading-tight tracking-tight">{datos.pregunta}</p>
 
         {!datos.mia || editando ? (
           formulario
         ) : (
-          <div className="mt-4 space-y-4 border-t border-borde pt-4">
+          <div className="mt-6 space-y-5">
             <Respuesta quien="Tú" texto={datos.mia} />
             {datos.suya ? (
-              <Respuesta quien={NOMBRES[tu]} texto={datos.suya} />
+              <Respuesta quien={NOMBRES[tu]} texto={datos.suya} destacada />
             ) : (
-              <p className="text-sm text-suave">Esperando la respuesta de {NOMBRES[tu]}…</p>
+              <p className="font-serif italic text-suave">Esperando la respuesta de {NOMBRES[tu]}…</p>
             )}
             <button
               onClick={() => {
@@ -113,14 +113,14 @@ export default function Pregunta({ yo }: { yo: Persona }) {
 
       {datos.historial.length > 0 && (
         <>
-          <p className="px-1 pt-3 text-sm font-medium">Días anteriores</p>
+          <p className={`${titulo} pt-2`}>Días anteriores</p>
           {datos.historial.map((h) => (
             <section key={h.fecha} className={tarjeta}>
               <p className={etiqueta}>{formatearFecha(h.fecha)}</p>
-              <p className="mt-1 font-medium">{h.pregunta}</p>
-              <div className="mt-3 space-y-3 text-sm">
-                <Respuesta quien={yo === "a" ? "Tú" : NOMBRES.a} texto={h.a} />
-                <Respuesta quien={yo === "b" ? "Tú" : NOMBRES.b} texto={h.b} />
+              <p className="mt-1 font-serif text-xl leading-snug">{h.pregunta}</p>
+              <div className="mt-4 space-y-4">
+                <Respuesta quien={yo === "a" ? "Tú" : NOMBRES.a} texto={h.a} destacada={yo !== "a"} />
+                <Respuesta quien={yo === "b" ? "Tú" : NOMBRES.b} texto={h.b} destacada={yo !== "b"} />
               </div>
             </section>
           ))}

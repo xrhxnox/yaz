@@ -1,6 +1,7 @@
 "use client";
 
 import { FECHA_INICIO } from "@/lib/config";
+import { etiqueta, numero, tarjeta } from "@/lib/estilos";
 
 function desglose(inicio: Date, hoy: Date) {
   let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
@@ -26,15 +27,13 @@ export default function Juntos({ ahora }: { ahora: Date }) {
   const esAniversario = esMesiversario && hoy.getMonth() === inicio.getMonth();
 
   return (
-    <section className="rounded-2xl border border-borde bg-tarjeta p-5">
-      <p className="text-sm text-suave">Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
-      <p className="mt-2 flex items-baseline gap-2">
-        <span className="font-mono text-5xl font-semibold tracking-tight tabular-nums">{totalDias}</span>
-        <span className="text-suave">días</span>
-      </p>
+    <section className={tarjeta}>
+      <p className={etiqueta}>Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <p className={`${numero} mt-1 text-[5.5rem] leading-none`}>{totalDias}</p>
+      <p className="font-serif text-lg italic">días, y contando</p>
       {partes.length > 0 && <p className="mt-1 text-sm text-suave">{partes.join(" · ")}</p>}
       {esMesiversario && (
-        <p className="mt-4 rounded-xl bg-acento-suave px-3 py-2 text-sm font-medium text-acento-texto">
+        <p className="mt-4 border-l-2 border-acento-texto pl-3 font-serif text-lg italic text-acento-texto">
           {esAniversario ? `Hoy cumplimos ${plural(anios, "año", "años")}` : `Hoy cumplimos ${plural(anios * 12 + meses, "mes", "meses")}`}
         </p>
       )}

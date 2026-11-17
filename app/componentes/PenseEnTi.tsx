@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MAX_MENSAJE, MENSAJES, NOMBRES, otra, type Persona } from "@/lib/config";
 import type { Estado } from "@/lib/cliente";
 import Corazon from "./Corazon";
+import { campo, etiqueta, numero, tarjeta } from "@/lib/estilos";
 
 function hace(iso: string, ahora: Date) {
   const min = Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000);
@@ -44,8 +45,8 @@ export default function PenseEnTi({
   }
 
   return (
-    <section className="rounded-2xl border border-borde bg-tarjeta p-5">
-      <p className="text-sm text-suave">Avisarle a {NOMBRES[tu]}</p>
+    <section className={tarjeta}>
+      <p className={etiqueta}>Para {NOMBRES[tu]}</p>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {MENSAJES.map((m) => (
@@ -68,13 +69,13 @@ export default function PenseEnTi({
         onChange={(e) => setPersonalizado(e.target.value)}
         maxLength={MAX_MENSAJE}
         placeholder="O escribe tu propio mensaje"
-        className="mt-2 w-full rounded-xl border border-borde bg-transparent px-4 py-2.5 text-sm outline-none placeholder:text-suave focus:border-suave"
+        className={`${campo} mt-2 text-sm`}
       />
 
       <button
         onClick={enviar}
         disabled={enviando}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-acento py-3 font-medium text-sobre-acento transition active:scale-[0.98] disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-acento py-3 font-medium text-sobre-acento transition active:scale-[0.98] disabled:opacity-60"
       >
         <Corazon key={pulso} size={18} className={pulso ? "pulso" : ""} />
         Enviar “{texto}”
@@ -82,36 +83,30 @@ export default function PenseEnTi({
 
       {estado && (
         <>
-          <div className="mt-5 grid grid-cols-2 divide-x divide-borde rounded-xl bg-relleno py-3 text-center">
-            <div>
-              <p className="font-mono text-2xl font-semibold tabular-nums">{estado.hoy[yo]}</p>
+          <div className="mt-6 grid grid-cols-2 divide-x divide-borde border-y border-borde py-3">
+            <div className="pr-4">
+              <p className={`${numero} text-3xl`}>{estado.hoy[yo]}</p>
               <p className="text-xs text-suave">enviados hoy</p>
             </div>
-            <div>
-              <p className="font-mono text-2xl font-semibold tabular-nums">{estado.hoy[tu]}</p>
+            <div className="pl-4">
+              <p className={`${numero} text-3xl`}>{estado.hoy[tu]}</p>
               <p className="text-xs text-suave">recibidos de {NOMBRES[tu]}</p>
             </div>
           </div>
 
           {estado.recientes.length > 0 && (
-            <ul className="mt-4 space-y-1.5">
+            <ul className="mt-5 space-y-4">
               {estado.recientes.map((p) => (
-                <li key={p.id} className={`flex ${p.de === yo ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${
-                      p.de === yo ? "rounded-br-md bg-acento text-sobre-acento" : "rounded-bl-md bg-relleno"
-                    }`}
-                  >
-                    <p className="break-words">{p.mensaje}</p>
-                    <p className="mt-0.5 text-[11px] opacity-60">
-                      {p.de === yo ? "Tú" : NOMBRES[p.de]} · {hace(p.created_at, ahora)}
-                    </p>
-                  </div>
+                <li key={p.id} className={`border-l-2 pl-3 ${p.de === yo ? "border-borde" : "border-acento-texto"}`}>
+                  <p className="font-serif text-lg leading-snug break-words">“{p.mensaje}”</p>
+                  <p className="mt-0.5 text-xs text-suave">
+                    — {p.de === yo ? "Tú" : NOMBRES[p.de]}, {hace(p.created_at, ahora)}
+                  </p>
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-3 text-center text-xs text-suave">{estado.total.a + estado.total.b} mensajes en total</p>
+          <p className="mt-5 text-xs text-suave">{estado.total.a + estado.total.b} mensajes desde el principio</p>
         </>
       )}
     </section>

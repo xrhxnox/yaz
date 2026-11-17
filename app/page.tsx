@@ -18,7 +18,7 @@ import Fotos from "./componentes/Fotos";
 import Momentos from "./componentes/Momentos";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
-import Corazon from "./componentes/Corazon";
+import Cabecera from "./componentes/Cabecera";
 import Corazones, { crearCorazones, type Particula } from "./componentes/Corazones";
 
 // La sección actual vive en el #hash de la URL (así las notificaciones pueden abrir una sección)
@@ -114,24 +114,8 @@ export default function Inicio() {
 
   return (
     <>
-      <main className="mx-auto w-full max-w-md flex-1 space-y-3 px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-        <header className="flex items-center justify-between py-1">
-          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            {NOMBRES.a} <Corazon size={16} className="text-acento-texto" /> {NOMBRES.b}
-          </h1>
-          <a
-            href="#perfil"
-            aria-label="Perfiles"
-            className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
-              seccion === "perfil" ? "border-acento bg-acento text-sobre-acento" : "border-borde text-suave hover:text-texto"
-            }`}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21a8 8 0 0 1 16 0" />
-            </svg>
-          </a>
-        </header>
+      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} enPerfil={seccion === "perfil"} />
 
         {seccion === "inicio" && (
           <>

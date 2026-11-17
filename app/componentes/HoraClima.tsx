@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { NOMBRES, type Persona } from "@/lib/config";
 import { api, type Ubicacion } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, campo, enlace, etiqueta, tarjeta } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
 
 type Clima = { temp: number; codigo: number };
 type Resultado = { name: string; admin1?: string; country?: string; latitude: number; longitude: number; timezone: string };
@@ -136,13 +136,15 @@ export default function HoraClima({
               <p className={etiqueta}>{NOMBRES[p]}</p>
               {u && h ? (
                 <>
-                  <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{h.hora}</p>
-                  <p className="truncate text-sm">{u.ciudad}</p>
-                  <p className="text-sm text-suave">{c ? `${c.temp}° · ${describir(c.codigo)}` : "…"}</p>
-                  {h.deNoche && p !== yo && <p className="mt-1 text-xs text-suave">Probablemente durmiendo</p>}
+                  <p className="truncate font-serif text-xl leading-tight">{u.ciudad}</p>
+                  <p className={`${numero} mt-1 text-4xl leading-none`}>{c ? `${c.temp}°` : "—"}</p>
+                  <p className="mt-1 text-xs text-suave">
+                    {c ? describir(c.codigo) : "…"} · {h.hora}
+                  </p>
+                  {h.deNoche && p !== yo && <p className="mt-1 font-serif text-sm italic text-suave">Probablemente durmiendo</p>}
                 </>
               ) : (
-                <p className="mt-1 text-sm text-suave">{p === yo ? "Agrega tu ciudad" : "Sin ciudad todavía"}</p>
+                <p className="mt-1 font-serif italic text-suave">{p === yo ? "Agrega tu ciudad" : "Sin ciudad todavía"}</p>
               )}
             </div>
           );

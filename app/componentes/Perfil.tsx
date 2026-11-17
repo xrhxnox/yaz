@@ -7,7 +7,7 @@ import { aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, botonSecundario, campo, enlace, etiqueta, tarjeta } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
 type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null }>; deseos: Deseo[] };
@@ -51,8 +51,8 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
 
   if (borrador) {
     return (
-      <form onSubmit={guardar} className={`${tarjeta} space-y-3`}>
-        <p className="font-medium">Mis tallas</p>
+      <form onSubmit={guardar} className={`${caja} space-y-3`}>
+        <p className={tituloSeccion}>Mis tallas</p>
         {TALLAS.map((t) => (
           <label key={t.id} className="block">
             <span className={etiqueta}>{t.nombre}</span>
@@ -92,7 +92,7 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        <p className="font-medium">Tallas</p>
+        <p className={tituloSeccion}>Tallas</p>
         {editable && (
           <button onClick={() => setBorrador({ ...tallas })} className={enlace}>
             Editar
@@ -105,9 +105,9 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
         <>
           <dl className="mt-3 grid grid-cols-2 gap-2">
             {conValor.map((t) => (
-              <div key={t.id} className="rounded-xl bg-relleno px-3 py-2">
+              <div key={t.id} className="border-b border-borde pb-2">
                 <dt className="text-xs text-suave">{t.nombre}</dt>
-                <dd className="font-medium break-words">{tallas[t.id]}</dd>
+                <dd className="font-serif text-xl break-words">{tallas[t.id]}</dd>
               </div>
             ))}
           </dl>
@@ -160,7 +160,7 @@ function SeccionDeseos({
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        <p className="font-medium">Wishlist</p>
+        <p className={tituloSeccion}>Wishlist</p>
         {esMia && !agregando && (
           <button onClick={() => setAgregando(true)} className={enlace}>
             Agregar link
@@ -204,7 +204,7 @@ function SeccionDeseos({
                   href={d.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`font-medium break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
+                  className={`font-serif text-lg leading-snug break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
                 >
                   {d.titulo}
                 </a>
@@ -287,7 +287,7 @@ function SeccionTema({ yo, temaActual, alGuardar }: { yo: Persona; temaActual: T
 
   return (
     <section className={tarjeta}>
-      <p className="font-medium">Personalizar mi app</p>
+      <p className={tituloSeccion}>Personalizar mi app</p>
       <p className="mt-0.5 text-xs text-suave">Solo cambia cómo la ves tú. Los cambios se ven en vivo.</p>
 
       <p className={`${etiqueta} mt-4`}>Fondo</p>
@@ -297,7 +297,7 @@ function SeccionTema({ yo, temaActual, alGuardar }: { yo: Persona; temaActual: T
       <Muestras colores={ACENTOS} actual={borrador.acento} etiquetaColor="Acento" alElegir={(acento) => probar({ ...borrador, acento })} />
 
       <div className="mt-4 flex items-center gap-2 rounded-xl bg-relleno p-3">
-        <span className="rounded-lg bg-acento px-3 py-1.5 text-sm font-medium text-sobre-acento">Botón</span>
+        <span className="rounded-full bg-acento px-3 py-1.5 text-sm font-medium text-sobre-acento">Botón</span>
         <span className="text-sm text-acento-texto">Texto de acento</span>
         <span className="ml-auto text-sm text-suave">Vista previa</span>
       </div>
@@ -367,7 +367,7 @@ function SeccionCuenta() {
     <section className={tarjeta}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium">Mi cuenta</p>
+          <p className={tituloSeccion}>Mi cuenta</p>
           {correo && <p className="truncate text-sm text-suave">{correo}</p>}
         </div>
         {!abierto && (
@@ -476,13 +476,13 @@ export default function Perfil({
   const deseos = (datos?.deseos ?? []).filter((d) => d.persona === viendo);
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-relleno p-1">
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
         {([yo, otra(yo)] as Persona[]).map((p) => (
           <button
             key={p}
             onClick={() => setViendo(p)}
-            className={`rounded-lg py-2 text-sm font-medium transition ${viendo === p ? "bg-tarjeta shadow-sm" : "text-suave hover:text-texto"}`}
+            className={`rounded-full py-2 text-sm font-medium transition ${viendo === p ? "bg-tarjeta shadow-sm" : "text-suave hover:text-texto"}`}
           >
             {p === yo ? `Yo (${NOMBRES[p]})` : NOMBRES[p]}
           </button>

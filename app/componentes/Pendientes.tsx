@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { CATEGORIAS, NOMBRES, type Categoria, type Persona } from "@/lib/config";
 import { api } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
-import { botonPrimario, campo, tarjeta } from "@/lib/estilos";
+import { botonPrimario, caja, campo, tarjeta } from "@/lib/estilos";
 
 type Pendiente = { id: number; texto: string; categoria: Categoria; hecho: boolean; creado_por: Persona; hecho_at: string | null };
 
@@ -25,7 +25,7 @@ function Fila({ p, alMarcar, alBorrar }: { p: Pendiente; alMarcar: () => void; a
         )}
       </button>
       <div className="min-w-0 flex-1">
-        <p className={`break-words ${p.hecho ? "text-suave line-through" : ""}`}>{p.texto}</p>
+        <p className={`font-serif text-lg leading-snug break-words ${p.hecho ? "text-suave line-through" : ""}`}>{p.texto}</p>
         <p className="text-xs text-suave">
           {CATEGORIAS.find((c) => c.id === p.categoria)?.nombre} · {NOMBRES[p.creado_por]}
         </p>
@@ -95,8 +95,8 @@ export default function Pendientes() {
   const hechos = visibles.filter((p) => p.hecho);
 
   return (
-    <div className="space-y-3">
-      <form onSubmit={agregar} className={`${tarjeta} space-y-2`}>
+    <div className="space-y-5">
+      <form onSubmit={agregar} className={`${caja} space-y-2`}>
         <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={200} placeholder="Agregar a la lista" className={campo} />
         <div className="flex gap-2">
           <select
@@ -116,7 +116,7 @@ export default function Pendientes() {
         </div>
       </form>
 
-      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]">
+      <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 [scrollbar-width:none]">
         {[{ id: "todo" as const, nombre: "Todo" }, ...CATEGORIAS].map((c) => (
           <button
             key={c.id}
@@ -134,7 +134,7 @@ export default function Pendientes() {
         {lista === null ? (
           <p className="text-sm text-suave">{error || "Cargando…"}</p>
         ) : porHacer.length === 0 ? (
-          <p className="text-sm text-suave">Nada pendiente aquí.</p>
+          <p className="font-serif italic text-suave">Nada pendiente aquí.</p>
         ) : (
           <ul className="-my-2.5 divide-y divide-borde">
             {porHacer.map((p) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
 
 function aInputLocal(iso: string) {
   const d = new Date(iso);
@@ -8,8 +9,7 @@ function aInputLocal(iso: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const boton = "rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-30";
-const enlace = "text-sm text-suave underline underline-offset-4 hover:text-texto";
+const boton = "rounded-full px-4 py-2 text-sm font-medium transition disabled:opacity-30";
 
 export default function Reencuentro({
   fecha,
@@ -49,7 +49,7 @@ export default function Reencuentro({
           type="datetime-local"
           value={valor}
           onChange={(e) => setValor(e.target.value)}
-          className="w-full rounded-xl border border-borde bg-transparent px-4 py-2.5 outline-none focus:border-suave"
+          className={campo}
         />
         <div className="flex items-center gap-2">
           <button onClick={() => setEditando(false)} className={`${boton} border border-borde hover:bg-relleno`}>
@@ -69,7 +69,7 @@ export default function Reencuentro({
   } else if (restante === null) {
     contenido = (
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-suave">Sin fecha todavía.</p>
+        <p className="font-serif text-lg italic text-suave">Sin fecha todavía.</p>
         <button onClick={abrir} className={`${boton} bg-acento text-sobre-acento`}>
           Poner fecha
         </button>
@@ -78,7 +78,7 @@ export default function Reencuentro({
   } else if (restante <= 0) {
     contenido = (
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-lg font-semibold">Hoy nos vemos.</p>
+        <p className="font-serif text-2xl italic">Hoy nos vemos.</p>
         <button onClick={abrir} className={enlace}>
           Siguiente fecha
         </button>
@@ -94,16 +94,16 @@ export default function Reencuentro({
     ] as const;
     contenido = (
       <>
-        <div className="mt-3 grid grid-cols-4 gap-2">
-          {bloques.map(([n, etiqueta]) => (
-            <div key={etiqueta} className="rounded-xl bg-relleno py-2.5 text-center">
-              <p className="font-mono text-2xl font-semibold tabular-nums">{n}</p>
-              <p className="text-xs text-suave">{etiqueta}</p>
+        <div className="mt-2 grid grid-cols-4 divide-x divide-borde">
+          {bloques.map(([n, nombre], i) => (
+            <div key={nombre} className={i === 0 ? "pr-3" : "px-3"}>
+              <p className={`${numero} ${i === 0 ? "text-5xl" : "text-3xl"} leading-tight`}>{n}</p>
+              <p className="text-xs text-suave">{nombre}</p>
             </div>
           ))}
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-sm text-suave first-letter:uppercase">
+          <p className="font-serif text-sm italic text-suave first-letter:uppercase">
             {new Date(fecha!).toLocaleString("es-MX", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}
           </p>
           <button onClick={abrir} className={enlace}>
@@ -115,8 +115,8 @@ export default function Reencuentro({
   }
 
   return (
-    <section className="rounded-2xl border border-borde bg-tarjeta p-5">
-      <p className="text-sm text-suave">Próximo reencuentro</p>
+    <section className={tarjeta}>
+      <p className={etiqueta}>Próximo reencuentro</p>
       {contenido}
     </section>
   );
