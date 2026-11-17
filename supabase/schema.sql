@@ -181,6 +181,21 @@ create table if not exists diario (
 );
 create index if not exists diario_fecha on diario (fecha, created_at);
 
+-- Playlist compartida: link de la canción, datos leídos del link y por qué la agregaron
+create table if not exists canciones (
+  id bigserial primary key,
+  persona text not null check (persona in ('a', 'b')),
+  url text not null,
+  titulo text not null,
+  artista text,
+  portada text,
+  nota text,
+  corazon_a boolean not null default false,
+  corazon_b boolean not null default false,
+  destacada boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 -- Juegos por turnos: gato y conecta 4
 create table if not exists partidas (
   id bigserial primary key,
@@ -214,6 +229,7 @@ alter table visitas enable row level security;
 alter table cartas enable row level security;
 alter table partidas enable row level security;
 alter table diario enable row level security;
+alter table canciones enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.

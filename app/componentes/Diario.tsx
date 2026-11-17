@@ -40,6 +40,18 @@ function Lista({
   alBorrar: (e: Entrada) => void;
 }) {
   const color = usePareja().acentos[persona];
+  // Canciones ya pasadas a la playlist en esta visita
+  const [enPlaylist, setEnPlaylist] = useState<Record<number, "guardando" | "listo" | string>>({});
+
+  async function aPlaylist(e: Entrada) {
+    setEnPlaylist((x) => ({ ...x, [e.id]: "guardando" }));
+    try {
+      await api("/api/canciones", { url: e.link, nota: e.texto, titulo: e.texto });
+      setEnPlaylist((x) => ({ ...x, [e.id]: "listo" }));
+    } catch (err) {
+      setEnPlaylist((x) => ({ ...x, [e.id]: (err as Error).message }));
+    }
+  }
   return (
     <div>
       <p className="mb-2 flex items-center gap-1.5 text-xs text-suave">
@@ -66,6 +78,18 @@ function Lista({
                   >
                     {dominio(e.link)} ↗
                   </a>
+                )}
+                {e.link && e.tipo === "escuche" && (
+                  <button
+                    onClick={() => aPlaylist(e)}
+                    disabled={enPlaylist[e.id] === "guardando" || enPlaylist[e.id] === "listo"}
+                    className="ml-3 text-xs text-suave transition hover:text-texto disabled:opacity-60"
+                  >
+                    {enPlaylist[e.id] === "listo" ? "En la playlist ✓" : enPlaylist[e.id] === "guardando" ? "Agregando…" : "+ Playlist"}
+                  </button>
+                )}
+                {enPlaylist[e.id] && !["listo", "guardando"].includes(enPlaylist[e.id]) && (
+                  <p className="mt-0.5 text-xs text-acento-texto">{enPlaylist[e.id]}</p>
                 )}
               </div>
               {propias && (

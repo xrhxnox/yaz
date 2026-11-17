@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 // Pestañas estilo periódico: texto serif con subrayado en el color de acento
 export default function Pestanas<T extends string>({
   opciones,
@@ -12,8 +14,16 @@ export default function Pestanas<T extends string>({
   alCambiar: (id: T) => void;
   etiqueta: string;
 }) {
+  const lista = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const activa = lista.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    const caja = lista.current;
+    if (!activa || !caja || caja.scrollWidth <= caja.clientWidth) return;
+    caja.scrollTo({ left: activa.offsetLeft - caja.offsetLeft - 20, behavior: "smooth" });
+  }, [actual]);
+
   return (
-    <div role="tablist" aria-label={etiqueta} className="-mx-5 flex gap-6 overflow-x-auto border-b border-borde px-5 [scrollbar-width:none] lg:mx-0 lg:px-0">
+    <div ref={lista} role="tablist" aria-label={etiqueta} className="-mx-5 flex gap-6 overflow-x-auto border-b border-borde px-5 [scrollbar-width:none] lg:mx-0 lg:px-0">
       {opciones.map((o) => (
         <button
           key={o.id}

@@ -216,7 +216,7 @@ export default function Inicio() {
         )}
         {seccion === "lista" && <Pendientes />}
         {seccion === "fotos" && <SeccionFotos yo={yo} />}
-        {seccion === "momentos" && <Recuerdos />}
+        {seccion === "momentos" && <Recuerdos yo={yo} />}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}
         {seccion === "buzon" && (
           <div className="lg:mx-auto lg:max-w-2xl">
