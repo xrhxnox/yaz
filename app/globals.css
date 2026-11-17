@@ -133,6 +133,26 @@ body {
   z-index: 50;
 }
 
+/* Conecta 4: la última ficha cae desde arriba de su columna */
+@keyframes caer {
+  from {
+    transform: translateY(calc(var(--filas, 6) * -115%));
+  }
+  70% {
+    transform: translateY(0);
+  }
+  85% {
+    transform: translateY(-8%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.ficha-cae {
+  animation: caer 0.45s ease-in;
+}
+
 @keyframes pulso {
   0% {
     transform: scale(1);

@@ -10,11 +10,21 @@ type Partida = {
   turno: Persona | null;
   ganador: Resultado | null;
   linea: number[] | null;
+  ultima?: number | null;
   created_at: string;
   updated_at: string;
 };
 
 const CAMPOS = "id, tipo, tablero, empieza, turno, ganador, linea, created_at, updated_at";
+
+type Respuesta = { data: unknown; error: { message: string } | null };
+
+// Lee partidas con la columna "ultima"; si todavía no existe en Supabase, sin ella
+async function leer(consulta: (campos: string) => PromiseLike<Respuesta>): Promise<unknown> {
+  let r = await consulta(CAMPOS + ", ultima");
+  if (r.error && /ultima/.test(r.error.message)) r = await consulta(CAMPOS);
+  return revisar(r);
+}
 
 // Partidas en curso, la última terminada de cada juego y el marcador histórico
 export async function GET(req: Request) {
@@ -22,7 +32,7 @@ export async function GET(req: Request) {
   if (yo instanceof Response) return yo;
 
   try {
-    const partidas: Partida[] = revisar(await db().from("partidas").select(CAMPOS).order("created_at", { ascending: false })) ?? [];
+    const partidas = ((await leer((c) => db().from("partidas").select(c).order("created_at", { ascending: false }))) as Partida[] | null) ?? [];
     const marcador: Record<TipoJuego, { a: number; b: number; empate: number }> = {
       gato: { a: 0, b: 0, empate: 0 },
       conecta4: { a: 0, b: 0, empate: 0 },
@@ -88,7 +98,7 @@ export async function PATCH(req: Request) {
   if (!Number.isInteger(id) || !Number.isInteger(posicion)) return invalido();
 
   try {
-    const p = revisar(await db().from("partidas").select(CAMPOS).eq("id", id).maybeSingle()) as Partida | null;
+    const p = (await leer((c) => db().from("partidas").select(c).eq("id", id).maybeSingle())) as Partida | null;
     if (!p) return invalido("Esa partida ya no existe");
     if (p.ganador) return invalido("La partida ya terminó");
     if (p.turno !== yo) return invalido("No es tu turno");
@@ -101,15 +111,11 @@ export async function PATCH(req: Request) {
 
     const { ganador, linea } = buscarGanador(tablero, p.tipo);
     // Solo se guarda si sigue siendo mi turno (evita dos jugadas al mismo tiempo)
-    const guardada = revisar(
-      await db()
-        .from("partidas")
-        .update({ tablero, turno: ganador ? null : otra(yo), ganador, linea, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("turno", yo)
-        .select("id")
-        .maybeSingle(),
-    );
+    const cambios = { tablero, turno: ganador ? null : otra(yo), ganador, linea, updated_at: new Date().toISOString() };
+    const guardar = (datos: Record<string, unknown>) => db().from("partidas").update(datos).eq("id", id).eq("turno", yo).select("id").maybeSingle();
+    let r: Respuesta = await guardar({ ...cambios, ultima: casilla });
+    if (r.error && /ultima/.test(r.error.message)) r = await guardar(cambios);
+    const guardada = revisar(r);
     if (!guardada) return invalido("No es tu turno");
 
     const nombres = await nombresActuales();

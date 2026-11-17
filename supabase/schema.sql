@@ -182,6 +182,8 @@ create table if not exists partidas (
   updated_at timestamptz not null default now()
 );
 create index if not exists partidas_tipo on partidas (tipo, created_at desc);
+-- Casilla del último movimiento (para destacarlo)
+alter table partidas add column if not exists ultima int;
 
 -- Sin políticas: solo el servidor (con la service role key) puede leer y escribir
 alter table ajustes enable row level security;

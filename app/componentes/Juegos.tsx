@@ -16,6 +16,7 @@ type Partida = {
   turno: Persona | null;
   ganador: Resultado | null;
   linea: number[] | null;
+  ultima?: number | null;
 };
 type Datos = {
   actual: Record<TipoJuego, Partida | null>;
@@ -75,14 +76,18 @@ function TableroConecta4({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: b
                 const i = fila * columnas + col;
                 const f = p.tablero[i];
                 const enLinea = p.linea?.includes(i);
+                // La última jugada: cae con animación y lleva un punto al centro
+                const ultima = !!f && p.ultima === i;
                 return (
                   <span
                     key={fila}
-                    className={`aspect-square w-full rounded-full ${f ? "" : libre ? "bg-fondo group-hover:bg-borde" : "bg-fondo"} ${
-                      enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""
-                    }`}
-                    style={f ? { backgroundColor: acentos[f] } : undefined}
-                  />
+                    className={`relative flex aspect-square w-full items-center justify-center rounded-full ${
+                      f ? "" : libre ? "bg-fondo group-hover:bg-borde" : "bg-fondo"
+                    } ${enLinea ? "ring-2 ring-texto ring-offset-2 ring-offset-relleno" : ""} ${ultima ? "ficha-cae" : ""}`}
+                    style={f ? { backgroundColor: acentos[f], ...(ultima ? ({ "--filas": fila + 1 } as React.CSSProperties) : {}) } : undefined}
+                  >
+                    {ultima && <span className="h-1/3 w-1/3 rounded-full bg-fondo/80" aria-label="Última jugada" />}
+                  </span>
                 );
               })}
             </button>
@@ -221,7 +226,7 @@ export default function Juegos({ yo, tipo }: { yo: Persona; tipo: TipoJuego }) {
       const tablero = [...p.tablero];
       const casilla = p.tipo === "conecta4" ? caidaEnColumna(tablero, posicion) : posicion;
       if (casilla >= 0) tablero[casilla] = yo;
-      return { ...d, actual: { ...d.actual, [p.tipo]: { ...p, tablero, turno: tu } } };
+      return { ...d, actual: { ...d.actual, [p.tipo]: { ...p, tablero, turno: tu, ultima: casilla } } };
     });
     hacer(api("/api/juegos", { id: p.id, posicion }, "PATCH"));
   }
