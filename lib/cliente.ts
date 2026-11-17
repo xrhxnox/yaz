@@ -1,5 +1,6 @@
 import { CLAVE_SESION, type Persona } from "./config";
 import { tokenActual } from "./cuenta";
+import { contarCarga } from "./cargas";
 
 // Quién eres en este dispositivo (la sesión real la guarda Supabase Auth)
 export type Sesion = { persona: Persona };
@@ -72,7 +73,12 @@ export function guardarSesion(s: Sesion | null) {
   oyentes.forEach((o) => o());
 }
 
-export async function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
+// Todas las llamadas cuentan para el cargador
+export function api<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
+  return contarCarga(llamar<T>(ruta, cuerpo, metodo));
+}
+
+async function llamar<T>(ruta: string, cuerpo?: unknown, metodo?: "PUT" | "PATCH" | "DELETE"): Promise<T> {
   const token = await tokenActual();
   if (!token) throw Object.assign(new Error("Inicia sesión"), { status: 401 });
   const esForm = cuerpo instanceof FormData;

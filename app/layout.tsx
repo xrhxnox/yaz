@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Caveat, Fraunces, Geist, Geist_Mono, Nunito, Pixelify_Sans, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { PAREJA } from "@/lib/config";
 import { SCRIPT_TEMA } from "@/lib/tema";
+import Cargador from "./componentes/Cargador";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -56,6 +57,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {/* Como app en el celular: franja del color de acento detrás de la barra de estado */}
         <div aria-hidden className="franja-app" />
+        {/* Pantalla de carga hasta que todo aparece */}
+        <Cargador />
         {children}
       </body>
     </html>
