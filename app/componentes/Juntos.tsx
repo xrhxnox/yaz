@@ -1,7 +1,7 @@
 "use client";
 
 import { FECHA_INICIO } from "@/lib/config";
-import { etiqueta, numero, tarjeta } from "@/lib/estilos";
+import { numero, tarjeta } from "@/lib/estilos";
 
 function desglose(inicio: Date, hoy: Date) {
   let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
@@ -28,7 +28,7 @@ export default function Juntos({ ahora }: { ahora: Date }) {
 
   return (
     <section className={tarjeta}>
-      <p className={etiqueta}>Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <p className="text-xs tracking-wide text-suave">Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
       <p className={`${numero} mt-1 text-[5.5rem] leading-none text-acento-texto lg:text-[10rem]`}>{totalDias}</p>
       <p className="font-serif text-lg italic lg:text-2xl">días, y contando</p>
       {partes.length > 0 && <p className="mt-1 text-sm text-suave">{partes.join(" · ")}</p>}
