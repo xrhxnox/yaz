@@ -5,7 +5,7 @@ Nuestro espacio a distancia:
 - **Inicio:** días juntos, hora y clima de cada uno, cuenta regresiva para el reencuentro y mensajes rápidos ("Pensé en ti", "Te extraño"…) que llegan como notificación.
 - **Pregunta del día:** la misma pregunta para los dos; la respuesta del otro se ve hasta que contestas la tuya.
 - **Lista:** pendientes compartidos (películas y series, lugares, planes).
-- **Fotos:** una foto al día de cada uno y el álbum de días anteriores.
+- **Fotos:** varias fotos al día de cada uno (hasta 12) y el álbum de días anteriores.
 - **Momentos:** línea del tiempo de la relación, con fotos.
 - **Perfiles** (botón arriba a la derecha): tallas, wishlist con links (el otro puede marcar "Ya lo compré" sin que el dueño lo vea) y colores personalizados de fondo y acento para tu app.
 

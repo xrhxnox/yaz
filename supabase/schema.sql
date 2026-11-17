@@ -60,16 +60,24 @@ create table if not exists pendientes (
 -- Imagen opcional (póster de la película, foto del lugar…)
 alter table pendientes add column if not exists foto_path text;
 
--- Foto del día (una por persona por día)
+-- Fotos del día (varias por persona por día)
 create table if not exists fotos (
   id bigserial primary key,
   fecha date not null,
   persona text not null check (persona in ('a', 'b')),
   path text not null,
   nota text,
-  created_at timestamptz not null default now(),
-  unique (fecha, persona)
+  created_at timestamptz not null default now()
 );
+-- Antes solo se permitía una foto por persona por día: quitamos esa restricción
+do $$
+declare r record;
+begin
+  for r in select conname from pg_constraint where conrelid = 'public.fotos'::regclass and contype = 'u' loop
+    execute format('alter table fotos drop constraint %I', r.conname);
+  end loop;
+end $$;
+create index if not exists fotos_fecha on fotos (fecha desc, persona);
 
 -- Línea del tiempo
 create table if not exists momentos (
