@@ -468,11 +468,11 @@ function SeccionDeseos({
                     href={d.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`font-serif text-lg leading-snug break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
+                    className={`block font-serif text-lg leading-snug break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
                   >
                     {d.titulo}
                   </a>
-                  <p className="text-xs text-suave">{dominio(d.url)}</p>
+                  <p className="sin-mayuscula text-xs text-suave">{dominio(d.url)}</p>
                   {d.nota && <p className="mt-0.5 text-sm break-words text-suave">{d.nota}</p>}
                 </div>
                 {esMia && ordenando ? (
@@ -568,7 +568,7 @@ function OpcionTexto({ yo, minusculas, alGuardar }: { yo: Persona; minusculas: b
             onClick={() => elegir(o.valor)}
             disabled={guardando}
             style={{ textTransform: "none" }}
-            className={`rounded-full py-2 text-sm transition ${
+            className={`sin-mayuscula rounded-full py-2 text-sm transition ${
               minusculas === o.valor ? "bg-acento font-medium text-sobre-acento" : "text-suave hover:text-texto"
             }`}
           >
@@ -705,7 +705,7 @@ function SeccionCuenta() {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className={tituloSeccion}>Mi cuenta</p>
-          {correo && <p className="truncate text-sm text-suave">{correo}</p>}
+          {correo && <p className="sin-mayuscula truncate text-sm text-suave">{correo}</p>}
         </div>
         {!abierto && (
           <button

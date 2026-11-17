@@ -84,6 +84,15 @@
   --font-serif: var(--font-fraunces), Georgia, serif;
 }
 
+/* Modo normal: la primera letra de cada texto siempre en mayúscula (aunque se haya escrito en minúsculas) */
+:root:not([data-minusculas]) :is(p, dt, dd, li, h1, h2, h3, figcaption, label, button, a)::first-letter {
+  text-transform: uppercase;
+}
+/* Excepciones: correos, dominios de links… */
+:root:not([data-minusculas]) .sin-mayuscula.sin-mayuscula::first-letter {
+  text-transform: none;
+}
+
 /* Preferencia "todo en minúsculas": se ve así, pero lo que escribes se queda igual */
 :root[data-minusculas] body,
 :root[data-minusculas] button,
