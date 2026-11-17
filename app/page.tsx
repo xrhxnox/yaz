@@ -223,7 +223,7 @@ export default function Inicio() {
           </>
         )}
         {seccion === "playlist" && (
-          <div className="lg:mx-auto lg:max-w-2xl">
+          <div className="lg:mx-auto lg:max-w-4xl">
             <Playlist yo={yo} />
           </div>
         )}
