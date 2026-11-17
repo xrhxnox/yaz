@@ -11,6 +11,8 @@ import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import type { Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
+import { useSubseccion } from "@/lib/subseccion";
+import Pestanas from "./Pestanas";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
@@ -1031,6 +1033,11 @@ export default function Perfil({
   const [pestana, setPestana] = useState<"favoritos" | "tallas" | "wishlist">("favoritos");
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
+  // Tu perfil en el celular: tus datos y la configuración de la app en pestañas separadas
+  const [parte, setParte] = useSubseccion<"datos" | "app">(["datos", "app"], "datos");
+  const mio = viendo === yo;
+  const soloDatos = mio && parte === "app" ? "hidden lg:block" : "";
+  const soloApp = mio && parte === "datos" ? "hidden lg:block" : "";
 
   const cargar = useCallback(async () => {
     try {
@@ -1074,14 +1081,30 @@ export default function Perfil({
         ))}
       </div>
 
-      <SeccionDatos key={`datos-${viendo}`} persona={viendo} editable={viendo === yo} alCambiar={alCambiarDatos} />
+      {mio && (
+        <div className="lg:hidden">
+          <Pestanas
+            opciones={[
+              { id: "datos", nombre: "Mis datos" },
+              { id: "app", nombre: "App y cuenta" },
+            ]}
+            actual={parte}
+            alCambiar={setParte}
+            etiqueta="Tu perfil"
+          />
+        </div>
+      )}
+
+      <div className={soloDatos}>
+        <SeccionDatos key={`datos-${viendo}`} persona={viendo} editable={viendo === yo} alCambiar={alCambiarDatos} />
+      </div>
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
       {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
 
       {/* En escritorio: tallas y wishlist a la izquierda, ajustes a la derecha */}
       <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-12 lg:space-y-0">
-      <div className={`space-y-6 ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl [&>section]:border-t-0 [&>section]:pt-0"}`}>
+      <div className={`space-y-6 ${soloDatos} ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl [&>section]:border-t-0 [&>section]:pt-0"}`}>
       {datos && viendo !== yo && (
         <div role="tablist" aria-label="Secciones del perfil" className="flex gap-4 border-b border-borde sm:gap-6">
           {(
@@ -1158,7 +1181,7 @@ export default function Perfil({
       </div>
 
       {viendo === yo && (
-      <div className="space-y-6 lg:border-l lg:border-borde lg:pl-12">
+      <div className={`space-y-6 lg:border-l lg:border-borde lg:pl-12 ${soloApp}`}>
         <SeccionTema
           yo={yo}
           temaActual={temaActual}
@@ -1187,7 +1210,7 @@ export default function Perfil({
         onClick={() => {
           if (confirm("¿Cerrar sesión en este dispositivo?")) alSalir();
         }}
-        className={`${enlace} mx-auto block pt-2`}
+        className={`${enlace} mx-auto block pt-2 ${soloApp}`}
       >
         Cerrar sesión en este dispositivo
       </button>

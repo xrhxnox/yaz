@@ -26,8 +26,23 @@ export function aplicarTema(persona: Persona | null, tema: Tema | null, guardar 
     } catch {}
   }
 
-  const fondo = getComputedStyle(raiz).getPropertyValue("--fondo").trim();
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", fondo));
+  const estilos = getComputedStyle(raiz);
+  const fondo = estilos.getPropertyValue("--fondo").trim();
+  const acento = estilos.getPropertyValue("--acento").trim();
+  // Como app, arriba va la franja de acento: la barra del sistema toma ese mismo color
+  const comoApp = matchMedia("(display-mode: standalone)").matches;
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", comoApp ? acento : fondo));
+  refrescarFranja(acento);
+}
+
+// iPhone guarda el color de lo que está detrás de la barra de estado y no lo actualiza
+// cuando solo cambia el color: se oculta la franja un par de cuadros para que lo vuelva a tomar
+function refrescarFranja(acento: string) {
+  const franja = document.querySelector<HTMLElement>(".franja-app");
+  if (!franja) return;
+  franja.style.background = acento;
+  franja.style.visibility = "hidden";
+  requestAnimationFrame(() => requestAnimationFrame(() => franja.style.removeProperty("visibility")));
 }
 
 // Mostrar todos los textos en minúsculas (preferencia de cada quien)
