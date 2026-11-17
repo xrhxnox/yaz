@@ -11,7 +11,7 @@ async function opcional<T>(consulta: PromiseLike<{ data: T[] | null; error: unkn
   }
 }
 
-// Sin ?mes: lista de meses. Con ?mes=n: el "número especial" de ese mes de la relación
+// Sin ?mes: lista de meses. Con ?mes=n: el resumen de ese mes de la relación
 export async function GET(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
       momentos,
       preguntas: {
         total: ambas.length,
-        // Una pregunta del mes con las dos respuestas, para el "número especial"
+        // Una pregunta del mes con las dos respuestas, para el resumen
         destacada: ambas.length
           ? (() => {
               const [fecha, r] = ambas[Math.floor(ambas.length / 2)];

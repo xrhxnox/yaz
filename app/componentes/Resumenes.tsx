@@ -34,15 +34,15 @@ function Cifra({ n, texto }: { n: number; texto: string }) {
   );
 }
 
-// El "número especial" de un mes: todo lo que pasó, como portada de periódico
-function NumeroEspecial({ r }: { r: Resumen }) {
+// El resumen de un mes: todo lo que pasó, como portada de periódico
+function ResumenMes({ r }: { r: Resumen }) {
   const { nombres, acentos } = usePareja();
   const totalMensajes = r.mensajes.a + r.mensajes.b;
   return (
     <article className="space-y-6">
       <header className="border-b border-borde pb-4 text-center">
         <p className="text-xs tracking-wide text-suave">
-          {r.terminado ? "Número especial" : "En curso"} · {formatearFecha(r.inicio, corto)} – {formatearFecha(r.fin, { ...corto, year: "numeric" })}
+          {r.terminado ? "Resumen del mes" : "En curso"} · {formatearFecha(r.inicio, corto)} – {formatearFecha(r.fin, { ...corto, year: "numeric" })}
         </p>
         <h2 className="mt-1 font-serif text-5xl tracking-tight">
           Mes <span className="text-acento-texto italic">{r.n}</span>
@@ -171,7 +171,7 @@ export default function Resumenes() {
           ← Todos los meses
         </button>
         {error && <p className="text-sm text-acento-texto">{error}</p>}
-        {resumen ? <NumeroEspecial r={resumen} /> : !error && <p className="py-10 text-center text-sm text-suave">Armando el número…</p>}
+        {resumen ? <ResumenMes r={resumen} /> : !error && <p className="py-10 text-center text-sm text-suave">Armando el resumen…</p>}
       </div>
     );
   }
