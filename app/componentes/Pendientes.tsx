@@ -66,17 +66,14 @@ function Fila({
     <li className="py-3">
       <div className="group flex items-center gap-3">
         <button
-          onClick={() => {
-            if (p.hecho) {
-              if (confirm(`¿Regresar "${p.texto}" a pendientes?`)) alReabrir();
-            } else setConfirmando((c) => !c);
-          }}
+          onClick={() => setConfirmando((c) => !c)}
           aria-label={p.hecho ? "Regresar a pendientes" : "Marcar como hecho"}
           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
-            p.hecho || confirmando ? "border-acento bg-acento text-sobre-acento" : "border-suave hover:border-texto"
+            p.hecho !== confirmando ? "border-acento bg-acento text-sobre-acento" : "border-suave hover:border-texto"
           }`}
         >
-          {(p.hecho || confirmando) && (
+          {/* Mientras se confirma, el círculo ya muestra cómo quedaría */}
+          {p.hecho !== confirmando && (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
               <path d="M5 12l5 5 9-10" />
             </svg>
@@ -105,7 +102,28 @@ function Fila({
         </button>
       </div>
 
-      {confirmando && (
+      {confirmando && p.hecho && (
+        <div className="mt-3 ml-9 rounded-xl bg-relleno p-3">
+          <p className="font-serif">¿Regresar a pendientes?</p>
+          <p className="mt-1 text-sm text-suave">Se quitará la fecha en que lo completaron.</p>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => setConfirmando(false)} className={botonSecundario}>
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                setConfirmando(false);
+                alReabrir();
+              }}
+              className={`${botonPrimario} flex-1`}
+            >
+              Sí, regresar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmando && !p.hecho && (
         <div className="mt-3 ml-9 rounded-xl bg-relleno p-3">
           <p className="font-serif">¿Ya lo hicieron?</p>
           <label className="mt-2 flex items-center gap-2 text-sm text-suave">
