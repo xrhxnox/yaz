@@ -3,7 +3,7 @@ import { hoyCompartido, otra, type Persona } from "@/lib/config";
 
 type Resultado = { tipo: string; texto: string; detalle: string | null; fecha: string | null; seccion: string };
 
-// Busca en mensajes, respuestas, momentos, pendientes, wishlist, visitas y cartas
+// Busca en mensajes, respuestas, momentos, pendientes, wishlist, visitas, cartas, diario y playlist
 export async function GET(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   };
 
   try {
-    const [mensajes, respuestas, momentos, pendientes, deseos, visitas, cartas] = await Promise.all([
+    const [mensajes, respuestas, momentos, pendientes, deseos, visitas, cartas, diario, canciones] = await Promise.all([
       buscar<{ mensaje: string; de: Persona; created_at: string }>(
         db().from("pensamientos").select("mensaje, de, created_at").ilike("mensaje", patron).order("created_at", { ascending: false }).limit(20),
       ),
@@ -47,6 +47,16 @@ export async function GET(req: Request) {
       ),
       buscar<{ titulo: string; contenido: string; de: Persona; para: Persona; abierta_at: string | null; created_at: string }>(
         db().from("cartas").select("titulo, contenido, de, para, abierta_at, created_at").or(`titulo.ilike.${patron},contenido.ilike.${patron}`).limit(20),
+      ),
+      buscar<{ texto: string; tipo: string; persona: Persona; fecha: string }>(
+        db().from("diario").select("texto, tipo, persona, fecha").ilike("texto", patron).order("fecha", { ascending: false }).limit(20),
+      ),
+      buscar<{ titulo: string; artista: string | null; nota: string | null; persona: Persona; created_at: string }>(
+        db()
+          .from("canciones")
+          .select("titulo, artista, nota, persona, created_at")
+          .or(`titulo.ilike.${patron},artista.ilike.${patron},nota.ilike.${patron}`)
+          .limit(20),
       ),
     ]);
 
@@ -70,6 +80,14 @@ export async function GET(req: Request) {
       ...cartas
         .filter((c) => c.de === yo || c.abierta_at)
         .map((c) => ({ tipo: "Carta", texto: c.titulo, detalle: null, fecha: c.created_at.slice(0, 10), seccion: "buzon" })),
+      ...diario.map((d) => ({ tipo: "Diario", texto: d.texto, detalle: d.persona, fecha: d.fecha, seccion: "fotos/diario" })),
+      ...canciones.map((c) => ({
+        tipo: "Canción",
+        texto: c.titulo,
+        detalle: [c.artista, c.nota].filter(Boolean).join(" · ") || null,
+        fecha: c.created_at.slice(0, 10),
+        seccion: "playlist",
+      })),
     ];
 
     return Response.json({ resultados });

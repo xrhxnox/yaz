@@ -115,6 +115,15 @@ export function formatearFecha(fecha: string, opciones: Intl.DateTimeFormatOptio
   return new Date(a, m - 1, d).toLocaleDateString("es-MX", opciones);
 }
 
+// Si la fecha es mesiversario (mismo día del mes que FECHA_INICIO), cuántos meses cumplen; si no, null
+export function mesiversario(fecha: string): number | null {
+  const [a, m, d] = FECHA_INICIO.split("-").map(Number);
+  const [y, mm, dd] = fecha.split("-").map(Number);
+  if (dd !== d) return null;
+  const n = (y - a) * 12 + (mm - m);
+  return n > 0 ? n : null;
+}
+
 // "Meses" de la relación: el mes 1 va del 15 de febrero al 14 de marzo, el 2 del 15 de marzo al 14 de abril…
 export function periodoMes(n: number): { inicio: string; fin: string } {
   const [a, m, d] = FECHA_INICIO.split("-").map(Number);
