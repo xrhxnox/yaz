@@ -21,6 +21,19 @@ export function esFuente(x: unknown): x is Fuente {
 }
 export type Estilo = { minusculas?: boolean; fuente?: Fuente };
 
+// Diario: qué hizo cada quien en el día
+export const TIPOS_DIARIO = [
+  { id: "hice", nombre: "Hice", ejemplo: "Fui al gym", conLink: false },
+  { id: "comi", nombre: "Comí", ejemplo: "Tacos de asada", conLink: false },
+  { id: "vi", nombre: "Vi", ejemplo: "Un video de gatitos", conLink: true },
+  { id: "escuche", nombre: "Escuché", ejemplo: "Una canción que me recordó a ti", conLink: true },
+  { id: "otro", nombre: "Otra cosa", ejemplo: "Me acordé de cuando…", conLink: false },
+] as const;
+export type TipoDiario = (typeof TIPOS_DIARIO)[number]["id"];
+export function esTipoDiario(x: unknown): x is TipoDiario {
+  return TIPOS_DIARIO.some((t) => t.id === x);
+}
+
 export const NOMBRES: Record<Persona, string> = {
   a: process.env.NEXT_PUBLIC_NOMBRE_A || "Ric",
   b: process.env.NEXT_PUBLIC_NOMBRE_B || "Yaz",

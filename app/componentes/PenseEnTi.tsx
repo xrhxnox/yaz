@@ -9,7 +9,7 @@ import Corazon from "./Corazon";
 import { campo, enlace, numero, tarjeta, titulo } from "@/lib/estilos";
 
 // Mensajes recientes que se ven sin abrir la lista completa
-const VISIBLES = 3;
+const VISIBLES = 5;
 
 function hace(iso: string, ahora: Date) {
   const min = Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000);

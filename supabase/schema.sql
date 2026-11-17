@@ -169,6 +169,18 @@ create table if not exists cartas (
   created_at timestamptz not null default now()
 );
 
+-- Diario: qué hizo, comió, vio o escuchó cada quien en el día
+create table if not exists diario (
+  id bigserial primary key,
+  persona text not null check (persona in ('a', 'b')),
+  fecha date not null,
+  tipo text not null check (tipo in ('hice', 'comi', 'vi', 'escuche', 'otro')),
+  texto text not null,
+  link text,
+  created_at timestamptz not null default now()
+);
+create index if not exists diario_fecha on diario (fecha, created_at);
+
 -- Juegos por turnos: gato y conecta 4
 create table if not exists partidas (
   id bigserial primary key,
@@ -201,6 +213,7 @@ alter table animos enable row level security;
 alter table visitas enable row level security;
 alter table cartas enable row level security;
 alter table partidas enable row level security;
+alter table diario enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.

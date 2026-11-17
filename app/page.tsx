@@ -17,7 +17,7 @@ import Pendientes from "./componentes/Pendientes";
 import Cartas from "./componentes/Cartas";
 import SeccionJuegos from "./componentes/SeccionJuegos";
 import AvisoTurno from "./componentes/AvisoTurno";
-import Fotos from "./componentes/Fotos";
+import SeccionFotos from "./componentes/SeccionFotos";
 import Recuerdos from "./componentes/Recuerdos";
 import Buscar from "./componentes/Buscar";
 import Animo from "./componentes/Animo";
@@ -215,7 +215,7 @@ export default function Inicio() {
           </>
         )}
         {seccion === "lista" && <Pendientes />}
-        {seccion === "fotos" && <Fotos yo={yo} />}
+        {seccion === "fotos" && <SeccionFotos yo={yo} />}
         {seccion === "momentos" && <Recuerdos />}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}
         {seccion === "buzon" && (
