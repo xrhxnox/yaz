@@ -264,50 +264,97 @@ function SeccionFavoritos({ favoritos, editable, alGuardar }: { favoritos: Favor
 
 // ---------- Wishlist ----------
 
-function SeccionDeseos({
-  duenio,
-  yo,
-  deseos,
-  alAgregar,
-  alBorrar,
-  alMarcar,
-}: {
-  duenio: Persona;
-  yo: Persona;
-  deseos: Deseo[];
-  alAgregar: (d: { url: string; titulo: string; nota: string }) => Promise<void>;
-  alBorrar: (d: Deseo) => void;
-  alMarcar: (d: Deseo) => void;
-}) {
-  const NOMBRES = useNombres();
-  const [agregando, setAgregando] = useState(false);
-  const [url, setUrl] = useState("");
-  const [titulo, setTitulo] = useState("");
-  const [nota, setNota] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const esMia = duenio === yo;
+type DatosDeseo = { url: string; titulo: string; nota: string };
 
-  async function agregar(e: React.FormEvent) {
+// Formulario para agregar o editar un producto de la wishlist
+function FormDeseo({
+  inicial,
+  textoBoton,
+  alGuardar,
+  alCancelar,
+}: {
+  inicial: DatosDeseo;
+  textoBoton: string;
+  alGuardar: (d: DatosDeseo) => Promise<void>;
+  alCancelar: () => void;
+}) {
+  const [url, setUrl] = useState(inicial.url);
+  const [titulo, setTitulo] = useState(inicial.titulo);
+  const [nota, setNota] = useState(inicial.nota);
+  const [guardando, setGuardando] = useState(false);
+
+  async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) return;
     setGuardando(true);
     try {
-      await alAgregar({ url, titulo, nota });
-      setUrl("");
-      setTitulo("");
-      setNota("");
-      setAgregando(false);
+      await alGuardar({ url, titulo, nota });
+    } catch {
+      // El error ya se muestra arriba; dejamos el formulario abierto para corregir
     } finally {
       setGuardando(false);
     }
   }
 
   return (
+    <form onSubmit={guardar} className="mt-3 space-y-2">
+      <input
+        type="url"
+        inputMode="url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://www.amazon.com.mx/…"
+        className={campo}
+        autoFocus
+      />
+      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={120} placeholder="Nombre (opcional)" className={campo} />
+      <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={300} placeholder="Nota: color, talla… (opcional)" className={campo} />
+      <div className="flex gap-2">
+        <button type="button" onClick={alCancelar} className={botonSecundario}>
+          Cancelar
+        </button>
+        <button disabled={!url.trim() || guardando} className={`${botonPrimario} flex-1`}>
+          {guardando ? "Guardando…" : textoBoton}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function SeccionDeseos({
+  duenio,
+  yo,
+  deseos,
+  alAgregar,
+  alEditar,
+  alBorrar,
+  alMarcar,
+}: {
+  duenio: Persona;
+  yo: Persona;
+  deseos: Deseo[];
+  alAgregar: (d: DatosDeseo) => Promise<void>;
+  alEditar: (d: Deseo, datos: DatosDeseo) => Promise<void>;
+  alBorrar: (d: Deseo) => void;
+  alMarcar: (d: Deseo) => void;
+}) {
+  const NOMBRES = useNombres();
+  const [agregando, setAgregando] = useState(false);
+  const [editando, setEditando] = useState<number | null>(null);
+  const esMia = duenio === yo;
+
+  return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
         <p className={tituloSeccion}>Wishlist</p>
         {esMia && !agregando && (
-          <button onClick={() => setAgregando(true)} className={enlace}>
+          <button
+            onClick={() => {
+              setAgregando(true);
+              setEditando(null);
+            }}
+            className={enlace}
+          >
             Agregar link
           </button>
         )}
@@ -315,63 +362,77 @@ function SeccionDeseos({
       {!esMia && <p className="mt-1 text-xs text-suave">{NOMBRES[duenio]} no ve lo que marques como comprado.</p>}
 
       {agregando && (
-        <form onSubmit={agregar} className="mt-3 space-y-2">
-          <input
-            type="url"
-            inputMode="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://www.amazon.com.mx/…"
-            className={campo}
-            autoFocus
-          />
-          <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={120} placeholder="Nombre (opcional)" className={campo} />
-          <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={300} placeholder="Nota: color, talla… (opcional)" className={campo} />
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setAgregando(false)} className={botonSecundario}>
-              Cancelar
-            </button>
-            <button disabled={!url.trim() || guardando} className={`${botonPrimario} flex-1`}>
-              {guardando ? "Guardando…" : "Agregar"}
-            </button>
-          </div>
-        </form>
+        <FormDeseo
+          inicial={{ url: "", titulo: "", nota: "" }}
+          textoBoton="Agregar"
+          alCancelar={() => setAgregando(false)}
+          alGuardar={async (datos) => {
+            await alAgregar(datos);
+            setAgregando(false);
+          }}
+        />
       )}
 
       {deseos.length === 0 ? (
         !agregando && <p className="mt-2 text-sm text-suave">{esMia ? "Agrega links de cosas que te gustan." : "Todavía no hay nada aquí."}</p>
       ) : (
         <ul className="mt-2 divide-y divide-borde">
-          {deseos.map((d) => (
-            <li key={d.id} className="flex items-start gap-3 py-3">
-              <div className="min-w-0 flex-1">
-                <a
-                  href={d.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`font-serif text-lg leading-snug break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
-                >
-                  {d.titulo}
-                </a>
-                <p className="text-xs text-suave">{dominio(d.url)}</p>
-                {d.nota && <p className="mt-0.5 text-sm break-words text-suave">{d.nota}</p>}
-              </div>
-              {esMia ? (
-                <button onClick={() => alBorrar(d)} aria-label="Borrar" className="shrink-0 p-1 text-suave hover:text-acento-texto">
-                  <Equis />
-                </button>
-              ) : (
-                <button
-                  onClick={() => alMarcar(d)}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-xs transition ${
-                    d.comprado ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"
-                  }`}
-                >
-                  {d.comprado ? "Comprado" : "Ya lo compré"}
-                </button>
-              )}
-            </li>
-          ))}
+          {deseos.map((d) =>
+            editando === d.id ? (
+              <li key={d.id} className="py-3">
+                <p className={etiqueta}>Editar producto</p>
+                <FormDeseo
+                  inicial={{ url: d.url, titulo: d.titulo, nota: d.nota ?? "" }}
+                  textoBoton="Guardar"
+                  alCancelar={() => setEditando(null)}
+                  alGuardar={async (datos) => {
+                    await alEditar(d, datos);
+                    setEditando(null);
+                  }}
+                />
+              </li>
+            ) : (
+              <li key={d.id} className="flex items-start gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={d.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`font-serif text-lg leading-snug break-words hover:underline ${d.comprado ? "text-suave line-through" : ""}`}
+                  >
+                    {d.titulo}
+                  </a>
+                  <p className="text-xs text-suave">{dominio(d.url)}</p>
+                  {d.nota && <p className="mt-0.5 text-sm break-words text-suave">{d.nota}</p>}
+                </div>
+                {esMia ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setEditando(d.id);
+                        setAgregando(false);
+                      }}
+                      className="px-1 text-xs text-suave underline decoration-borde underline-offset-4 hover:text-texto"
+                    >
+                      Editar
+                    </button>
+                    <button onClick={() => alBorrar(d)} aria-label="Borrar" className="p-1 text-suave hover:text-acento-texto">
+                      <Equis />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => alMarcar(d)}
+                    className={`shrink-0 rounded-full border px-3 py-1 text-xs transition ${
+                      d.comprado ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"
+                    }`}
+                  >
+                    {d.comprado ? "Comprado" : "Ya lo compré"}
+                  </button>
+                )}
+              </li>
+            ),
+          )}
         </ul>
       )}
     </section>
@@ -853,6 +914,7 @@ export default function Perfil({
             yo={yo}
             deseos={deseos}
             alAgregar={(d) => hacer(api("/api/deseos", d))}
+            alEditar={(d, datos) => hacer(api("/api/deseos", { id: d.id, ...datos }, "PUT"))}
             alBorrar={(d) => {
               if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
             }}

@@ -40,6 +40,34 @@ export async function POST(req: Request) {
   }
 }
 
+// Editar nombre, link y nota: solo el dueño
+export async function PUT(req: Request) {
+  const yo = await autenticar(req);
+  if (yo instanceof Response) return yo;
+
+  const { id, titulo, url, nota } = await req.json().catch(() => ({}));
+  if (!Number.isInteger(id)) return invalido();
+  if (!urlValida(url)) return invalido("Revisa el link");
+  const link = url.trim();
+
+  try {
+    if ((await dueno(id)) !== yo) return invalido("Solo puedes editar tus propios deseos");
+    revisar(
+      await db()
+        .from("deseos")
+        .update({
+          url: link,
+          titulo: typeof titulo === "string" && titulo.trim() ? titulo.trim().slice(0, 120) : new URL(link).hostname.replace(/^www\./, ""),
+          nota: typeof nota === "string" && nota.trim() ? nota.trim().slice(0, 300) : null,
+        })
+        .eq("id", id),
+    );
+    return Response.json({ ok: true });
+  } catch (e) {
+    return error(e);
+  }
+}
+
 // Marcar como comprado: solo lo puede hacer el otro
 export async function PATCH(req: Request) {
   const yo = await autenticar(req);
