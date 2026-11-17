@@ -1,16 +1,10 @@
 "use client";
 
-export const SECCIONES = ["inicio", "pregunta", "lista", "fotos", "juegos", "buzon", "momentos"] as const;
+export const SECCIONES = ["inicio", "lista", "fotos", "juegos", "buzon", "momentos"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
 const ICONOS: Record<Seccion, React.ReactNode> = {
   inicio: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
-  pregunta: (
-    <>
-      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-      <path d="M10 9.5a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.2v.5M12 15.5h.01" />
-    </>
-  ),
   lista: <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />,
   fotos: (
     <>
@@ -40,7 +34,6 @@ const ICONOS: Record<Seccion, React.ReactNode> = {
 
 export const NOMBRES_SECCION: Record<Seccion, string> = {
   inicio: "Inicio",
-  pregunta: "Pregunta",
   lista: "Pendientes",
   fotos: "Fotos",
   juegos: "Juegos",
@@ -51,13 +44,13 @@ export const NOMBRES_SECCION: Record<Seccion, string> = {
 export default function Navegacion({ actual }: { actual: string }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t lg:hidden border-borde bg-tarjeta/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="mx-auto grid max-w-md grid-cols-7">
+      <ul className="mx-auto grid max-w-md grid-cols-6">
         {SECCIONES.map((s) => (
           <li key={s}>
             <a
               href={`#${s}`}
               aria-current={actual === s ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2 text-[9px] min-[360px]:text-[10px] min-[420px]:text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
+              className={`flex flex-col items-center gap-0.5 py-2 text-[10px] min-[360px]:text-[11px] transition ${actual === s ? "text-texto" : "text-suave hover:text-texto"}`}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actual === s ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 {ICONOS[s]}

@@ -55,7 +55,7 @@ export async function GET(req: Request) {
       // La respuesta de hoy del otro sigue siendo secreta hasta que contestes
       ...respuestas
         .filter((r) => !(r.fecha === hoy && r.persona === otra(yo)))
-        .map((r) => ({ tipo: "Pregunta del día", texto: r.respuesta, detalle: r.persona, fecha: r.fecha, seccion: "pregunta" })),
+        .map((r) => ({ tipo: "Pregunta del día", texto: r.respuesta, detalle: r.persona, fecha: r.fecha, seccion: "juegos/pregunta" })),
       ...momentos.map((m) => ({ tipo: "Momento", texto: m.titulo, detalle: m.descripcion, fecha: m.fecha, seccion: "momentos" })),
       ...pendientes.map((p) => ({
         tipo: p.hecho ? "Ya lo hicimos" : "Pendiente",

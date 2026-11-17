@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         .from("respuestas")
         .upsert({ fecha: hoy, persona, respuesta: respuesta.trim().slice(0, MAX_RESPUESTA) }, { onConflict: "fecha,persona" }),
     );
-    if (!previa) await notificar(otra(persona), "Pregunta del día", `${(await nombresActuales())[persona]} ya respondió`, "/#pregunta");
+    if (!previa) await notificar(otra(persona), "Pregunta del día", `${(await nombresActuales())[persona]} ya respondió`, "/#juegos/pregunta");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

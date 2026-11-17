@@ -3,11 +3,10 @@
 Nuestro espacio a distancia:
 
 - **Inicio:** días juntos, hora y clima de cada uno, cuenta regresiva para el reencuentro y mensajes rápidos ("Pensé en ti", "Te extraño"…) que llegan como notificación.
-- **Pregunta del día:** la misma pregunta para los dos; la respuesta del otro se ve hasta que contestas la tuya.
 - **Lista:** pendientes compartidos (películas y series, lugares, planes).
 - **Fotos:** varias fotos al día de cada uno (hasta 12) y el álbum de días anteriores.
 - **Recuerdos:** línea del tiempo (momentos con fotos), visitas y el resumen de cada mes.
-- **Juegos:** gato y conecta 4 por turnos, con marcador y aviso cuando te toca.
+- **Juegos:** la pregunta del día, y gato y conecta 4 por turnos (3 partidas al día), con marcador y aviso cuando te toca.
 - **Buzón:** cartas que se abren en una fecha o en un momento especial.
 - **Inicio:** también el ánimo de cada uno, rachas y los planes para el próximo reencuentro.
 - **Buscar** en mensajes, respuestas, momentos, pendientes, wishlist, visitas y cartas.

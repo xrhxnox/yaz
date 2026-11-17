@@ -5,10 +5,8 @@ import { otra, type Persona } from "@/lib/config";
 import { api } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
-import { useSubseccion } from "@/lib/subseccion";
 import { JUEGOS, caidaEnColumna, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
 import { botonPrimario, enlace, numero } from "@/lib/estilos";
-import Pestanas from "./Pestanas";
 
 type Partida = {
   id: number;
@@ -25,11 +23,6 @@ type Datos = {
   hoy?: Record<TipoJuego, number>;
   limite?: number;
 };
-
-const PESTANAS = [
-  { id: "gato", nombre: "Gato" },
-  { id: "conecta4", nombre: "Conecta 4" },
-] as const;
 
 // Gato: × para Ric (a), ○ para Yaz (b), cada quien en su color
 function TableroGato({ p, puedoJugar, alJugar }: { p: Partida; puedoJugar: boolean; alJugar: (posicion: number) => void }) {
@@ -185,9 +178,8 @@ function JuegoActual({ tipo, p, yo, hoy, limite, alJugar, alNueva, alAbandonar }
 }
 
 // Juegos por turnos: cada quien juega cuando puede
-export default function Juegos({ yo }: { yo: Persona }) {
+export default function Juegos({ yo, tipo }: { yo: Persona; tipo: TipoJuego }) {
   const { nombres, acentos } = usePareja();
-  const [tipo, setTipo] = useSubseccion<TipoJuego>(["gato", "conecta4"], "gato");
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
   const tu = otra(yo);
@@ -228,19 +220,9 @@ export default function Juegos({ yo }: { yo: Persona }) {
 
   const p = datos?.actual[tipo] ?? null;
   const m = datos?.marcador[tipo];
-  const tocaEn = (t: TipoJuego) => {
-    const x = datos?.actual[t];
-    return x && !x.ganador && x.turno === yo ? 1 : 0;
-  };
 
   return (
     <div className="space-y-6 lg:mx-auto lg:max-w-xl">
-      <Pestanas
-        opciones={PESTANAS.map((o) => ({ ...o, cuantos: tocaEn(o.id) }))}
-        actual={tipo}
-        alCambiar={setTipo}
-        etiqueta="Juegos"
-      />
 
       {m && (
         <section className="grid grid-cols-3 divide-x divide-borde border-b border-borde pb-4 text-center">

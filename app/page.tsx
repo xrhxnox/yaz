@@ -13,10 +13,9 @@ import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import HoraClima from "./componentes/HoraClima";
-import Pregunta from "./componentes/Pregunta";
 import Pendientes from "./componentes/Pendientes";
 import Cartas from "./componentes/Cartas";
-import Juegos from "./componentes/Juegos";
+import SeccionJuegos from "./componentes/SeccionJuegos";
 import AvisoTurno from "./componentes/AvisoTurno";
 import Fotos from "./componentes/Fotos";
 import Recuerdos from "./componentes/Recuerdos";
@@ -36,6 +35,10 @@ type Vista = Seccion | "perfil" | "buscar";
 function leerSeccion(): Vista {
   // #seccion o #seccion/pestaña (ej. #momentos/cartas)
   const h = window.location.hash.slice(1).split("/")[0];
+  if (h === "pregunta") {
+    history.replaceState(null, "", "#juegos/pregunta");
+    return "juegos";
+  }
   return h === "perfil" || h === "buscar" || (SECCIONES as readonly string[]).includes(h) ? (h as Vista) : "inicio";
 }
 
@@ -202,11 +205,10 @@ export default function Inicio() {
             </div>
           </>
         )}
-        {seccion === "pregunta" && <Pregunta yo={yo} />}
         {seccion === "lista" && <Pendientes />}
         {seccion === "fotos" && <Fotos yo={yo} />}
         {seccion === "momentos" && <Recuerdos />}
-        {seccion === "juegos" && <Juegos yo={yo} />}
+        {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}
         {seccion === "buzon" && (
           <div className="lg:mx-auto lg:max-w-2xl">
             <Cartas yo={yo} />
