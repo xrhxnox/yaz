@@ -8,9 +8,10 @@ import Resumenes from "./Resumenes";
 import Pendientes from "./Pendientes";
 
 const PESTANAS = [
+  // Lo que vivieron, cuándo se vieron, lo que quieren hacer y el resumen de cada mes
   { id: "linea", nombre: "Historia" },
-  { id: "pendientes", nombre: "Pendientes" },
   { id: "visitas", nombre: "Visitas" },
+  { id: "pendientes", nombre: "Pendientes" },
   { id: "resumenes", nombre: "Resúmenes" },
 ] as const;
 

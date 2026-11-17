@@ -1,6 +1,7 @@
 "use client";
 
-export const SECCIONES = ["inicio", "playlist", "fotos", "juegos", "buzon", "momentos"] as const;
+// Primero lo de cada día (inicio, fotos, juegos), luego lo que se mandan (playlist, buzón) y al final lo guardado (momentos)
+export const SECCIONES = ["inicio", "fotos", "juegos", "playlist", "buzon", "momentos"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
 const ICONOS: Record<Seccion, React.ReactNode> = {

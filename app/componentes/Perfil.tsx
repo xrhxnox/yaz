@@ -18,8 +18,10 @@ import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta,
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
 type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null; favoritos: Favorito[] }>; deseos: Deseo[] };
 
-const FONDOS = ["#000000", "#0f1115", "#1b1a1f", "#1f1f21", "#2b2b2e", "#ffffff", "#fbf7fa", "#f6f4ef", "#eef3f8"];
-const ACENTOS = ["#2f99eb", "#fad4f5", "#e5484d", "#22c55e", "#f59e0b", "#8b5cf6", "#14b8a6", "#f472b6", "#ff7a59"];
+// De claro a oscuro: blanco, crema, rosado y azulado; luego grises hasta el negro
+const FONDOS = ["#ffffff", "#f6f4ef", "#fbf7fa", "#eef3f8", "#2b2b2e", "#1f1f21", "#1b1a1f", "#0f1115", "#000000"];
+// Como arcoíris: rojo, coral, ámbar, verde, turquesa, azul, morado, rosa y rosa pastel
+const ACENTOS = ["#e5484d", "#ff7a59", "#f59e0b", "#22c55e", "#14b8a6", "#2f99eb", "#8b5cf6", "#f472b6", "#fad4f5"];
 
 function dominio(url: string) {
   try {
