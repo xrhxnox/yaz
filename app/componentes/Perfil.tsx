@@ -580,12 +580,12 @@ function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; edit
           </div>
 
           <label className="block">
-            <span className={etiqueta}>Apodo (cómo te ves en la app)</span>
+            <span className={etiqueta}>Apodo</span>
             <input value={apodo} onChange={(e) => setApodo(e.target.value)} maxLength={30} className={`${campo} mt-1`} />
           </label>
 
           <div>
-            <p className={etiqueta}>Cumpleaños (sin año)</p>
+            <p className={etiqueta}>Cumpleaños</p>
             <div className="mt-1 grid grid-cols-[6rem_1fr] gap-2">
               <select value={dia} onChange={(e) => setDia(e.target.value)} className={campo} aria-label="Día">
                 <option value="">Día</option>

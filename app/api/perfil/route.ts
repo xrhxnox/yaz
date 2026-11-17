@@ -3,7 +3,7 @@ import { TALLAS, type Persona, type Tallas } from "@/lib/config";
 import { esHex } from "@/lib/colores";
 
 type Fila = { persona: Persona; tallas: Tallas; tema: { fondo: string; acento: string } | null };
-// Cumpleaños sin año: "MM-DD" (se acepta el 29 de febrero)
+// Cumpleaños: "MM-DD" (se acepta el 29 de febrero)
 function esCumple(v: unknown): v is string {
   if (typeof v !== "string" || !/^\d{2}-\d{2}$/.test(v)) return false;
   const [m, d] = v.split("-").map(Number);
