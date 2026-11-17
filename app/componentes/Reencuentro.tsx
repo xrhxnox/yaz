@@ -97,7 +97,7 @@ export default function Reencuentro({
         <div className="mt-2 grid grid-cols-4 divide-x divide-borde">
           {bloques.map(([n, nombre], i) => (
             <div key={nombre} className={i === 0 ? "pr-3" : "px-3"}>
-              <p className={`${numero} ${i === 0 ? "text-5xl" : "text-3xl"} leading-tight`}>{n}</p>
+              <p className={`${numero} ${i === 0 ? "text-5xl text-acento-texto" : "text-3xl"} leading-tight`}>{n}</p>
               <p className="text-xs text-suave">{nombre}</p>
             </div>
           ))}

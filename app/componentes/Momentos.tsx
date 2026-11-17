@@ -117,7 +117,7 @@ export default function Momentos() {
           {momentos.map((m) => (
             <li key={m.id} className="relative pb-6 pl-6">
               <span className="absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 border-fondo bg-acento" />
-              <p className="text-xs text-suave">{formatearFecha(m.fecha)}</p>
+              <p className="text-xs tracking-wide text-acento-texto">{formatearFecha(m.fecha)}</p>
               <div className="mt-1">
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-serif text-2xl leading-tight tracking-tight">{m.titulo}</p>

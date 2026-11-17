@@ -25,7 +25,9 @@ export default function Cabecera({
   return (
     <header className="pb-1">
       <div className="flex items-center justify-between text-[11px] tracking-wide text-suave">
-        <span>Núm. {diasJuntos(ahora)}</span>
+        <span>
+          Núm. <span className="font-serif text-sm text-acento-texto">{diasJuntos(ahora)}</span>
+        </span>
         <a
           href={enPerfil ? "#inicio" : "#perfil"}
           aria-label={enPerfil ? "Volver al inicio" : "Perfiles"}

@@ -14,7 +14,7 @@ export function db(): SupabaseClient {
   return cliente;
 }
 
-// Qué correo es de quién (CORREO_A = Rick, CORREO_B = Yaz). Cualquier otra cuenta no tiene acceso.
+// Qué correo es de quién (CORREO_A = Ric, CORREO_B = Yaz). Cualquier otra cuenta no tiene acceso.
 function personaDeCorreo(correo: string): Persona | null {
   const c = correo.trim().toLowerCase();
   if (c === process.env.CORREO_A?.trim().toLowerCase()) return "a";

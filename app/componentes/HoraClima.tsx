@@ -137,7 +137,7 @@ export default function HoraClima({
               {u && h ? (
                 <>
                   <p className="truncate font-serif text-xl leading-tight">{u.ciudad}</p>
-                  <p className={`${numero} mt-1 text-4xl leading-none`}>{c ? `${c.temp}°` : "—"}</p>
+                  <p className={`${numero} mt-1 text-4xl leading-none text-acento-texto`}>{c ? `${c.temp}°` : "—"}</p>
                   <p className="mt-1 text-xs text-suave">
                     {c ? describir(c.codigo) : "…"} · {h.hora}
                   </p>

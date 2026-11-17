@@ -5,7 +5,7 @@ export const CLAVE_SESION = "nosotros:sesion";
 export const CLAVE_TEMA = "nosotros:tema";
 
 export const NOMBRES: Record<Persona, string> = {
-  a: process.env.NEXT_PUBLIC_NOMBRE_A || "Rick",
+  a: process.env.NEXT_PUBLIC_NOMBRE_A || "Ric",
   b: process.env.NEXT_PUBLIC_NOMBRE_B || "Yaz",
 };
 

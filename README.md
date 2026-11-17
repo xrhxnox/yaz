@@ -1,4 +1,4 @@
-# Yaz & Rick
+# Yaz & Ric
 
 Nuestro espacio a distancia:
 

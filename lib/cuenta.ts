@@ -37,7 +37,7 @@ export async function iniciarSesion(correo: string, contrasena: string, pregunta
   try {
     return await preguntarQuienSoy();
   } catch (e) {
-    // La cuenta existe pero no es la de Rick ni la de Yaz
+    // La cuenta existe pero no es la de Ric ni la de Yaz
     await supa().auth.signOut();
     throw e;
   }

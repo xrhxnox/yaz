@@ -38,7 +38,7 @@
   }
 }
 
-/* Rick: fondo negro, acento azul */
+/* Ric: fondo negro, acento azul */
 :root[data-tema="a"] {
   color-scheme: dark;
   --fondo: #000000;

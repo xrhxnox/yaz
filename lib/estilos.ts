@@ -6,7 +6,7 @@ export const tarjeta = "border-t border-borde pt-5";
 export const caja = "rounded-xl border border-borde bg-tarjeta p-5";
 
 // Etiqueta pequeña arriba de cada sección
-export const etiqueta = "text-xs tracking-wide text-suave";
+export const etiqueta = "text-xs tracking-wide text-acento-texto";
 // Título de sección en serif
 export const titulo = "font-serif text-xl leading-snug tracking-tight";
 // Números grandes en serif

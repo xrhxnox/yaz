@@ -29,7 +29,7 @@ export default function Juntos({ ahora }: { ahora: Date }) {
   return (
     <section className={tarjeta}>
       <p className={etiqueta}>Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
-      <p className={`${numero} mt-1 text-[5.5rem] leading-none`}>{totalDias}</p>
+      <p className={`${numero} mt-1 text-[5.5rem] leading-none text-acento-texto`}>{totalDias}</p>
       <p className="font-serif text-lg italic">días, y contando</p>
       {partes.length > 0 && <p className="mt-1 text-sm text-suave">{partes.join(" · ")}</p>}
       {esMesiversario && (

@@ -57,7 +57,7 @@ export default function Inicio() {
     window.scrollTo(0, 0);
   }, [seccion]);
 
-  // Cada quien tiene su tema (Rick oscuro con azul, Yaz claro con rosa), o el que personalizó en su perfil
+  // Cada quien tiene su tema (Ric oscuro con azul, Yaz claro con rosa), o el que personalizó en su perfil
   // persona: undefined = todavía no se lee la sesión, null = no hay sesión
   const persona = sesion === undefined ? undefined : (sesion?.persona ?? null);
   const temaGuardado = JSON.stringify(persona && estado ? (estado.temas?.[persona] ?? null) : undefined);

@@ -89,7 +89,7 @@ export default function PenseEnTi({
               <p className="text-xs text-suave">enviados hoy</p>
             </div>
             <div className="pl-4">
-              <p className={`${numero} text-3xl`}>{estado.hoy[tu]}</p>
+              <p className={`${numero} text-3xl text-acento-texto`}>{estado.hoy[tu]}</p>
               <p className="text-xs text-suave">recibidos de {NOMBRES[tu]}</p>
             </div>
           </div>

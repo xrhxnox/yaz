@@ -1,6 +1,6 @@
 import { autenticar } from "@/lib/servidor";
 
-// Después de iniciar sesión, la app pregunta quién eres (Rick o Yaz) según tu correo
+// Después de iniciar sesión, la app pregunta quién eres (Ric o Yaz) según tu correo
 export async function GET(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;

@@ -117,7 +117,7 @@ if (url && llave && llaveOk) {
     const { data: lista, error: eUsuarios } = await db.auth.admin.listUsers({ perPage: 200 });
     if (eUsuarios) mal(`No pude leer las cuentas: ${eUsuarios.message}`);
     else {
-      for (const [p, n] of [["a", "Rick"], ["b", "Yaz"]]) {
+      for (const [p, n] of [["a", "Ric"], ["b", "Yaz"]]) {
         if (!correos[p]) continue;
         const u = lista.users.find((x) => x.email?.toLowerCase() === correos[p]);
         if (!u) mal(`No existe la cuenta de ${n} (${correos[p]})`, "Créala en Supabase → Authentication → Users → Add user (marca Auto Confirm)");
