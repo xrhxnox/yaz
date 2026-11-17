@@ -37,7 +37,17 @@ function Equis() {
 
 // ---------- Tallas ----------
 
-function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editable: boolean; alGuardar: (t: Tallas) => Promise<void> }) {
+function SeccionTallas({
+  tallas,
+  editable,
+  sinTitulo,
+  alGuardar,
+}: {
+  tallas: Tallas;
+  editable: boolean;
+  sinTitulo?: boolean;
+  alGuardar: (t: Tallas) => Promise<void>;
+}) {
   const [borrador, setBorrador] = useState<Tallas | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -96,7 +106,7 @@ function SeccionTallas({ tallas, editable, alGuardar }: { tallas: Tallas; editab
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        <p className={tituloSeccion}>Tallas</p>
+        {!sinTitulo && <p className={tituloSeccion}>Tallas</p>}
         {editable && (
           <button onClick={() => setBorrador({ ...tallas })} className={enlace}>
             Editar
@@ -173,7 +183,17 @@ const SUGERENCIAS = [
   "Lugar",
 ];
 
-function SeccionFavoritos({ favoritos, editable, alGuardar }: { favoritos: Favorito[]; editable: boolean; alGuardar: (f: Favorito[]) => Promise<void> }) {
+function SeccionFavoritos({
+  favoritos,
+  editable,
+  sinTitulo,
+  alGuardar,
+}: {
+  favoritos: Favorito[];
+  editable: boolean;
+  sinTitulo?: boolean;
+  alGuardar: (f: Favorito[]) => Promise<void>;
+}) {
   const [borrador, setBorrador] = useState<Favorito[] | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -269,7 +289,7 @@ function SeccionFavoritos({ favoritos, editable, alGuardar }: { favoritos: Favor
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        <p className={tituloSeccion}>Favoritos</p>
+        {!sinTitulo && <p className={tituloSeccion}>Favoritos</p>}
         {editable && (
           <button onClick={() => setBorrador(favoritos.length ? favoritos.map((f) => ({ ...f })) : [])} className={enlace}>
             {favoritos.length ? "Editar" : "Agregar"}
@@ -360,8 +380,10 @@ function SeccionDeseos({
   alBorrar,
   alMarcar,
   alOrdenar,
+  sinTitulo,
 }: {
   duenio: Persona;
+  sinTitulo?: boolean;
   yo: Persona;
   deseos: Deseo[];
   alAgregar: (d: DatosDeseo) => Promise<void>;
@@ -379,7 +401,7 @@ function SeccionDeseos({
   return (
     <section className={tarjeta}>
       <div className="flex items-center justify-between">
-        <p className={tituloSeccion}>Wishlist</p>
+        {!sinTitulo && <p className={tituloSeccion}>Wishlist</p>}
         {esMia && !agregando && (
           <div className="flex items-center gap-4">
             {deseos.length > 1 && (
@@ -952,6 +974,8 @@ export default function Perfil({
 }) {
   const NOMBRES = useNombres();
   const [viendo, setViendo] = useState<Persona>(yo);
+  // Al ver el perfil del otro, tallas / favoritos / wishlist van en pestañas
+  const [pestana, setPestana] = useState<"tallas" | "favoritos" | "wishlist">("tallas");
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState("");
 
@@ -1004,25 +1028,57 @@ export default function Perfil({
 
       {/* En escritorio: tallas y wishlist a la izquierda, ajustes a la derecha */}
       <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-12 lg:space-y-0">
-      <div className={`space-y-6 ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl"}`}>
+      <div className={`space-y-6 ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl [&>section]:border-t-0 [&>section]:pt-0"}`}>
+      {datos && viendo !== yo && (
+        <div role="tablist" aria-label="Secciones del perfil" className="flex gap-6 border-b border-borde">
+          {(
+            [
+              ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
+              ["favoritos", "Favoritos", (datos.perfiles[viendo].favoritos ?? []).length],
+              ["wishlist", "Wishlist", deseos.length],
+            ] as const
+          ).map(([id, nombre, cuantos]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={pestana === id}
+              onClick={() => setPestana(id)}
+              className={`-mb-px flex items-baseline gap-1.5 border-b-2 pb-2 font-serif text-lg transition ${
+                pestana === id ? "border-acento-texto text-texto" : "border-transparent text-suave hover:text-texto"
+              }`}
+            >
+              {nombre}
+              {cuantos > 0 && <span className="font-sans text-xs text-acento-texto">{cuantos}</span>}
+            </button>
+          ))}
+        </div>
+      )}
       {datos && (
         <>
+          {(viendo === yo || pestana === "tallas") && (
           <SeccionTallas
             key={`tallas-${viendo}`}
             tallas={datos.perfiles[viendo].tallas}
             editable={viendo === yo}
+            sinTitulo={viendo !== yo}
             alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
           />
+          )}
+          {(viendo === yo || pestana === "favoritos") && (
           <SeccionFavoritos
             key={`favoritos-${viendo}`}
             favoritos={datos.perfiles[viendo].favoritos ?? []}
             editable={viendo === yo}
+            sinTitulo={viendo !== yo}
             alGuardar={(favoritos) => hacer(api("/api/perfil", { favoritos }))}
           />
+          )}
+          {(viendo === yo || pestana === "wishlist") && (
           <SeccionDeseos
             key={`deseos-${viendo}`}
             duenio={viendo}
             yo={yo}
+            sinTitulo={viendo !== yo}
             deseos={deseos}
             alAgregar={(d) => hacer(api("/api/deseos", d))}
             alEditar={(d, datos) => hacer(api("/api/deseos", { id: d.id, ...datos }, "PUT"))}
@@ -1043,6 +1099,7 @@ export default function Perfil({
               hacer(api("/api/deseos", { id: d.id, comprado: !d.comprado }, "PATCH")).catch(() => {});
             }}
           />
+          )}
         </>
       )}
       </div>
