@@ -141,7 +141,7 @@ export default function Reencuentro({
       )}
 
       {visitas && visitas.veces > 0 && (
-        <a href="#momentos/visitas" className="mt-4 block text-sm text-suave hover:text-texto">
+        <a href="#nosotros/visitas" className="mt-4 block text-sm text-suave hover:text-texto">
           Nos hemos visto <span className="font-serif text-lg text-acento-texto">{visitas.veces}</span> {visitas.veces === 1 ? "vez" : "veces"} ·{" "}
           <span className="font-serif text-lg text-acento-texto">{visitas.dias}</span> {visitas.dias === 1 ? "día" : "días"} juntos en persona
         </a>

@@ -7,11 +7,11 @@ import { api, type Ubicacion } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, campo, enlace, etiqueta, numero, tarjeta } from "@/lib/estilos";
 
-type Clima = { temp: number; codigo: number };
+export type Clima = { temp: number; codigo: number };
 export type Resultado = { name: string; admin1?: string; country?: string; latitude: number; longitude: number; timezone: string };
 
 // Códigos WMO que usa Open-Meteo
-function describir(codigo: number): string {
+export function describir(codigo: number): string {
   if (codigo === 0) return "Despejado";
   if (codigo <= 2) return "Algo nublado";
   if (codigo === 3) return "Nublado";
@@ -24,11 +24,36 @@ function describir(codigo: number): string {
   return "Tormenta";
 }
 
-function horaEn(zona: string, ahora: Date) {
+export function horaEn(zona: string, ahora: Date) {
   const hora = ahora.toLocaleTimeString("es-MX", { timeZone: zona, hour: "numeric", minute: "2-digit" });
   const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: zona, hour: "numeric", hourCycle: "h23" }).format(ahora));
   const dia = ahora.toLocaleDateString("es-MX", { timeZone: zona, weekday: "long" });
   return { hora, dia, deNoche: h >= 23 || h < 7 };
+}
+
+// Temperatura y clima actual de cada quien (Open-Meteo), cada 15 minutos
+export function useClima(ubicaciones: Record<Persona, Ubicacion | null> | undefined) {
+  const [clima, setClima] = useState<Partial<Record<Persona, Clima>>>({});
+  const a = ubicaciones?.a;
+  const b = ubicaciones?.b;
+  const cargarClima = useCallback(async () => {
+    const lugares = { a, b };
+    const nuevos: Partial<Record<Persona, Clima>> = {};
+    await Promise.all(
+      (["a", "b"] as Persona[]).map(async (p) => {
+        const u = lugares[p];
+        if (!u) return;
+        try {
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${u.lat}&longitude=${u.lon}&current=temperature_2m,weather_code`);
+          const d = await res.json();
+          nuevos[p] = { temp: Math.round(d.current.temperature_2m), codigo: d.current.weather_code };
+        } catch {}
+      }),
+    );
+    setClima(nuevos);
+  }, [a, b]);
+  useCarga(cargarClima, 15 * 60 * 1000);
+  return clima;
 }
 
 // Guarda la ciudad elegida (y su zona horaria) para la persona que inició sesión
@@ -105,31 +130,8 @@ export default function HoraClima({
   alCambiar: () => Promise<void>;
 }) {
   const NOMBRES = useNombres();
-  const [clima, setClima] = useState<Partial<Record<Persona, Clima>>>({});
+  const clima = useClima(ubicaciones);
   const [editando, setEditando] = useState(false);
-  const a = ubicaciones?.a;
-  const b = ubicaciones?.b;
-
-  const cargarClima = useCallback(async () => {
-    const lugares = { a, b };
-    const nuevos: Partial<Record<Persona, Clima>> = {};
-    await Promise.all(
-      (["a", "b"] as Persona[]).map(async (p) => {
-        const u = lugares[p];
-        if (!u) return;
-        try {
-          const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${u.lat}&longitude=${u.lon}&current=temperature_2m,weather_code`,
-          );
-          const d = await res.json();
-          nuevos[p] = { temp: Math.round(d.current.temperature_2m), codigo: d.current.weather_code };
-        } catch {}
-      }),
-    );
-    setClima(nuevos);
-  }, [a, b]);
-
-  useCarga(cargarClima, 15 * 60 * 1000);
 
   return (
     <section className={tarjeta}>

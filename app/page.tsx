@@ -8,13 +8,11 @@ import { useCarga } from "@/lib/useCarga";
 import { aplicarFuente, aplicarMinusculas, aplicarTema } from "@/lib/tema";
 import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
-import Juntos from "./componentes/Juntos";
+import Portada from "./componentes/Portada";
 import UnDiaComoHoy from "./componentes/UnDiaComoHoy";
 import Historias from "./componentes/Historias";
-import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
-import HoraClima from "./componentes/HoraClima";
 import SeccionJuegos from "./componentes/SeccionJuegos";
 import AvisoTurno from "./componentes/AvisoTurno";
 import Muro from "./componentes/Muro";
@@ -22,7 +20,6 @@ import Nosotros from "./componentes/Nosotros";
 import Crear from "./componentes/Crear";
 import Buscar from "./componentes/Buscar";
 import Animo from "./componentes/Animo";
-import Rachas from "./componentes/Rachas";
 import AvisoResumen from "./componentes/AvisoResumen";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
@@ -192,28 +189,26 @@ export default function Inicio() {
         {seccion === "inicio" && (
           <>
             <Historias yo={yo} />
+            {/* Solo lo que pide algo hoy */}
             <Cumpleanos yo={yo} />
             <AvisoResumen />
             <AvisoTurno turnos={estado?.turnos} />
-            <Animo yo={yo} animos={estado?.animos} alCambiar={cargar} />
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas, como la portada de un periódico */}
             <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
-            <div className="space-y-6 lg:col-span-7 lg:space-y-10">
-            <Juntos ahora={ahora} />
-            <UnDiaComoHoy />
-            <Rachas rachas={estado?.rachas} />
-            <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={cargar} />
-            <Reencuentro
-              fecha={estado?.proximoEncuentro ?? null}
+            <div className="space-y-6 lg:col-span-7 lg:space-y-8">
+            <Portada
+              yo={yo}
               ahora={ahora}
-              planes={estado?.planes}
-              visitas={estado?.visitas}
-              alGuardar={async (fecha) => {
+              estado={estado}
+              alCambiar={cargar}
+              alGuardarFecha={async (fecha) => {
                 await api("/api/proximo", { fecha });
                 await cargar();
               }}
             />
+            <Animo yo={yo} animos={estado?.animos} alCambiar={cargar} />
+            <UnDiaComoHoy />
             </div>
             <div className="lg:col-span-5 lg:border-l lg:border-borde lg:pl-12">
             <PenseEnTi

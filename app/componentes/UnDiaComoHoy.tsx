@@ -38,9 +38,9 @@ export default function UnDiaComoHoy() {
   return (
     <section className={tarjeta}>
       <p className={titulo}>Un día como hoy</p>
-      <div className="mt-3 space-y-5">
+      <div className="-mx-5 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0">
         {recuerdos.map((r) => (
-          <article key={r.fecha}>
+          <article key={r.fecha} className={`shrink-0 snap-start rounded-2xl border border-borde bg-tarjeta p-3 ${recuerdos.length > 1 ? "w-[85%]" : "w-full"}`}>
             <p className={etiqueta}>
               {r.hace} · {formatearFecha(r.fecha, { day: "numeric", month: "long", year: "numeric" })}
             </p>

@@ -362,7 +362,7 @@ export default function Historias({ yo }: { yo: Persona }) {
           persona={tu}
           hay={suyas.length > 0}
           nuevas={sinVer.length > 0}
-          etiqueta={suyas.length ? nombres[tu] : `${nombres[tu]} · sin historias`}
+          etiqueta={nombres[tu]}
           acento={acentos[tu]}
           // Empieza por la primera que no ha visto
           alAbrir={() => setAbierta({ persona: tu, inicio: Math.max(0, suyas.findIndex((h) => !h.vista_at)) })}
