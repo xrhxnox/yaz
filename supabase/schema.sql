@@ -227,6 +227,8 @@ create table if not exists publicacion_fotos (
   orden int not null default 0
 );
 create index if not exists publicacion_fotos_pub on publicacion_fotos (publicacion_id, orden);
+-- Versión chica (~400 px) para las cuadrículas
+alter table publicacion_fotos add column if not exists miniatura text;
 
 create table if not exists publicacion_likes (
   publicacion_id bigint not null references publicaciones (id) on delete cascade,

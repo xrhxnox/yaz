@@ -68,6 +68,12 @@ export default function Inicio() {
   const [aviso, setAviso] = useState("");
   // Hoja de "Crear" (botón + del menú)
   const [creando, setCreando] = useState(false);
+  // Para abrir sin internet (solo en la versión publicada; en desarrollo estorbaría)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {});
+  }, []);
+
   // Como en una app: cada sección nueva empieza hasta arriba
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -154,6 +160,8 @@ export default function Inicio() {
   const salir = useCallback(() => {
     cerrarSesion();
     limpiarCache();
+    // Lo guardado para usar sin internet también se borra
+    navigator.serviceWorker?.controller?.postMessage("borrar-datos");
     guardarSesion(null);
     setEstado(null);
     ultimoVisto.current = null;

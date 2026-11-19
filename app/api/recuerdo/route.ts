@@ -62,11 +62,12 @@ export async function GET(req: Request) {
       .filter((d) => d.fotos.length || d.momentos.length || d.diario.length)
       .slice(0, 3);
 
-    const urls = await firmar(dias.flatMap((d) => d.fotos.map((f) => f.path)));
+    const vista = (f: { path: string; miniatura?: string | null }) => f.miniatura ?? f.path;
+    const urls = await firmar(dias.flatMap((d) => d.fotos.map(vista)));
     return Response.json({
       recuerdos: dias.map((d) => ({
         ...d,
-        fotos: d.fotos.filter((f) => urls[f.path]).map((f) => ({ url: urls[f.path], persona: f.persona, nota: f.nota })),
+        fotos: d.fotos.filter((f) => urls[vista(f)]).map((f) => ({ url: urls[vista(f)], persona: f.persona, nota: f.nota })),
       })),
     });
   } catch (e) {

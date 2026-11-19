@@ -76,7 +76,9 @@ export async function GET(req: Request) {
     // Hasta 9 fotos repartidas a lo largo del mes
     const paso = Math.max(1, Math.floor(fotos.length / 9));
     const elegidas = fotos.filter((_, i) => i % paso === 0).slice(0, 9);
-    const urls = await firmar(elegidas.map((f) => f.path));
+    // En la cuadrícula basta la miniatura (si la hay)
+    const vista = (f: (typeof elegidas)[number]) => f.miniatura ?? f.path;
+    const urls = await firmar(elegidas.map(vista));
 
     return Response.json({
       n,
@@ -87,7 +89,7 @@ export async function GET(req: Request) {
       fotos: {
         total: fotos.length,
         dias: new Set(fotos.map((f) => f.fecha)).size,
-        muestra: elegidas.filter((f) => urls[f.path]).map((f) => ({ url: urls[f.path], persona: f.persona, nota: f.nota })),
+        muestra: elegidas.filter((f) => urls[vista(f)]).map((f) => ({ url: urls[vista(f)], persona: f.persona, nota: f.nota })),
       },
       momentos,
       preguntas: {

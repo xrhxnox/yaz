@@ -20,12 +20,12 @@ export type Publicacion = {
   fecha: string;
   texto: string | null;
   created_at: string;
-  fotos: { id: number; url: string }[];
+  fotos: { id: number; url: string; mini?: string | null }[];
   likes: Persona[];
   comentarios: Comentario[];
 };
 type Datos = { publicaciones: Publicacion[]; maximo: number };
-type Elegida = { blob: Blob; vista: string };
+type Elegida = { blob: Blob; mini: Blob; vista: string };
 
 function hace(iso: string) {
   const min = Math.floor((Date.now() - Date.parse(iso)) / 60000);
@@ -63,7 +63,9 @@ function Componer({ maximo, alListo, alCancelar }: { maximo: number; alListo: ()
       const nuevas: Elegida[] = [];
       for (const a of archivos.slice(0, Math.max(cupo, 0))) {
         const blob = await comprimirImagen(a);
-        nuevas.push({ blob, vista: URL.createObjectURL(blob) });
+        // Versión chica para las cuadrículas
+        const mini = await comprimirImagen(a, 400);
+        nuevas.push({ blob, mini, vista: URL.createObjectURL(mini) });
       }
       setElegidas((x) => [...x, ...nuevas]);
     } catch (err) {
@@ -84,6 +86,7 @@ function Componer({ maximo, alListo, alCancelar }: { maximo: number; alListo: ()
         const form = new FormData();
         form.set("id", String(id));
         form.set("foto", e.blob, "foto.jpg");
+        form.set("miniatura", e.mini, "mini.jpg");
         await api("/api/muro", form, "PUT");
       }
       await alListo();
@@ -546,7 +549,7 @@ export default function Muro({ yo }: { yo: Persona }) {
               className="relative aspect-square bg-relleno"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.fotos[0].url} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <img src={p.fotos[0].mini ?? p.fotos[0].url} alt="" loading="lazy" className="h-full w-full object-cover" />
               {p.fotos.length > 1 && (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white" className="absolute top-1.5 right-1.5 drop-shadow" aria-hidden>
                   <path d="M8 3h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM3 7v12a2 2 0 0 0 2 2h12v-2H5V7z" />
