@@ -8,6 +8,7 @@ import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, caja, campo, etiqueta, titulo } from "@/lib/estilos";
 import Corazon from "./Corazon";
 import Vacio, { ICONOS_VACIO } from "./Vacio";
+import { perfilDe } from "@/lib/navegar";
 import { useReproductor, type Pista } from "@/lib/reproductor";
 import { hay, limpiar } from "@/lib/intencion";
 
@@ -180,7 +181,9 @@ function Tarjeta({
           <p className={`leading-snug ${grande ? "line-clamp-2 font-serif text-2xl leading-tight" : "truncate font-medium"}`}>{cancion.titulo}</p>
           {detalle && <p className="truncate text-sm text-suave">{detalle}</p>}
           <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-suave">
-            <span style={{ color: acentos[cancion.persona] }}>{cancion.persona === yo ? "Tú" : nombres[cancion.persona]}</span>
+            <a href={`#${perfilDe(cancion.persona, yo)}`} className="hover:underline" style={{ color: acentos[cancion.persona] }}>
+              {cancion.persona === yo ? "Tú" : nombres[cancion.persona]}
+            </a>
             <span>· {fecha}</span>
             {(mio || suyo) && (
               <span className="flex items-center gap-0.5">

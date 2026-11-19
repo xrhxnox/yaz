@@ -1152,21 +1152,23 @@ export default function Perfil({
   alSalir: () => void;
 }) {
   const NOMBRES = useNombres();
-  const [viendo, setViendo] = useState<Persona>(yo);
   const [pestana, setPestana] = useState<Pestana>("fotos");
   const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/perfil"));
   const [error, setError] = useState("");
   // #perfil/app: la configuración de la app y la cuenta (detrás del engrane)
-  const [parte, setParte] = useSubseccion<"datos" | "app">(["datos", "app"], "datos");
+  // #perfil/pareja: el perfil de la otra persona (así se puede llegar desde el muro, las historias…)
+  const [parte, setParte] = useSubseccion<"datos" | "app" | "pareja">(["datos", "app", "pareja"], "datos");
+  const viendo: Persona = parte === "pareja" ? otra(yo) : yo;
+  const setViendo = (p: Persona) => setParte(p === yo ? "datos" : "pareja");
   // Lo del muro y la playlist para los conteos y la cuadrícula de fotos
   const [publicaciones, setPublicaciones] = useState<PublicacionMini[] | null>(
     () => enCache<{ publicaciones: PublicacionMini[] }>("/api/muro")?.publicaciones ?? null,
   );
   // Publicación abierta desde la cuadrícula de fotos
-  const [abierta, setAbierta] = useState<number | null>(null);
+  const [abierta, setAbierta] = useState<{ id: number; persona: Persona } | null>(null);
   // Historias (se abren tocando la foto de perfil)
   const { historias, cargar: cargarHistorias } = useHistorias();
-  const [viendoHistorias, setViendoHistorias] = useState(false);
+  const [viendoHistorias, setViendoHistorias] = useState<Persona | null>(null);
   const [canciones, setCanciones] = useState<{ persona: Persona }[] | null>(() => enCache<{ canciones: { persona: Persona }[] }>("/api/canciones")?.canciones ?? null);
 
   const cargar = useCallback(async () => {
@@ -1301,7 +1303,7 @@ export default function Perfil({
         alCambiar={alCambiarDatos}
         alAjustes={() => setParte("app")}
         historias={{ hay: historiasDe.length > 0, nuevas: mio || historiasDe.some((h) => !h.vista_at) }}
-        alVerHistorias={() => setViendoHistorias(true)}
+        alVerHistorias={() => setViendoHistorias(viendo)}
       />
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
@@ -1327,7 +1329,7 @@ export default function Perfil({
           </div>
 
           <div className="[&>section]:border-t-0 [&>section]:pt-0">
-            {pestana === "fotos" && <FotosDe publicaciones={publicaciones && suyas} editable={mio} alAbrir={setAbierta} />}
+            {pestana === "fotos" && <FotosDe publicaciones={publicaciones && suyas} editable={mio} alAbrir={(id) => setAbierta({ id, persona: viendo })} />}
             {pestana === "favoritos" && (
               <SeccionFavoritos
                 key={`favoritos-${viendo}`}
@@ -1376,22 +1378,22 @@ export default function Perfil({
           </div>
         </>
       )}
-      {viendoHistorias && historiasDe.length > 0 && (
+      {viendoHistorias === viendo && historiasDe.length > 0 && (
         <Visor
           historias={historiasDe}
           inicio={inicioDe(historiasDe, viendo, yo)}
           yo={yo}
           alCambiar={cargarHistorias}
           alCerrar={() => {
-            setViendoHistorias(false);
+            setViendoHistorias(null);
             cargarHistorias();
           }}
         />
       )}
-      {abierta !== null && suyas.length > 0 && (
+      {abierta?.persona === viendo && suyas.length > 0 && (
         <VerPublicaciones
           lista={suyas}
-          inicio={abierta}
+          inicio={abierta.id}
           titulo={mio ? "Tú" : NOMBRES[viendo]}
           yo={yo}
           alCerrar={() => setAbierta(null)}

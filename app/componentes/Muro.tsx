@@ -10,6 +10,7 @@ import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 import Historias from "./Historias";
 import Vacio, { ICONOS_VACIO } from "./Vacio";
+import { perfilDe } from "@/lib/navegar";
 import { hay, limpiar } from "@/lib/intencion";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
@@ -282,13 +283,13 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
   return (
     <article id={`pub-${p.id}`} className="scroll-mt-4 overflow-hidden rounded-2xl border border-borde bg-tarjeta">
       <header className="flex items-center gap-2.5 px-3 py-2.5">
-        <span className="rounded-full p-[2px]" style={{ background: acentos[p.persona] }}>
+        <a href={`#${perfilDe(p.persona, yo)}`} aria-label={`Perfil de ${nombres[p.persona]}`} className="rounded-full p-[2px]" style={{ background: acentos[p.persona] }}>
           <Avatar persona={p.persona} size={30} className="border-2 border-tarjeta" />
-        </span>
+        </a>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-sm font-medium" style={{ color: acentos[p.persona] }}>
+          <a href={`#${perfilDe(p.persona, yo)}`} className="text-sm font-medium hover:underline" style={{ color: acentos[p.persona] }}>
             {mio ? "Tú" : nombres[p.persona]}
-          </p>
+          </a>
           <p className="text-[11px] text-suave">{hace(p.created_at)}</p>
         </div>
         {mio && (
@@ -372,9 +373,9 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
         ) : (
           p.texto && (
             <p className="text-sm leading-snug break-words whitespace-pre-line">
-              <span className="mr-1.5 font-medium" style={{ color: acentos[p.persona] }}>
+              <a href={`#${perfilDe(p.persona, yo)}`} className="mr-1.5 font-medium hover:underline" style={{ color: acentos[p.persona] }}>
                 {nombres[p.persona]}
-              </span>
+              </a>
               {p.texto}
             </p>
           )
@@ -387,9 +388,9 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
         )}
         {comentarios.map((c) => (
           <p key={c.id} className="group text-sm leading-snug break-words">
-            <span className="mr-1.5 font-medium" style={{ color: acentos[c.persona] }}>
+            <a href={`#${perfilDe(c.persona, yo)}`} className="mr-1.5 font-medium hover:underline" style={{ color: acentos[c.persona] }}>
               {nombres[c.persona]}
-            </span>
+            </a>
             {c.texto}
             {c.persona === yo && (
               <button

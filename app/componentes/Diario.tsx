@@ -10,6 +10,7 @@ import { botonPrimario, campo, junto, tarjeta, titulo } from "@/lib/estilos";
 import Reacciones, { type Reaccion } from "./Reacciones";
 import { useReproductor } from "@/lib/reproductor";
 import { embedDe } from "@/lib/embed";
+import { perfilDe } from "@/lib/navegar";
 
 type Entrada = {
   id: number;
@@ -128,7 +129,9 @@ function Lista({
     <div>
       <p className="mb-2 flex items-center gap-1.5 text-xs text-suave">
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-        <span style={{ color }}>{nombre}</span>
+        <a href={`#${perfilDe(persona, yo)}`} className="hover:underline" style={{ color }}>
+          {nombre}
+        </a>
       </p>
       {entradas.length === 0 ? (
         <p className="font-serif text-sm italic text-suave">{propias ? "Todavía no anotas nada." : "Todavía no anota nada."}</p>

@@ -7,6 +7,7 @@ import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
+import { irA, perfilDe } from "@/lib/navegar";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
 export type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
@@ -141,7 +142,15 @@ export function Visor({
         <span className="rounded-full p-[2px]" style={{ background: acentos[h.persona] }}>
           <Avatar persona={h.persona} size={30} className="border-2 border-black" />
         </span>
-        <p className="text-sm font-medium">{mia ? "Tu historia" : nombres[h.persona]}</p>
+        <button
+          onClick={() => {
+            alCerrar();
+            irA(perfilDe(h.persona, yo));
+          }}
+          className="text-sm font-medium hover:underline"
+        >
+          {mia ? "Tu historia" : nombres[h.persona]}
+        </button>
         <p className="text-xs text-white/60">{hace(h.created_at)}</p>
         <div className="ml-auto flex items-center gap-1">
           {mia && (
