@@ -10,6 +10,7 @@ import { cerrarSesion } from "@/lib/cuenta";
 import Bienvenida from "./componentes/Bienvenida";
 import Juntos from "./componentes/Juntos";
 import UnDiaComoHoy from "./componentes/UnDiaComoHoy";
+import Historias from "./componentes/Historias";
 import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
@@ -182,6 +183,7 @@ export default function Inicio() {
 
         {seccion === "inicio" && (
           <>
+            <Historias yo={yo} />
             <Cumpleanos yo={yo} />
             <AvisoResumen />
             <AvisoTurno turnos={estado?.turnos} />

@@ -1,5 +1,6 @@
 import { db, error, nombresActuales, notificar } from "@/lib/servidor";
 import { horaLocal, hoyCompartido, mesiversario, otra, type Persona } from "@/lib/config";
+import { limpiarHistorias } from "@/lib/historias";
 
 // Vercel lo llama todos los días (ver vercel.json): 10:00 a.m. y 10:00 p.m. hora de Hermosillo/Culiacán.
 // - Mañana: si es mesiversario, lo festeja; si nadie ha mandado mensaje, recuerda dar los buenos días.
@@ -44,6 +45,11 @@ export async function GET(req: Request) {
         avisos.push("mesiversario");
       }
     } else {
+      // Historias vencidas: se borran con su imagen para no gastar espacio
+      try {
+        const borradas = await limpiarHistorias();
+        if (borradas) avisos.push(`historias-borradas-${borradas}`);
+      } catch {}
       // Diario: a cada quien que no ha anotado nada hoy
       for (const p of personas) {
         const anotadas = await contar(db().from("diario").select("*", { count: "exact", head: true }).eq("persona", p).eq("fecha", hoy));

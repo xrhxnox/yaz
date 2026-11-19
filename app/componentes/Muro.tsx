@@ -8,6 +8,7 @@ import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, botonSecundario, caja, campo } from "@/lib/estilos";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
+import Historias from "./Historias";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
 type Publicacion = {
@@ -401,6 +402,7 @@ export default function Muro({ yo }: { yo: Persona }) {
 
   return (
     <div className="space-y-4">
+      <Historias yo={yo} />
       <div className="flex items-center justify-between gap-3">
         {/* Filtro por persona */}
         <div className="flex gap-1 rounded-full bg-relleno p-1 text-sm">
