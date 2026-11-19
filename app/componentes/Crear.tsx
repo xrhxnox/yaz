@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { pedir, type Intencion } from "@/lib/intencion";
-import { subirHistorias } from "./Historias";
+import { componerHistorias } from "./ComponerHistoria";
 import { irA } from "@/lib/navegar";
 
 type Opcion = { id: Intencion | "historia"; nombre: string; texto: string; destino: string; icono: string };
@@ -21,7 +21,6 @@ const OPCIONES: Opcion[] = [
 // Hoja que sale desde abajo con todo lo que se puede crear
 export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerrar: () => void }) {
   const selector = useRef<HTMLInputElement>(null);
-  const [subiendo, setSubiendo] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -44,15 +43,10 @@ export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerra
     const archivos = [...(e.target.files ?? [])];
     e.target.value = "";
     if (!archivos.length) return;
-    try {
-      await subirHistorias(archivos, setSubiendo);
-      irA("inicio");
-      alCerrar();
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubiendo(null);
-    }
+    // Se abre la vista previa para escribir sobre cada foto; al compartir aparece en Hoy
+    irA("inicio");
+    componerHistorias(archivos);
+    alCerrar();
   }
 
   return (
@@ -78,7 +72,6 @@ export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerra
                 <li key={o.id}>
                   <button
                     onClick={() => elegir(o)}
-                    disabled={!!subiendo}
                     className="flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-relleno disabled:opacity-60"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-acento-suave text-acento-texto">
@@ -88,7 +81,7 @@ export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerra
                     </span>
                     <span className="min-w-0">
                       <span className="block font-medium leading-tight">{o.nombre}</span>
-                      <span className="block text-xs text-suave">{o.id === "historia" && subiendo ? `Subiendo ${subiendo}…` : o.texto}</span>
+                      <span className="block text-xs text-suave">{o.texto}</span>
                     </span>
                   </button>
                 </li>

@@ -18,6 +18,7 @@ import AvisoTurno from "./componentes/AvisoTurno";
 import Muro from "./componentes/Muro";
 import Nosotros from "./componentes/Nosotros";
 import Crear from "./componentes/Crear";
+import ComponerHistoria from "./componentes/ComponerHistoria";
 import TirarParaActualizar from "./componentes/TirarParaActualizar";
 import Buscar from "./componentes/Buscar";
 import Animo from "./componentes/Animo";
@@ -264,6 +265,7 @@ export default function Inicio() {
 
       <Navegacion actual={seccion} alCrear={() => setCreando(true)} />
       <Crear abierto={creando} alCerrar={() => setCreando(false)} />
+      <ComponerHistoria yo={yo} />
       <TirarParaActualizar />
       <Reproductor />
       <Corazones lista={corazones} />

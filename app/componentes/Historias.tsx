@@ -3,25 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
-import { api, comprimirImagen, enCache } from "@/lib/cliente";
+import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
+import { componerHistorias } from "./ComponerHistoria";
 import { irA, perfilDe } from "@/lib/navegar";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
 export type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
-export async function subirHistorias(archivos: File[], alAvanzar?: (texto: string) => void) {
-  const lista = archivos.slice(0, 10);
-  for (const [n, a] of lista.entries()) {
-    alAvanzar?.(lista.length > 1 ? `${n + 1}/${lista.length}` : "…");
-    const form = new FormData();
-    form.set("foto", await comprimirImagen(a), "historia.jpg");
-    await api("/api/historias", form);
-  }
-  window.dispatchEvent(new Event("historias:actualizar"));
+// Texto que se lee sobre un color: oscuro sobre colores claros, blanco sobre oscuros
+export function textoSobreColor(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#1a1a1a" : "#ffffff";
 }
 
 // Cuánto se ve cada historia
@@ -213,7 +210,14 @@ export function Visor({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={h.url} alt={h.texto ?? `Historia de ${nombres[h.persona]}`} draggable={false} className="pointer-events-none h-full w-full object-contain" />
-        {h.texto && <p className="absolute inset-x-6 bottom-6 rounded-xl bg-black/50 px-3 py-2 text-center text-sm">{h.texto}</p>}
+        {h.texto && (
+          <p
+            className="absolute top-1/2 left-1/2 max-w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-2xl px-4 py-2.5 text-center text-lg leading-snug font-semibold break-words shadow-lg"
+            style={{ background: acentos[h.persona], color: textoSobreColor(acentos[h.persona]) }}
+          >
+            {h.texto}
+          </p>
+        )}
         {aviso && <p className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{aviso}</p>}
       </div>
 
@@ -267,7 +271,6 @@ function Circulo({
   hay,
   nuevas,
   etiqueta,
-  subiendo,
   acento,
   alAbrir,
   alAgregar,
@@ -277,7 +280,6 @@ function Circulo({
   hay: boolean;
   nuevas: boolean;
   etiqueta: string;
-  subiendo?: boolean;
   acento: string;
   alAbrir: () => void;
   alAgregar?: () => void;
@@ -299,7 +301,7 @@ function Circulo({
             aria-label="Agregar historia"
             className="absolute right-0 bottom-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-fondo bg-acento text-sm leading-none font-bold text-sobre-acento"
           >
-            {subiendo ? "·" : "+"}
+            +
           </span>
         )}
       </span>
@@ -341,22 +343,15 @@ export function inicioDe(lista: Historia[], persona: Persona, yo: Persona) {
 export default function Historias({ yo }: { yo: Persona }) {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
-  const { historias, error, setError, cargar } = useHistorias();
+  const { historias, error, cargar } = useHistorias();
   const [abierta, setAbierta] = useState<{ persona: Persona; inicio: number } | null>(null);
-  const [subiendo, setSubiendo] = useState<string | null>(null);
   const selector = useRef<HTMLInputElement>(null);
 
   async function subir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivos = [...(e.target.files ?? [])];
     e.target.value = "";
-    if (!archivos.length) return;
-    try {
-      await subirHistorias(archivos, setSubiendo);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubiendo(null);
-    }
+    // Antes de compartir: la vista previa para escribir sobre cada foto
+    if (archivos.length) componerHistorias(archivos);
   }
 
   if (!historias) return null;
@@ -373,8 +368,7 @@ export default function Historias({ yo }: { yo: Persona }) {
           propia
           hay={mias.length > 0}
           nuevas
-          etiqueta={subiendo ? `Subiendo ${subiendo}` : "Tu historia"}
-          subiendo={!!subiendo}
+          etiqueta="Tu historia"
           acento={acentos[yo]}
           alAbrir={() => (mias.length ? setAbierta({ persona: yo, inicio: 0 }) : selector.current?.click())}
           alAgregar={() => selector.current?.click()}
