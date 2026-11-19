@@ -12,9 +12,8 @@ import { cambiarContrasena, correoActual } from "@/lib/cuenta";
 import { derivarTema, type Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
-import Pestanas from "./Pestanas";
 import RuedaColor from "./RuedaColor";
-import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
+import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
 type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null; favoritos: Favorito[] }>; deseos: Deseo[] };
@@ -913,8 +912,20 @@ function textoCumple(cumple: string) {
   return `${d} de ${MESES[m - 1]}`;
 }
 
-function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; editable: boolean; alCambiar: () => Promise<void> }) {
-  const { nombres, cumples } = usePareja();
+function SeccionDatos({
+  persona,
+  editable,
+  conteos,
+  alCambiar,
+  alAjustes,
+}: {
+  persona: Persona;
+  editable: boolean;
+  conteos: Conteos | null;
+  alCambiar: () => Promise<void>;
+  alAjustes: () => void;
+}) {
+  const { nombres, cumples, acentos } = usePareja();
   const [editando, setEditando] = useState(false);
   const [apodo, setApodo] = useState("");
   const [dia, setDia] = useState("");
@@ -968,21 +979,46 @@ function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; edit
   }
 
   return (
-    <section className={tarjeta}>
-      <div className="flex items-center gap-4">
-        <Avatar persona={persona} size={72} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-serif text-3xl leading-tight tracking-tight">{nombres[persona]}</p>
-          <p className="font-serif text-sm italic text-suave">
-            {cumple ? `Cumpleaños: ${textoCumple(cumple)}` : editable ? "Agrega tu cumpleaños" : "Sin cumpleaños todavía"}
-          </p>
+    <section>
+      <div className="flex items-center gap-5">
+        <span className="shrink-0 rounded-full p-[3px]" style={{ background: acentos[persona] }}>
+          <span className="block rounded-full border-[3px] border-fondo">
+            <Avatar persona={persona} size={84} />
+          </span>
+        </span>
+        {/* Conteos, como en Instagram */}
+        <div className="grid flex-1 grid-cols-3 text-center">
+          {(
+            [
+              ["publicaciones", "Publicaciones"],
+              ["fotos", "Fotos"],
+              ["canciones", "Canciones"],
+            ] as const
+          ).map(([id, nombre]) => (
+            <div key={id}>
+              <p className={`${numero} text-2xl leading-tight`}>{conteos ? conteos[id] : "·"}</p>
+              <p className="text-[11px] text-suave">{nombre}</p>
+            </div>
+          ))}
         </div>
-        {editable && !editando && (
-          <button onClick={abrir} className={`${enlace} shrink-0`}>
-            Editar
-          </button>
-        )}
       </div>
+      <p className="mt-3 truncate font-serif text-2xl leading-tight tracking-tight">{nombres[persona]}</p>
+      <p className="font-serif text-sm italic text-suave">
+        {cumple ? `Cumpleaños: ${textoCumple(cumple)}` : editable ? "Agrega tu cumpleaños" : "Sin cumpleaños todavía"}
+      </p>
+      {editable && !editando && (
+        <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+          <button onClick={abrir} className={botonSecundario}>
+            Editar perfil
+          </button>
+          <button onClick={alAjustes} aria-label="App y cuenta" title="App y cuenta" className={`${botonSecundario} px-3`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {editable && editando && (
         <form onSubmit={guardar} className="mt-5 space-y-4">
@@ -1048,6 +1084,41 @@ function SeccionDatos({ persona, editable, alCambiar }: { persona: Persona; edit
 
 // ---------- Perfil ----------
 
+type Conteos = { publicaciones: number; fotos: number; canciones: number };
+type PublicacionMini = { id: number; persona: Persona; fotos: { id: number; url: string }[] };
+type Pestana = "fotos" | "favoritos" | "tallas" | "wishlist";
+
+// Cuadrícula de las fotos del muro de una persona; tocar una lleva al muro
+function FotosDe({ publicaciones, editable }: { publicaciones: PublicacionMini[] | null; editable: boolean }) {
+  if (!publicaciones) return <p className="py-8 text-center text-sm text-suave">Cargando…</p>;
+  if (!publicaciones.length)
+    return (
+      <div className="py-8 text-center">
+        <p className="font-serif text-lg text-suave italic">{editable ? "Todavía no publicas fotos." : "Todavía no publica fotos."}</p>
+        {editable && (
+          <a href="#muro" className={`${botonPrimario} mt-3 inline-block`}>
+            Ir al muro
+          </a>
+        )}
+      </div>
+    );
+  return (
+    <div className="grid grid-cols-3 gap-0.5 overflow-hidden rounded-xl">
+      {publicaciones.map((p) => (
+        <a key={p.id} href="#muro" aria-label="Ver en el muro" className="relative aspect-square bg-relleno">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={p.fotos[0].url} alt="" loading="lazy" className="h-full w-full object-cover" />
+          {p.fotos.length > 1 && (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="white" className="absolute top-1.5 right-1.5 drop-shadow" aria-hidden>
+              <path d="M8 3h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM3 7v12a2 2 0 0 0 2 2h12v-2H5V7z" />
+            </svg>
+          )}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function Perfil({
   yo,
   temaActual,
@@ -1069,15 +1140,16 @@ export default function Perfil({
 }) {
   const NOMBRES = useNombres();
   const [viendo, setViendo] = useState<Persona>(yo);
-  // Al ver el perfil del otro, datos y favoritos / tallas / wishlist van en pestañas
-  const [pestana, setPestana] = useState<"favoritos" | "tallas" | "wishlist">("favoritos");
+  const [pestana, setPestana] = useState<Pestana>("fotos");
   const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/perfil"));
   const [error, setError] = useState("");
-  // Tu perfil en el celular: tus datos y la configuración de la app en pestañas separadas
+  // #perfil/app: la configuración de la app y la cuenta (detrás del engrane)
   const [parte, setParte] = useSubseccion<"datos" | "app">(["datos", "app"], "datos");
-  const mio = viendo === yo;
-  const soloDatos = mio && parte === "app" ? "hidden lg:block" : "";
-  const soloApp = mio && parte === "datos" ? "hidden lg:block" : "";
+  // Lo del muro y la playlist para los conteos y la cuadrícula de fotos
+  const [publicaciones, setPublicaciones] = useState<PublicacionMini[] | null>(
+    () => enCache<{ publicaciones: PublicacionMini[] }>("/api/muro")?.publicaciones ?? null,
+  );
+  const [canciones, setCanciones] = useState<{ persona: Persona }[] | null>(() => enCache<{ canciones: { persona: Persona }[] }>("/api/canciones")?.canciones ?? null);
 
   const cargar = useCallback(async () => {
     try {
@@ -1087,8 +1159,18 @@ export default function Perfil({
       setError((e as Error).message);
     }
   }, []);
-
   useCarga(cargar);
+
+  // Extras: si el muro o la playlist aún no existen, solo no salen los conteos
+  const cargarExtras = useCallback(async () => {
+    const [m, c] = await Promise.allSettled([
+      api<{ publicaciones: PublicacionMini[] }>("/api/muro"),
+      api<{ canciones: { persona: Persona }[] }>("/api/canciones"),
+    ]);
+    setPublicaciones(m.status === "fulfilled" ? m.value.publicaciones : []);
+    setCanciones(c.status === "fulfilled" ? c.value.canciones : []);
+  }, []);
+  useCarga(cargarExtras);
 
   async function hacer(accion: Promise<unknown>) {
     try {
@@ -1102,126 +1184,26 @@ export default function Perfil({
     }
   }
 
+  const mio = viendo === yo;
   const deseos = (datos?.deseos ?? []).filter((d) => d.persona === viendo);
+  const suyas = (publicaciones ?? []).filter((p) => p.persona === viendo);
+  const conteos: Conteos = {
+    publicaciones: suyas.length,
+    fotos: suyas.reduce((n, p) => n + p.fotos.length, 0),
+    canciones: (canciones ?? []).filter((c) => c.persona === viendo).length,
+  };
 
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-1 rounded-full bg-relleno p-1 lg:mx-auto lg:max-w-md">
-        {([yo, otra(yo)] as Persona[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setViendo(p)}
-            className={`rounded-full py-2 text-sm font-medium transition ${viendo === p ? "bg-tarjeta shadow-sm" : "text-suave hover:text-texto"}`}
-          >
-            <span className="inline-flex items-center gap-2">
-              <Avatar persona={p} size={22} />
-              {p === yo ? `Yo (${NOMBRES[p]})` : NOMBRES[p]}
-            </span>
+  // ---------- App y cuenta (engrane) ----------
+  if (parte === "app") {
+    return (
+      <div className="space-y-6 lg:mx-auto lg:max-w-2xl">
+        <div>
+          <button onClick={() => setParte("datos")} className="inline-flex items-center gap-1 text-sm text-suave transition hover:text-texto">
+            <span aria-hidden>←</span> Mi perfil
           </button>
-        ))}
-      </div>
-
-      {mio && (
-        <div className="lg:hidden">
-          <Pestanas
-            opciones={[
-              { id: "datos", nombre: "Mis datos" },
-              { id: "app", nombre: "App y cuenta" },
-            ]}
-            actual={parte}
-            alCambiar={setParte}
-            etiqueta="Tu perfil"
-          />
+          <p className="mt-1 font-serif text-3xl tracking-tight">App y cuenta</p>
         </div>
-      )}
-
-      <div className={soloDatos}>
-        <SeccionDatos key={`datos-${viendo}`} persona={viendo} editable={viendo === yo} alCambiar={alCambiarDatos} />
-      </div>
-
-      {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
-
-      {/* En escritorio: tallas y wishlist a la izquierda, ajustes a la derecha */}
-      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-12 lg:space-y-0">
-      <div className={`space-y-6 ${soloDatos} ${viendo === yo ? "" : "lg:col-span-2 lg:mx-auto lg:w-full lg:max-w-2xl [&>section]:border-t-0 [&>section]:pt-0"}`}>
-      {datos && viendo !== yo && (
-        <div role="tablist" aria-label="Secciones del perfil" className="flex gap-4 border-b border-borde sm:gap-6">
-          {(
-            [
-              ["favoritos", "Datos y favoritos", (datos.perfiles[viendo].favoritos ?? []).length],
-              ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
-              ["wishlist", "Wishlist", deseos.length],
-            ] as const
-          ).map(([id, nombre, cuantos]) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={pestana === id}
-              onClick={() => setPestana(id)}
-              className={`-mb-px flex items-baseline gap-1.5 border-b-2 pb-2 font-serif text-lg transition ${
-                pestana === id ? "border-acento-texto text-texto" : "border-transparent text-suave hover:text-texto"
-              }`}
-            >
-              {nombre}
-              {cuantos > 0 && <span className="font-sans text-xs text-acento-texto">{cuantos}</span>}
-            </button>
-          ))}
-        </div>
-      )}
-      {datos && (
-        <>
-          {(viendo === yo || pestana === "favoritos") && (
-          <SeccionFavoritos
-            key={`favoritos-${viendo}`}
-            favoritos={datos.perfiles[viendo].favoritos ?? []}
-            editable={viendo === yo}
-            sinTitulo={viendo !== yo}
-            alGuardar={(favoritos) => hacer(api("/api/perfil", { favoritos }))}
-          />
-          )}
-          {(viendo === yo || pestana === "tallas") && (
-          <SeccionTallas
-            key={`tallas-${viendo}`}
-            tallas={datos.perfiles[viendo].tallas}
-            editable={viendo === yo}
-            sinTitulo={viendo !== yo}
-            alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
-          />
-          )}
-          {(viendo === yo || pestana === "wishlist") && (
-          <SeccionDeseos
-            key={`deseos-${viendo}`}
-            duenio={viendo}
-            yo={yo}
-            sinTitulo={viendo !== yo}
-            deseos={deseos}
-            alAgregar={(d) => hacer(api("/api/deseos", d))}
-            alEditar={(d, datos) => hacer(api("/api/deseos", { id: d.id, ...datos }, "PUT"))}
-            alOrdenar={(ids) => {
-              setDatos((x) => {
-                if (!x) return x;
-                const otros = x.deseos.filter((d) => !ids.includes(d.id));
-                const ordenados = ids.map((id) => x.deseos.find((d) => d.id === id)!).filter(Boolean);
-                return { ...x, deseos: [...ordenados, ...otros] };
-              });
-              hacer(api("/api/deseos", { orden: ids }, "PATCH")).catch(() => {});
-            }}
-            alBorrar={(d) => {
-              if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
-            }}
-            alMarcar={(d) => {
-              setDatos((x) => x && { ...x, deseos: x.deseos.map((y) => (y.id === d.id ? { ...y, comprado: !d.comprado } : y)) });
-              hacer(api("/api/deseos", { id: d.id, comprado: !d.comprado }, "PATCH")).catch(() => {});
-            }}
-          />
-          )}
-        </>
-      )}
-      </div>
-
-      {viendo === yo && (
-      <div className={`space-y-6 lg:border-l lg:border-borde lg:pl-12 ${soloApp}`}>
+        {error && <p className="text-sm text-acento-texto">{error}</p>}
         <SeccionTema
           yo={yo}
           temaActual={temaActual}
@@ -1242,18 +1224,126 @@ export default function Perfil({
         />
         <SeccionAjustes yo={yo} ubicacion={ubicacion} alCambiar={alCambiarDatos} />
         <SeccionCuenta />
+        <button
+          onClick={() => {
+            if (confirm("¿Cerrar sesión en este dispositivo?")) alSalir();
+          }}
+          className={`${enlace} mx-auto block pt-2`}
+        >
+          Cerrar sesión en este dispositivo
+        </button>
       </div>
-      )}
+    );
+  }
+
+  // ---------- Perfil ----------
+  const pestanas: [Pestana, string, number][] = datos
+    ? [
+        ["fotos", "Fotos", conteos.fotos],
+        ["favoritos", "Datos", (datos.perfiles[viendo].favoritos ?? []).length],
+        ["tallas", "Tallas", TALLAS.filter((t) => datos.perfiles[viendo].tallas[t.id]).length],
+        ["wishlist", "Wishlist", deseos.length],
+      ]
+    : [];
+
+  return (
+    <div className="space-y-5 lg:mx-auto lg:max-w-2xl">
+      <div className="grid grid-cols-2 gap-1 rounded-full bg-relleno p-1">
+        {([yo, otra(yo)] as Persona[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setViendo(p)}
+            className={`rounded-full py-2 text-sm font-medium transition ${viendo === p ? "bg-tarjeta shadow-sm" : "text-suave hover:text-texto"}`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Avatar persona={p} size={22} />
+              {p === yo ? `Yo (${NOMBRES[p]})` : NOMBRES[p]}
+            </span>
+          </button>
+        ))}
       </div>
 
-      <button
-        onClick={() => {
-          if (confirm("¿Cerrar sesión en este dispositivo?")) alSalir();
-        }}
-        className={`${enlace} mx-auto block pt-2 ${soloApp}`}
-      >
-        Cerrar sesión en este dispositivo
-      </button>
+      <SeccionDatos
+        key={`datos-${viendo}`}
+        persona={viendo}
+        editable={mio}
+        conteos={publicaciones && canciones ? conteos : null}
+        alCambiar={alCambiarDatos}
+        alAjustes={() => setParte("app")}
+      />
+
+      {error && <p className="text-sm text-acento-texto">{error}</p>}
+      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+
+      {datos && (
+        <>
+          <div role="tablist" aria-label="Secciones del perfil" className="-mx-5 flex gap-4 overflow-x-auto border-b border-borde px-5 [scrollbar-width:none] sm:gap-6 lg:mx-0 lg:px-0">
+            {pestanas.map(([id, nombre, cuantos]) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={pestana === id}
+                onClick={() => setPestana(id)}
+                className={`-mb-px flex shrink-0 items-baseline gap-1.5 border-b-2 pb-2 font-serif text-lg transition ${
+                  pestana === id ? "border-acento-texto text-texto" : "border-transparent text-suave hover:text-texto"
+                }`}
+              >
+                {nombre}
+                {cuantos > 0 && <span className="font-sans text-xs text-acento-texto">{cuantos}</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="[&>section]:border-t-0 [&>section]:pt-0">
+            {pestana === "fotos" && <FotosDe publicaciones={publicaciones && suyas} editable={mio} />}
+            {pestana === "favoritos" && (
+              <SeccionFavoritos
+                key={`favoritos-${viendo}`}
+                favoritos={datos.perfiles[viendo].favoritos ?? []}
+                editable={mio}
+                sinTitulo
+                alGuardar={(favoritos) => hacer(api("/api/perfil", { favoritos }))}
+              />
+            )}
+            {pestana === "tallas" && (
+              <SeccionTallas
+                key={`tallas-${viendo}`}
+                tallas={datos.perfiles[viendo].tallas}
+                editable={mio}
+                sinTitulo
+                alGuardar={(tallas) => hacer(api("/api/perfil", { tallas }))}
+              />
+            )}
+            {pestana === "wishlist" && (
+              <SeccionDeseos
+                key={`deseos-${viendo}`}
+                duenio={viendo}
+                yo={yo}
+                sinTitulo
+                deseos={deseos}
+                alAgregar={(d) => hacer(api("/api/deseos", d))}
+                alEditar={(d, datos) => hacer(api("/api/deseos", { id: d.id, ...datos }, "PUT"))}
+                alOrdenar={(ids) => {
+                  setDatos((x) => {
+                    if (!x) return x;
+                    const otros = x.deseos.filter((d) => !ids.includes(d.id));
+                    const ordenados = ids.map((id) => x.deseos.find((d) => d.id === id)!).filter(Boolean);
+                    return { ...x, deseos: [...ordenados, ...otros] };
+                  });
+                  hacer(api("/api/deseos", { orden: ids }, "PATCH")).catch(() => {});
+                }}
+                alBorrar={(d) => {
+                  if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
+                }}
+                alMarcar={(d) => {
+                  setDatos((x) => x && { ...x, deseos: x.deseos.map((y) => (y.id === d.id ? { ...y, comprado: !d.comprado } : y)) });
+                  hacer(api("/api/deseos", { id: d.id, comprado: !d.comprado }, "PATCH")).catch(() => {});
+                }}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

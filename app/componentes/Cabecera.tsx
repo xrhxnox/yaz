@@ -6,6 +6,7 @@ import { useNombres } from "@/lib/pareja";
 import type { Ubicacion } from "@/lib/cliente";
 import { NOMBRES_SECCION, SECCIONES } from "./Navegacion";
 import Campana from "./Campana";
+import Avatar from "./Avatar";
 import type { Persona } from "@/lib/config";
 
 // Días desde que empezamos (el "número de edición" del diario)
@@ -90,17 +91,16 @@ export default function Cabecera({
           <span className="hidden sm:inline">Actualizar</span>
         </button>
         <Campana yo={yo} />
+        {/* Tu foto de perfil: abre tu perfil (y regresa a Hoy si ya estás ahí) */}
         <a
           href={enPerfil ? "#inicio" : "#perfil"}
-          className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs transition lg:h-9 lg:px-4 lg:text-sm ${
-            enPerfil ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:text-texto"
-          }`}
+          aria-label={enPerfil ? "Volver" : "Mi perfil"}
+          title={enPerfil ? "Volver" : "Mi perfil"}
+          className={`rounded-full p-[2px] transition ${enPerfil ? "bg-acento" : "bg-borde hover:bg-suave"}`}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21a8 8 0 0 1 16 0" />
-          </svg>
-          {enPerfil ? "Volver" : "Perfil"}
+          <span className="block rounded-full border-2 border-fondo">
+            <Avatar persona={yo} size={26} />
+          </span>
         </a>
         </div>
       </div>
