@@ -212,6 +212,18 @@ body {
   animation: caer 0.45s ease-in;
 }
 
+/* Muro: corazón grande al dar doble toque a una foto */
+@keyframes corazon-doble {
+  0% { transform: scale(0.2); opacity: 0; }
+  15% { transform: scale(1.15); opacity: 0.95; }
+  30% { transform: scale(0.95); }
+  45%, 70% { transform: scale(1); opacity: 0.95; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+.corazon-doble > * {
+  animation: corazon-doble 0.9s ease-out forwards;
+}
+
 /* Corazón del cargador */
 @keyframes latido {
   0%, 100% { transform: scale(1); }

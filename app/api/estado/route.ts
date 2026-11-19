@@ -1,5 +1,6 @@
 import { db, error, autenticar, firmar } from "@/lib/servidor";
 import { NOMBRES, hoyCompartido, type Persona, type Estilo } from "@/lib/config";
+import { fotosDelMuro } from "@/lib/muro";
 
 // Lee algo opcional: si la tabla o columna aún no existe en Supabase, devuelve null en vez de fallar
 async function opcional<T>(consulta: PromiseLike<{ data: T | null; error: unknown }>): Promise<T | null> {
@@ -92,7 +93,7 @@ export async function GET(req: Request) {
     const [animosFilas, respuestasFilas, fotosFilas, visitasFilas, planes, misTurnos] = await Promise.all([
       opcional<{ persona: Persona; texto: string; updated_at: string }[]>(db().from("animos").select("persona, texto, updated_at")),
       opcional<{ fecha: string; persona: string }[]>(db().from("respuestas").select("fecha, persona").order("fecha", { ascending: false }).limit(800)),
-      opcional<{ fecha: string; persona: string }[]>(db().from("fotos").select("fecha, persona").order("fecha", { ascending: false }).limit(2000)),
+      fotosDelMuro({}, 1500),
       opcional<{ inicio: string; fin: string }[]>(db().from("visitas").select("inicio, fin")),
       opcional<{ id: number; texto: string }[]>(
         db().from("pendientes").select("id, texto").eq("para_reencuentro", true).eq("hecho", false).order("created_at", { ascending: true }),

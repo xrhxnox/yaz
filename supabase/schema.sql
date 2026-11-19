@@ -208,6 +208,103 @@ create table if not exists reacciones (
   unique (tipo, objeto, persona)
 );
 
+-- Muro (tipo Instagram): publicaciones con una o varias fotos, me gusta y comentarios
+create table if not exists publicaciones (
+  id bigserial primary key,
+  persona text not null check (persona in ('a', 'b')),
+  fecha date not null,
+  texto text,
+  -- Para no repetir la migración de las fotos del día (ej. 'fotos:a:2026-11-17')
+  origen text unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists publicaciones_fecha on publicaciones (fecha desc, created_at desc);
+
+create table if not exists publicacion_fotos (
+  id bigserial primary key,
+  publicacion_id bigint not null references publicaciones (id) on delete cascade,
+  path text not null,
+  orden int not null default 0
+);
+create index if not exists publicacion_fotos_pub on publicacion_fotos (publicacion_id, orden);
+
+create table if not exists publicacion_likes (
+  publicacion_id bigint not null references publicaciones (id) on delete cascade,
+  persona text not null check (persona in ('a', 'b')),
+  created_at timestamptz not null default now(),
+  primary key (publicacion_id, persona)
+);
+
+create table if not exists comentarios (
+  id bigserial primary key,
+  publicacion_id bigint not null references publicaciones (id) on delete cascade,
+  persona text not null check (persona in ('a', 'b')),
+  texto text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists comentarios_pub on comentarios (publicacion_id, created_at);
+
+-- Las fotos del día pasan al muro: una publicación por persona por día (solo la primera vez)
+insert into publicaciones (persona, fecha, texto, origen, created_at)
+select persona, fecha,
+       nullif(string_agg(nullif(trim(nota), ''), ' · ' order by created_at), ''),
+       'fotos:' || persona || ':' || fecha, min(created_at)
+from fotos
+group by persona, fecha
+on conflict (origen) do nothing;
+
+insert into publicacion_fotos (publicacion_id, path, orden)
+select p.id, f.path, (row_number() over (partition by f.persona, f.fecha order by f.created_at, f.id) - 1)::int
+from fotos f
+join publicaciones p on p.origen = 'fotos:' || f.persona || ':' || f.fecha
+where not exists (select 1 from publicacion_fotos pf where pf.path = f.path);
+
+-- Los corazones y comentarios que ya tenían las fotos también pasan
+do $$
+begin
+  if to_regclass('public.reacciones') is not null then
+    insert into publicacion_likes (publicacion_id, persona)
+    select distinct pf.publicacion_id, r.persona
+    from reacciones r
+    join fotos f on r.tipo = 'foto' and r.objeto = f.id
+    join publicacion_fotos pf on pf.path = f.path
+    where r.corazon
+    on conflict do nothing;
+
+    insert into comentarios (publicacion_id, persona, texto, created_at)
+    select pf.publicacion_id, r.persona, r.comentario, r.updated_at
+    from reacciones r
+    join fotos f on r.tipo = 'foto' and r.objeto = f.id
+    join publicacion_fotos pf on pf.path = f.path
+    where r.comentario is not null
+      and not exists (
+        select 1 from comentarios c
+        where c.publicacion_id = pf.publicacion_id and c.persona = r.persona and c.texto = r.comentario
+      );
+  end if;
+end $$;
+
+-- Historias: fotos que duran 24 horas (vista_at = cuándo la vio la otra persona)
+create table if not exists historias (
+  id bigserial primary key,
+  persona text not null check (persona in ('a', 'b')),
+  path text not null,
+  texto text,
+  vista_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists historias_creada on historias (created_at desc);
+
+-- Respuestas a una historia: corazón o mensajito
+create table if not exists historia_respuestas (
+  id bigserial primary key,
+  historia_id bigint not null references historias (id) on delete cascade,
+  persona text not null check (persona in ('a', 'b')),
+  corazon boolean not null default false,
+  texto text,
+  created_at timestamptz not null default now()
+);
+
 -- Juegos por turnos: gato y conecta 4
 create table if not exists partidas (
   id bigserial primary key,
@@ -243,6 +340,12 @@ alter table partidas enable row level security;
 alter table diario enable row level security;
 alter table canciones enable row level security;
 alter table reacciones enable row level security;
+alter table publicaciones enable row level security;
+alter table publicacion_fotos enable row level security;
+alter table publicacion_likes enable row level security;
+alter table comentarios enable row level security;
+alter table historias enable row level security;
+alter table historia_respuestas enable row level security;
 
 -- La app solo habla con la base desde el servidor, con la llave secreta (service_role).
 -- Se lo damos explícito para no depender de los permisos automáticos de Supabase.

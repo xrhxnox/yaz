@@ -1,6 +1,7 @@
 import { db, error, invalido, autenticar, firmar } from "@/lib/servidor";
 import { hoyCompartido, mesDe, periodoMes, type Persona } from "@/lib/config";
 import { preguntaDe } from "@/lib/preguntas";
+import { fotosDelMuro } from "@/lib/muro";
 
 async function opcional<T>(consulta: PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
   try {
@@ -36,9 +37,7 @@ export async function GET(req: Request) {
   try {
     const [mensajes, fotos, momentos, respuestas, pendientes, visitas, cartas, diario, canciones] = await Promise.all([
       opcional<{ de: Persona }>(db().from("pensamientos").select("de").gte("created_at", inicio).lt("created_at", finExclusivo)),
-      opcional<{ persona: Persona; path: string; nota: string | null; fecha: string }>(
-        db().from("fotos").select("persona, path, nota, fecha").gte("fecha", inicio).lte("fecha", fin).order("fecha"),
-      ),
+      fotosDelMuro({ desde: inicio, hasta: fin }).then((f) => f.reverse()),
       opcional<{ titulo: string; fecha: string; creado_por: Persona }>(
         db().from("momentos").select("titulo, fecha, creado_por").gte("fecha", inicio).lte("fecha", fin).order("fecha"),
       ),

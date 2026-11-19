@@ -1,5 +1,6 @@
 import { db, error, autenticar, firmar } from "@/lib/servidor";
 import { hoyCompartido, type Persona } from "@/lib/config";
+import { fotosDelMuro } from "@/lib/muro";
 
 // Si una tabla aún no existe, esa parte sale vacía
 async function opcional<T>(consulta: PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
@@ -42,9 +43,7 @@ export async function GET(req: Request) {
 
   try {
     const [fotos, momentos, diario] = await Promise.all([
-      opcional<{ fecha: string; persona: Persona; path: string; nota: string | null }>(
-        db().from("fotos").select("fecha, persona, path, nota").in("fecha", lista).order("created_at"),
-      ),
+      fotosDelMuro({ fechas: lista }),
       opcional<{ fecha: string; titulo: string }>(db().from("momentos").select("fecha, titulo").in("fecha", lista)),
       opcional<{ fecha: string; persona: Persona; tipo: string; texto: string }>(
         db().from("diario").select("fecha, persona, tipo, texto").in("fecha", lista).order("created_at"),
