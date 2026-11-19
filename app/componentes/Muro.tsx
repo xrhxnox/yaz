@@ -437,8 +437,8 @@ export default function Muro({ yo }: { yo: Persona }) {
   const [filtro, setFiltro] = useState<"todos" | Persona>("todos");
   const [componiendo, setComponiendo] = useState(() => hay("publicar"));
   useEffect(() => limpiar("publicar"), []);
-  // Publicación a la que hay que bajar al volver a la lista desde la cuadrícula
-  const irA = useRef<number | null>(null);
+  // Publicación abierta desde la cuadrícula (se ven todas a pantalla completa, empezando en esa)
+  const [abierta, setAbierta] = useState<number | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -450,13 +450,6 @@ export default function Muro({ yo }: { yo: Persona }) {
   }, []);
 
   useCarga(cargar, 60000);
-
-  // Al tocar una foto de la cuadrícula: cambia a la lista y baja a esa publicación
-  useEffect(() => {
-    if (irA.current === null || vista !== "lista") return;
-    document.getElementById(`pub-${irA.current}`)?.scrollIntoView({ block: "start" });
-    irA.current = null;
-  }, [vista]);
 
   function like(p: Publicacion, valor: boolean) {
     setDatos((d) => d && { ...d, publicaciones: d.publicaciones.map((x) => (x.id === p.id ? { ...x, likes: valor ? [...x.likes.filter((l) => l !== yo), yo] : x.likes.filter((l) => l !== yo) } : x)) });
@@ -547,10 +540,7 @@ export default function Muro({ yo }: { yo: Persona }) {
           {visibles.map((p) => (
             <button
               key={p.id}
-              onClick={() => {
-                irA.current = p.id;
-                setVista("lista");
-              }}
+              onClick={() => setAbierta(p.id)}
               aria-label={`Ver publicación de ${nombres[p.persona]}`}
               className="relative aspect-square bg-relleno"
             >
@@ -565,6 +555,21 @@ export default function Muro({ yo }: { yo: Persona }) {
             </button>
           ))}
         </div>
+      )}
+
+      {abierta !== null && visibles.some((p) => p.id === abierta) && (
+        <VerPublicaciones
+          lista={visibles}
+          inicio={abierta}
+          titulo={filtro === "todos" ? "Muro" : filtro === yo ? "Tú" : nombres[filtro]}
+          yo={yo}
+          alCerrar={() => setAbierta(null)}
+          alCambiar={cargar}
+          alLike={(id, valor) => {
+            const p = visibles.find((x) => x.id === id);
+            if (p) like(p, valor);
+          }}
+        />
       )}
     </div>
   );
