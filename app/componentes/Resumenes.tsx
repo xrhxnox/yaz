@@ -47,7 +47,9 @@ function ResumenMes({ r }: { r: Resumen }) {
     <article className="space-y-6">
       <header className="border-b border-borde pb-4 text-center">
         <p className="text-xs tracking-wide text-suave">
-          {r.terminado ? "Resumen del mes" : "En curso"} · {formatearFecha(r.inicio, corto)} – {formatearFecha(r.fin, { ...corto, year: "numeric" })}
+          {r.n === 0
+            ? `Antes de ser novios · hasta el ${formatearFecha(r.fin, { ...corto, year: "numeric" })}`
+            : `${r.terminado ? "Resumen del mes" : "En curso"} · ${formatearFecha(r.inicio, corto)} – ${formatearFecha(r.fin, { ...corto, year: "numeric" })}`}
         </p>
         <h2 className="mt-1 font-serif text-5xl tracking-tight">
           Mes <span className="text-acento-texto italic">{r.n}</span>
@@ -226,8 +228,14 @@ export default function Resumenes() {
                   Mes <span className="text-acento-texto">{m.n}</span>
                 </span>
                 <span className="text-xs text-suave">
-                  {m.terminado ? "" : "En curso · "}
-                  {formatearFecha(m.inicio, corto)} – {formatearFecha(m.fin, corto)}
+                  {m.n === 0 ? (
+                    `Antes de ser novios · hasta el ${formatearFecha(m.fin, corto)}`
+                  ) : (
+                    <>
+                      {m.terminado ? "" : "En curso · "}
+                      {formatearFecha(m.inicio, corto)} – {formatearFecha(m.fin, corto)}
+                    </>
+                  )}
                 </span>
               </button>
             </li>

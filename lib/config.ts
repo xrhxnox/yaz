@@ -125,8 +125,10 @@ export function mesiversario(fecha: string): number | null {
 }
 
 // "Meses" de la relación: el mes 1 va del 15 de febrero al 14 de marzo, el 2 del 15 de marzo al 14 de abril…
+// El mes 0 es todo lo que pasó antes de ser novios (desde siempre hasta el día antes de FECHA_INICIO)
 export function periodoMes(n: number): { inicio: string; fin: string } {
   const [a, m, d] = FECHA_INICIO.split("-").map(Number);
+  if (n === 0) return { inicio: "1900-01-01", fin: new Date(Date.UTC(a, m - 1, d) - 864e5).toISOString().slice(0, 10) };
   const inicio = new Date(Date.UTC(a, m - 1 + (n - 1), d));
   const fin = new Date(Date.UTC(a, m - 1 + n, d) - 864e5);
   return { inicio: inicio.toISOString().slice(0, 10), fin: fin.toISOString().slice(0, 10) };
@@ -134,6 +136,7 @@ export function periodoMes(n: number): { inicio: string; fin: string } {
 
 // En qué mes de la relación cae una fecha (1 = el primero)
 export function mesDe(fecha: string): number {
+  if (fecha < FECHA_INICIO) return 0;
   let n = 1;
   while (periodoMes(n + 1).inicio <= fecha) n++;
   return n;

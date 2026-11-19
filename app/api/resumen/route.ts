@@ -24,12 +24,13 @@ export async function GET(req: Request) {
   if (!param) {
     return Response.json({
       actual,
-      meses: Array.from({ length: actual }, (_, i) => ({ n: actual - i, ...periodoMes(actual - i), terminado: actual - i < actual })),
+      // Del mes actual al 0 (antes de ser novios)
+      meses: Array.from({ length: actual + 1 }, (_, i) => ({ n: actual - i, ...periodoMes(actual - i), terminado: actual - i < actual })),
     });
   }
 
   const n = Number(param);
-  if (!Number.isInteger(n) || n < 1 || n > actual) return invalido("Ese mes no existe todavía");
+  if (!Number.isInteger(n) || n < 0 || n > actual) return invalido("Ese mes no existe todavía");
   const { inicio, fin } = periodoMes(n);
   // Para comparar fechas con hora (created_at, hecho_at) usamos el día siguiente al fin
   const finExclusivo = new Date(Date.parse(fin + "T00:00:00Z") + 864e5).toISOString().slice(0, 10);
