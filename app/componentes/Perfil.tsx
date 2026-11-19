@@ -13,7 +13,7 @@ import { derivarTema, type Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
 import RuedaColor from "./RuedaColor";
-import { VerPublicacion, type Publicacion } from "./Muro";
+import { VerPublicaciones, type Publicacion } from "./Muro";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
@@ -1248,7 +1248,6 @@ export default function Perfil({
     );
     api("/api/muro", { id, like: valor }, "PATCH").catch((e) => setError((e as Error).message));
   }
-  const publicacionAbierta = publicaciones?.find((p) => p.id === abierta);
 
   // ---------- Perfil ----------
   const pestanas: [Pestana, string, number][] = datos
@@ -1358,17 +1357,15 @@ export default function Perfil({
           </div>
         </>
       )}
-      {publicacionAbierta && (
-        <VerPublicacion
-          p={publicacionAbierta}
+      {abierta !== null && suyas.length > 0 && (
+        <VerPublicaciones
+          lista={suyas}
+          inicio={abierta}
+          titulo={mio ? "Tú" : NOMBRES[viendo]}
           yo={yo}
           alCerrar={() => setAbierta(null)}
-          alLike={(valor) => like(publicacionAbierta.id, valor)}
-          alCambiar={async () => {
-            await cargarExtras();
-            // Si la borraron, se cierra
-            if (!enCache<{ publicaciones: Publicacion[] }>("/api/muro")?.publicaciones.some((p) => p.id === publicacionAbierta.id)) setAbierta(null);
-          }}
+          alLike={like}
+          alCambiar={cargarExtras}
         />
       )}
     </div>

@@ -189,21 +189,33 @@ function Carrusel({ fotos, alDobleToque }: { fotos: Publicacion["fotos"]; alDobl
   );
 }
 
-// ---------- Una sola publicación encima de la pantalla (al tocar una foto del perfil) ----------
-export function VerPublicacion({
-  p,
+// ---------- Las publicaciones de alguien a pantalla completa, empezando en la que tocaste (como en Instagram) ----------
+export function VerPublicaciones({
+  lista,
+  inicio,
+  titulo,
   yo,
   alCerrar,
   alCambiar,
   alLike,
 }: {
-  p: Publicacion;
+  lista: Publicacion[];
+  inicio: number;
+  titulo: string;
   yo: Persona;
   alCerrar: () => void;
   alCambiar: () => Promise<void>;
-  alLike: (valor: boolean) => void;
+  alLike: (id: number, valor: boolean) => void;
 }) {
-  // Sin scroll de la página mientras está abierta; Escape cierra
+  const caja = useRef<HTMLDivElement>(null);
+
+  // Abre justo en la publicación que tocaste
+  useEffect(() => {
+    const el = caja.current?.querySelector<HTMLElement>(`#ver-${inicio}`);
+    if (el && caja.current) caja.current.scrollTop = el.offsetTop - 60;
+  }, [inicio]);
+
+  // Sin scroll de la página de atrás mientras está abierta; Escape cierra
   useEffect(() => {
     const antes = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -216,27 +228,24 @@ export function VerPublicacion({
   }, [alCerrar]);
 
   return (
-    <div className="fixed inset-0 z-[75] overflow-y-auto bg-black/70 backdrop-blur-sm" onClick={alCerrar} role="presentation">
-      <div className="flex min-h-full items-center justify-center px-3 pt-[max(3.5rem,calc(env(safe-area-inset-top)+3rem))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div role="dialog" aria-label="Publicación" onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md">
-          <button
-            onClick={alCerrar}
-            aria-label="Cerrar"
-            className="absolute -top-11 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-          <Tarjeta
-            p={p}
-            yo={yo}
-            alLike={alLike}
-            alCambiar={async () => {
-              await alCambiar();
-            }}
-          />
+    <div ref={caja} role="dialog" aria-label="Publicaciones" className="fixed inset-0 z-[75] overflow-y-auto bg-fondo">
+      <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-borde bg-fondo/90 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 backdrop-blur">
+        <button onClick={alCerrar} aria-label="Regresar" className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-relleno">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+        </button>
+        <div className="leading-tight">
+          <p className="text-[11px] text-suave">{titulo}</p>
+          <p className="font-serif text-lg">Publicaciones</p>
         </div>
+      </header>
+      <div className="mx-auto max-w-md space-y-5 px-3 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        {lista.map((p) => (
+          <div key={p.id} id={`ver-${p.id}`}>
+            <Tarjeta p={p} yo={yo} alLike={(v) => alLike(p.id, v)} alCambiar={alCambiar} />
+          </div>
+        ))}
       </div>
     </div>
   );
