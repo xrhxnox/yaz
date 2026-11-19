@@ -5,6 +5,7 @@ import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
+import { hay, limpiar } from "@/lib/intencion";
 import { botonPrimario, botonSecundario, caja, campo, enlace, titulo as tituloSeccion } from "@/lib/estilos";
 import Imagen from "./Imagen";
 import Corazon from "./Corazon";
@@ -202,7 +203,8 @@ export default function Momentos() {
   const { acentos } = usePareja();
   const [editando, setEditando] = useState<number | null>(null);
   const [datos, setDatos] = useState<{ maximo: number; momentos: Momento[] } | null>(() => enCache("/api/momentos"));
-  const [agregando, setAgregando] = useState(false);
+  const [agregando, setAgregando] = useState(() => hay("momento"));
+  useEffect(() => limpiar("momento"), []);
   const [subiendo, setSubiendo] = useState<{ id: number; texto: string } | null>(null);
   const [error, setError] = useState("");
   const selector = useRef<HTMLInputElement>(null);

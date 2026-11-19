@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!existe) return invalido("Esa publicación ya no existe");
     const limpio = texto.trim().slice(0, 500);
     revisar(await db().from("comentarios").insert({ publicacion_id: publicacion, persona: yo, texto: limpio }));
-    await notificar(otra(yo), `${(await nombresActuales())[yo]} comentó`, limpio, "/#fotos");
+    await notificar(otra(yo), `${(await nombresActuales())[yo]} comentó`, limpio, "/#muro");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

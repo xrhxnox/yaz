@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatearFecha, hoyCompartido, otra, type Persona } from "@/lib/config";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
+import { hay, limpiar } from "@/lib/intencion";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
@@ -129,7 +130,8 @@ export default function Cartas({ yo }: { yo: Persona }) {
   const { nombres, acentos } = usePareja();
   const [datos, setDatos] = useState<{ recibidas: Recibida[]; enviadas: Enviada[] } | null>(() => enCache("/api/cartas"));
   const [error, setError] = useState("");
-  const [escribiendo, setEscribiendo] = useState(false);
+  const [escribiendo, setEscribiendo] = useState(() => hay("carta"));
+  useEffect(() => limpiar("carta"), []);
   const [leyendo, setLeyendo] = useState<number | null>(null);
   const tu = otra(yo);
 

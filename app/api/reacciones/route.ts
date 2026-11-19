@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
     // Aviso solo cuando hay algo nuevo (no al quitar)
     const que = tipo === "foto" ? "tu foto" : "lo que anotaste";
-    const url = tipo === "foto" ? "/#fotos" : "/#fotos/diario";
+    const url = tipo === "foto" ? "/#muro" : "/#nosotros/diario";
     const nombre = (await nombresActuales())[yo];
     if (nuevoComentario && nuevoComentario !== antes?.comentario) {
       await notificar(objeto.persona, `${nombre} comentó ${que}`, nuevoComentario, url);

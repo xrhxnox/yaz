@@ -15,12 +15,11 @@ import Reencuentro from "./componentes/Reencuentro";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import HoraClima from "./componentes/HoraClima";
-import Playlist from "./componentes/Playlist";
-import Cartas from "./componentes/Cartas";
 import SeccionJuegos from "./componentes/SeccionJuegos";
 import AvisoTurno from "./componentes/AvisoTurno";
-import SeccionFotos from "./componentes/SeccionFotos";
-import Recuerdos from "./componentes/Recuerdos";
+import Muro from "./componentes/Muro";
+import Nosotros from "./componentes/Nosotros";
+import Crear from "./componentes/Crear";
 import Buscar from "./componentes/Buscar";
 import Animo from "./componentes/Animo";
 import Rachas from "./componentes/Rachas";
@@ -36,17 +35,24 @@ import Corazones, { crearCorazones, type Particula } from "./componentes/Corazon
 // La sección actual vive en el #hash de la URL (así las notificaciones pueden abrir una sección)
 type Vista = Seccion | "perfil" | "buscar";
 
+// Direcciones de antes (avisos y links viejos) → dónde viven ahora
+function redireccion(h: string, sub: string): string | null {
+  if (h === "pregunta") return "juegos/pregunta";
+  if (h === "lista") return "nosotros/pendientes";
+  if (h === "fotos") return sub === "diario" ? "nosotros/diario" : "muro";
+  if (h === "playlist") return "nosotros/playlist";
+  if (h === "buzon") return "nosotros/buzon";
+  if (h === "momentos") return `nosotros/${!sub || sub === "linea" ? "historia" : sub}`;
+  return null;
+}
+
 function leerSeccion(): Vista {
-  // #seccion o #seccion/pestaña (ej. #momentos/cartas)
-  const h = window.location.hash.slice(1).split("/")[0];
-  if (h === "pregunta") {
-    history.replaceState(null, "", "#juegos/pregunta");
-    return "juegos";
-  }
-  // Pendientes ahora es una pestaña de Momentos
-  if (h === "lista") {
-    history.replaceState(null, "", "#momentos/pendientes");
-    return "momentos";
+  // #seccion o #seccion/pestaña (ej. #nosotros/playlist)
+  const [h, sub = ""] = window.location.hash.slice(1).split("/");
+  const nueva = redireccion(h, sub);
+  if (nueva) {
+    history.replaceState(null, "", `#${nueva}`);
+    return nueva.split("/")[0] as Vista;
   }
   return h === "perfil" || h === "buscar" || (SECCIONES as readonly string[]).includes(h) ? (h as Vista) : "inicio";
 }
@@ -63,6 +69,8 @@ export default function Inicio() {
   const [ahora, setAhora] = useState<Date | null>(null);
   const [corazones, setCorazones] = useState<Particula[]>([]);
   const [aviso, setAviso] = useState("");
+  // Hoja de "Crear" (botón + del menú)
+  const [creando, setCreando] = useState(false);
   const ultimoVisto = useRef<number | null>(null);
 
   useEffect(() => {
@@ -179,7 +187,7 @@ export default function Inicio() {
     <ProveedorPareja value={pareja}>
       <ProveedorReproductor>
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] app:pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
-        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} />
+        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} alCrear={() => setCreando(true)} />
 
         {seccion === "inicio" && (
           <>
@@ -227,19 +235,13 @@ export default function Inicio() {
             </div>
           </>
         )}
-        {seccion === "playlist" && (
-          <div className="lg:mx-auto lg:max-w-4xl">
-            <Playlist yo={yo} />
+        {seccion === "muro" && (
+          <div className="lg:mx-auto lg:max-w-xl">
+            <Muro yo={yo} />
           </div>
         )}
-        {seccion === "fotos" && <SeccionFotos yo={yo} />}
-        {seccion === "momentos" && <Recuerdos />}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}
-        {seccion === "buzon" && (
-          <div className="lg:mx-auto lg:max-w-2xl">
-            <Cartas yo={yo} />
-          </div>
-        )}
+        {seccion === "nosotros" && <Nosotros yo={yo} />}
         {seccion === "buscar" && <Buscar />}
         {seccion === "perfil" && <Perfil
             yo={yo}
@@ -254,7 +256,8 @@ export default function Inicio() {
         <EspacioReproductor />
       </main>
 
-      <Navegacion actual={seccion} />
+      <Navegacion actual={seccion} alCrear={() => setCreando(true)} />
+      <Crear abierto={creando} alCerrar={() => setCreando(false)} />
       <Reproductor />
       <Corazones lista={corazones} />
       {aviso && (

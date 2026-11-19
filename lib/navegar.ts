@@ -1,0 +1,4 @@
+// Cambia de sección (el #hash de la URL); deja la anterior en el historial para el botón "atrás"
+export function irA(hash: string) {
+  window.location.hash = hash;
+}

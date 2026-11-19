@@ -11,6 +11,18 @@ import Corazon from "./Corazon";
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
 type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
 
+// Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
+export async function subirHistorias(archivos: File[], alAvanzar?: (texto: string) => void) {
+  const lista = archivos.slice(0, 10);
+  for (const [n, a] of lista.entries()) {
+    alAvanzar?.(lista.length > 1 ? `${n + 1}/${lista.length}` : "…");
+    const form = new FormData();
+    form.set("foto", await comprimirImagen(a), "historia.jpg");
+    await api("/api/historias", form);
+  }
+  window.dispatchEvent(new Event("historias:actualizar"));
+}
+
 // Cuánto se ve cada historia
 const DURACION = 5000;
 
@@ -308,19 +320,17 @@ export default function Historias({ yo }: { yo: Persona }) {
   }, []);
 
   useCarga(cargar, 60000);
+  useEffect(() => {
+    window.addEventListener("historias:actualizar", cargar);
+    return () => window.removeEventListener("historias:actualizar", cargar);
+  }, [cargar]);
 
   async function subir(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivos = [...(e.target.files ?? [])].slice(0, 10);
+    const archivos = [...(e.target.files ?? [])];
     e.target.value = "";
     if (!archivos.length) return;
     try {
-      for (const [n, a] of archivos.entries()) {
-        setSubiendo(archivos.length > 1 ? `${n + 1}/${archivos.length}` : "…");
-        const form = new FormData();
-        form.set("foto", await comprimirImagen(a), "historia.jpg");
-        await api("/api/historias", form);
-      }
-      await cargar();
+      await subirHistorias(archivos, setSubiendo);
     } catch (err) {
       setError((err as Error).message);
     } finally {

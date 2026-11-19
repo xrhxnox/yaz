@@ -66,27 +66,27 @@ export async function GET(req: Request) {
       ...respuestas
         .filter((r) => !(r.fecha === hoy && r.persona === otra(yo)))
         .map((r) => ({ tipo: "Pregunta del día", texto: r.respuesta, detalle: r.persona, fecha: r.fecha, seccion: "juegos/pregunta" })),
-      ...momentos.map((m) => ({ tipo: "Momento", texto: m.titulo, detalle: m.descripcion, fecha: m.fecha, seccion: "momentos" })),
+      ...momentos.map((m) => ({ tipo: "Momento", texto: m.titulo, detalle: m.descripcion, fecha: m.fecha, seccion: "nosotros/historia" })),
       ...pendientes.map((p) => ({
         tipo: p.hecho ? "Ya lo hicimos" : "Pendiente",
         texto: p.texto,
         detalle: null,
         fecha: p.created_at.slice(0, 10),
-        seccion: "momentos/pendientes",
+        seccion: "nosotros/pendientes",
       })),
       ...deseos.map((d) => ({ tipo: "Wishlist", texto: d.titulo, detalle: d.nota, fecha: null, seccion: "perfil" })),
-      ...visitas.map((v) => ({ tipo: "Visita", texto: v.ciudad ?? "Visita", detalle: v.nota, fecha: v.inicio, seccion: "momentos/visitas" })),
+      ...visitas.map((v) => ({ tipo: "Visita", texto: v.ciudad ?? "Visita", detalle: v.nota, fecha: v.inicio, seccion: "nosotros/visitas" })),
       // Cartas: solo las que escribiste o las que ya abriste
       ...cartas
         .filter((c) => c.de === yo || c.abierta_at)
-        .map((c) => ({ tipo: "Carta", texto: c.titulo, detalle: null, fecha: c.created_at.slice(0, 10), seccion: "buzon" })),
-      ...diario.map((d) => ({ tipo: "Diario", texto: d.texto, detalle: d.persona, fecha: d.fecha, seccion: "fotos/diario" })),
+        .map((c) => ({ tipo: "Carta", texto: c.titulo, detalle: null, fecha: c.created_at.slice(0, 10), seccion: "nosotros/buzon" })),
+      ...diario.map((d) => ({ tipo: "Diario", texto: d.texto, detalle: d.persona, fecha: d.fecha, seccion: "nosotros/diario" })),
       ...canciones.map((c) => ({
         tipo: "Canción",
         texto: c.titulo,
         detalle: [c.artista, c.nota].filter(Boolean).join(" · ") || null,
         fecha: c.created_at.slice(0, 10),
-        seccion: "playlist",
+        seccion: "nosotros/playlist",
       })),
     ];
 

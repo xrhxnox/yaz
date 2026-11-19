@@ -54,7 +54,7 @@ export async function GET(req: Request) {
       for (const p of personas) {
         const anotadas = await contar(db().from("diario").select("*", { count: "exact", head: true }).eq("persona", p).eq("fecha", hoy));
         if (anotadas === 0) {
-          await mandar(p, "Diario", `¿Qué hiciste hoy? Anótalo para ${nombres[otra(p)]}`, "/#fotos/diario");
+          await mandar(p, "Diario", `¿Qué hiciste hoy? Anótalo para ${nombres[otra(p)]}`, "/#nosotros/diario");
           avisos.push(`diario-${p}`);
         }
       }

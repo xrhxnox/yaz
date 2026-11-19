@@ -10,7 +10,7 @@ export default function AvisoResumen() {
   const dias = Math.round((Date.parse(hoy) - Date.parse(periodoMes(actual).inicio)) / 864e5);
   if (dias > 2) return null;
   return (
-    <a href="#momentos/resumenes" className="block border-l-2 border-acento-texto pl-3 font-serif text-xl italic text-acento-texto hover:underline">
+    <a href="#nosotros/resumenes" className="block border-l-2 border-acento-texto pl-3 font-serif text-xl italic text-acento-texto hover:underline">
       Ya está el resumen del mes {actual - 1}
     </a>
   );

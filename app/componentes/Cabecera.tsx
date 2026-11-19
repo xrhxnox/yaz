@@ -17,10 +17,12 @@ export default function Cabecera({
   ahora,
   ubicaciones,
   seccion,
+  alCrear,
 }: {
   ahora: Date;
   ubicaciones?: { a: Ubicacion | null; b: Ubicacion | null };
   seccion: string;
+  alCrear: () => void;
 }) {
   const NOMBRES = useNombres();
   const enPerfil = seccion === "perfil";
@@ -116,6 +118,9 @@ export default function Cabecera({
               {NOMBRES_SECCION[s]}
             </a>
           ))}
+          <button onClick={alCrear} className="font-serif text-base text-acento-texto transition hover:opacity-80">
+            + Crear
+          </button>
         </nav>
         {ruta && <span className="truncate lg:w-56 lg:text-right">{ruta}</span>}
       </div>

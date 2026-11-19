@@ -95,7 +95,7 @@ export async function PUT(req: Request) {
 
     const path = await subirImagen(form.get("foto"), "muro");
     revisar(await db().from("publicacion_fotos").insert({ publicacion_id: id, path, orden: count ?? 0 }));
-    if (!count) await notificar(otra(yo), "Muro", `${(await nombresActuales())[yo]} publicó en el muro`, "/#fotos");
+    if (!count) await notificar(otra(yo), "Muro", `${(await nombresActuales())[yo]} publicó en el muro`, "/#muro");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);
@@ -127,7 +127,7 @@ export async function PATCH(req: Request) {
         const { data: antes } = await db().from("publicacion_likes").select("persona").eq("publicacion_id", id).eq("persona", yo).maybeSingle();
         revisar(await db().from("publicacion_likes").upsert({ publicacion_id: id, persona: yo }, { onConflict: "publicacion_id,persona" }));
         if (!antes && pub.persona !== yo) {
-          await notificar(pub.persona, "Le gustó", `A ${(await nombresActuales())[yo]} le gustó tu publicación`, "/#fotos");
+          await notificar(pub.persona, "Le gustó", `A ${(await nombresActuales())[yo]} le gustó tu publicación`, "/#muro");
         }
       } else {
         revisar(await db().from("publicacion_likes").delete().eq("publicacion_id", id).eq("persona", yo));

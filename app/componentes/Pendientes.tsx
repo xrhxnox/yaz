@@ -5,6 +5,7 @@ import { CATEGORIAS, formatearFecha, hoyCompartido, type Categoria, type Persona
 import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
+import { hay, limpiar } from "@/lib/intencion";
 import { botonPrimario, botonSecundario, caja, campo, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
 
@@ -177,6 +178,9 @@ function Fila({
 }
 
 export default function Pendientes() {
+  // Si se pidió desde "+", el campo para escribir queda listo
+  const [enfocar] = useState(() => hay("pendiente"));
+  useEffect(() => limpiar("pendiente"), []);
   const [lista, setLista] = useState<Pendiente[] | null>(() => enCache<{ pendientes: Pendiente[] }>("/api/pendientes")?.pendientes ?? null);
   const [filtro, setFiltro] = useState<Categoria | "todo">("todo");
   const [texto, setTexto] = useState("");
@@ -306,7 +310,7 @@ export default function Pendientes() {
             />
           </label>
           <div className="min-w-0 flex-1 space-y-1">
-            <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={200} placeholder="Agregar a la lista" className={campo} />
+            <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={200} placeholder="Agregar a la lista" className={campo} autoFocus={enfocar} />
             {foto ? (
               <button type="button" onClick={() => setFoto(null)} className="text-xs text-suave underline underline-offset-4 hover:text-texto">
                 Quitar imagen

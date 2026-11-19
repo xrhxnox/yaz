@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { otra, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
@@ -8,6 +8,7 @@ import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, caja, campo, etiqueta, titulo } from "@/lib/estilos";
 import Corazon from "./Corazon";
 import { useReproductor, type Pista } from "@/lib/reproductor";
+import { hay, limpiar } from "@/lib/intencion";
 
 type Cancion = {
   id: number;
@@ -256,7 +257,8 @@ export default function Playlist({ yo }: { yo: Persona }) {
   const [artista, setArtista] = useState("");
   const [guardando, setGuardando] = useState(false);
   // El formulario solo se abre al querer agregar una canción
-  const [agregando, setAgregando] = useState(false);
+  const [agregando, setAgregando] = useState(() => hay("cancion"));
+  useEffect(() => limpiar("cancion"), []);
   const [busqueda, setBusqueda] = useState("");
   const { poner } = useReproductor();
 

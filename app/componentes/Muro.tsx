@@ -9,6 +9,7 @@ import { botonPrimario, botonSecundario, caja, campo } from "@/lib/estilos";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 import Historias from "./Historias";
+import { hay, limpiar } from "@/lib/intencion";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
 type Publicacion = {
@@ -371,7 +372,8 @@ export default function Muro({ yo }: { yo: Persona }) {
   const [error, setError] = useState("");
   const [vista, setVista] = useState<"lista" | "cuadricula">("lista");
   const [filtro, setFiltro] = useState<"todos" | Persona>("todos");
-  const [componiendo, setComponiendo] = useState(false);
+  const [componiendo, setComponiendo] = useState(() => hay("publicar"));
+  useEffect(() => limpiar("publicar"), []);
   // Publicación a la que hay que bajar al volver a la lista desde la cuadrícula
   const irA = useRef<number | null>(null);
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TIPOS_DIARIO, formatearFecha, hoyCompartido, otra, type Persona, type TipoDiario } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
+import { hay, limpiar } from "@/lib/intencion";
 import { botonPrimario, campo, junto, tarjeta, titulo } from "@/lib/estilos";
 import Reacciones, { type Reaccion } from "./Reacciones";
 import { useReproductor } from "@/lib/reproductor";
@@ -207,6 +208,9 @@ function Lista({
 
 // Diario del día: qué hizo, comió, vio o escuchó cada quien
 export default function Diario({ yo }: { yo: Persona }) {
+  // Si se pidió desde "+", el campo para escribir queda listo
+  const [enfocar] = useState(() => hay("diario"));
+  useEffect(() => limpiar("diario"), []);
   const nombres = useNombres();
   const tu = otra(yo);
   const [fecha, setFecha] = useState(() => hoyCompartido());
@@ -283,7 +287,7 @@ export default function Diario({ yo }: { yo: Persona }) {
               </button>
             ))}
           </div>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={300} placeholder={`Ej. ${actual.ejemplo}`} className={`${campo} text-sm`} />
+          <input value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={300} placeholder={`Ej. ${actual.ejemplo}`} className={`${campo} text-sm`} autoFocus={enfocar} />
           {actual.conLink && (
             <input
               value={link}
