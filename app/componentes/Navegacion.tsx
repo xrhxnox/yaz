@@ -35,6 +35,11 @@ function Item({ s, actual }: { s: Seccion; actual: string }) {
     <li>
       <a
         href={`#${s}`}
+        onClick={(e) => {
+          if (!activa) return;
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
         aria-current={activa ? "page" : undefined}
         className={`flex flex-col items-center gap-0.5 py-2 text-[11px] transition ${activa ? "text-barra-texto" : "text-barra-suave hover:text-barra-texto"}`}
       >

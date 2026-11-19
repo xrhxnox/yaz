@@ -68,6 +68,10 @@ export default function Inicio() {
   const [aviso, setAviso] = useState("");
   // Hoja de "Crear" (botón + del menú)
   const [creando, setCreando] = useState(false);
+  // Como en una app: cada sección nueva empieza hasta arriba
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [seccion]);
   const ultimoVisto = useRef<number | null>(null);
 
   useEffect(() => {
@@ -183,7 +187,7 @@ export default function Inicio() {
   return (
     <ProveedorPareja value={pareja}>
       <ProveedorReproductor>
-      <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] app:pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
+      <main className="mx-auto w-full max-w-md flex-1 space-y-5 px-5 pt-[env(safe-area-inset-top)] app:pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
         <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} yo={yo} alCrear={() => setCreando(true)} />
 
         {seccion === "inicio" && (

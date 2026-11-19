@@ -72,7 +72,11 @@ export default function Portada({
         className="overflow-hidden rounded-3xl border border-borde bg-tarjeta p-5"
         style={{ backgroundImage: `radial-gradient(320px 200px at 0% 0%, color-mix(in srgb, ${acentos[yo]} 16%, transparent), transparent 70%)` }}
       >
-        <p className="text-xs tracking-wide text-suave">Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</p>
+        <p className="text-xs tracking-wide text-suave first-letter:uppercase">
+          {ahora.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
+          <span className="lg:hidden"> · </span>
+          <span className="block lg:inline">Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span>
+        </p>
         <div className="mt-1 flex items-end gap-3">
           <p className={`${numero} text-7xl leading-none text-acento-texto lg:text-8xl`}>{total}</p>
           <div className="pb-1.5">

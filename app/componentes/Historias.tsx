@@ -9,7 +9,7 @@ import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
-type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
+export type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
 export async function subirHistorias(archivos: File[], alAvanzar?: (texto: string) => void) {
@@ -34,7 +34,7 @@ function hace(iso: string) {
 }
 
 // ---------- Visor a pantalla completa ----------
-function Visor({
+export function Visor({
   historias,
   inicio,
   yo,
@@ -300,21 +300,17 @@ function Circulo({
 }
 
 // ---------- Fila de historias (en Inicio y en el Muro) ----------
-export default function Historias({ yo }: { yo: Persona }) {
-  const { nombres, acentos } = usePareja();
-  const tu = otra(yo);
+// Las historias de las últimas 24 horas (se actualizan solas y cuando alguien sube una)
+export function useHistorias() {
   const [historias, setHistorias] = useState<Historia[] | null>(() => enCache<{ historias: Historia[] }>("/api/historias")?.historias ?? null);
-  const [abierta, setAbierta] = useState<{ persona: Persona; inicio: number } | null>(null);
-  const [subiendo, setSubiendo] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const selector = useRef<HTMLInputElement>(null);
 
   const cargar = useCallback(async () => {
     try {
       setHistorias((await api<{ historias: Historia[] }>("/api/historias")).historias);
       setError("");
     } catch (e) {
-      // Si aún no existe la tabla, la fila simplemente no aparece
+      // Si aún no existe la tabla, simplemente no aparecen
       setError((e as Error).message);
     }
   }, []);
@@ -324,6 +320,22 @@ export default function Historias({ yo }: { yo: Persona }) {
     window.addEventListener("historias:actualizar", cargar);
     return () => window.removeEventListener("historias:actualizar", cargar);
   }, [cargar]);
+
+  return { historias, error, setError, cargar };
+}
+
+// Por dónde empezar a ver: la primera que no ha visto (las mías, desde la primera)
+export function inicioDe(lista: Historia[], persona: Persona, yo: Persona) {
+  return persona === yo ? 0 : Math.max(0, lista.findIndex((h) => !h.vista_at));
+}
+
+export default function Historias({ yo }: { yo: Persona }) {
+  const { nombres, acentos } = usePareja();
+  const tu = otra(yo);
+  const { historias, error, setError, cargar } = useHistorias();
+  const [abierta, setAbierta] = useState<{ persona: Persona; inicio: number } | null>(null);
+  const [subiendo, setSubiendo] = useState<string | null>(null);
+  const selector = useRef<HTMLInputElement>(null);
 
   async function subir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivos = [...(e.target.files ?? [])];
@@ -365,7 +377,7 @@ export default function Historias({ yo }: { yo: Persona }) {
           etiqueta={nombres[tu]}
           acento={acentos[tu]}
           // Empieza por la primera que no ha visto
-          alAbrir={() => setAbierta({ persona: tu, inicio: Math.max(0, suyas.findIndex((h) => !h.vista_at)) })}
+          alAbrir={() => setAbierta({ persona: tu, inicio: inicioDe(suyas, tu, yo) })}
         />
       </div>
       <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />

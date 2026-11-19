@@ -162,6 +162,15 @@
   text-transform: none;
 }
 
+/* Que se sienta como app: los botones y menús no se seleccionan al mantener presionado */
+button,
+nav,
+[role="tab"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 body {
   background: var(--fondo);
   color: var(--texto);

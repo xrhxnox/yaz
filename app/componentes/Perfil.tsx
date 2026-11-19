@@ -14,6 +14,7 @@ import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
 import RuedaColor from "./RuedaColor";
 import { VerPublicaciones, type Publicacion } from "./Muro";
+import { Visor, inicioDe, useHistorias } from "./Historias";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
@@ -919,12 +920,17 @@ function SeccionDatos({
   conteos,
   alCambiar,
   alAjustes,
+  historias,
+  alVerHistorias,
 }: {
   persona: Persona;
   editable: boolean;
   conteos: Conteos | null;
   alCambiar: () => Promise<void>;
   alAjustes: () => void;
+  // Historias de esta persona: con aro de color si hay nuevas, gris si ya se vieron
+  historias: { hay: boolean; nuevas: boolean };
+  alVerHistorias: () => void;
 }) {
   const { nombres, cumples, acentos } = usePareja();
   const [editando, setEditando] = useState(false);
@@ -982,11 +988,17 @@ function SeccionDatos({
   return (
     <section>
       <div className="flex items-center gap-5">
-        <span className="shrink-0 rounded-full p-[3px]" style={{ background: acentos[persona] }}>
+        <button
+          onClick={alVerHistorias}
+          disabled={!historias.hay}
+          aria-label={historias.hay ? `Ver historias de ${nombres[persona]}` : undefined}
+          className="shrink-0 rounded-full p-[3px] transition active:scale-95 disabled:active:scale-100"
+          style={{ background: historias.hay ? (historias.nuevas ? acentos[persona] : "var(--borde)") : "transparent" }}
+        >
           <span className="block rounded-full border-[3px] border-fondo">
             <Avatar persona={persona} size={84} />
           </span>
-        </span>
+        </button>
         {/* Conteos, como en Instagram */}
         <div className="grid flex-1 grid-cols-3 text-center">
           {(
@@ -1152,6 +1164,9 @@ export default function Perfil({
   );
   // Publicación abierta desde la cuadrícula de fotos
   const [abierta, setAbierta] = useState<number | null>(null);
+  // Historias (se abren tocando la foto de perfil)
+  const { historias, cargar: cargarHistorias } = useHistorias();
+  const [viendoHistorias, setViendoHistorias] = useState(false);
   const [canciones, setCanciones] = useState<{ persona: Persona }[] | null>(() => enCache<{ canciones: { persona: Persona }[] }>("/api/canciones")?.canciones ?? null);
 
   const cargar = useCallback(async () => {
@@ -1249,6 +1264,8 @@ export default function Perfil({
     api("/api/muro", { id, like: valor }, "PATCH").catch((e) => setError((e as Error).message));
   }
 
+  const historiasDe = (historias ?? []).filter((h) => h.persona === viendo);
+
   // ---------- Perfil ----------
   const pestanas: [Pestana, string, number][] = datos
     ? [
@@ -1283,6 +1300,8 @@ export default function Perfil({
         conteos={publicaciones && canciones ? conteos : null}
         alCambiar={alCambiarDatos}
         alAjustes={() => setParte("app")}
+        historias={{ hay: historiasDe.length > 0, nuevas: mio || historiasDe.some((h) => !h.vista_at) }}
+        alVerHistorias={() => setViendoHistorias(true)}
       />
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
@@ -1356,6 +1375,18 @@ export default function Perfil({
             )}
           </div>
         </>
+      )}
+      {viendoHistorias && historiasDe.length > 0 && (
+        <Visor
+          historias={historiasDe}
+          inicio={inicioDe(historiasDe, viendo, yo)}
+          yo={yo}
+          alCambiar={cargarHistorias}
+          alCerrar={() => {
+            setViendoHistorias(false);
+            cargarHistorias();
+          }}
+        />
       )}
       {abierta !== null && suyas.length > 0 && (
         <VerPublicaciones
