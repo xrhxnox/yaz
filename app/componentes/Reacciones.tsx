@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { vibrar } from "@/lib/vibrar";
 import { otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
 import { api } from "@/lib/cliente";
@@ -83,6 +84,7 @@ export default function Reacciones({
 
   async function alternar() {
     const valor = !lleno;
+    if (valor) vibrar();
     setCorazon(valor);
     try {
       await reaccionar(tipo, id, { corazon: valor });

@@ -4,22 +4,34 @@
 export const SECCIONES = ["inicio", "muro", "juegos", "nosotros"] as const;
 export type Seccion = (typeof SECCIONES)[number];
 
-const ICONOS: Record<Seccion, React.ReactNode> = {
-  inicio: <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
-  muro: (
+// Cada ícono con su versión de contorno y la rellena (la de la pestaña en la que estás)
+const ICONOS: Record<Seccion, (activo: boolean) => React.ReactNode> = {
+  inicio: (activo) =>
+    activo ? (
+      <>
+        <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" fill="currentColor" />
+        <path d="M9.5 21v-5.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V21" className="fill-barra stroke-barra" strokeWidth={0.5} />
+      </>
+    ) : (
+      <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+    ),
+  muro: (activo) => (
     <>
-      <rect x="3" y="3" width="18" height="18" rx="4" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+      <rect x="3" y="3" width="18" height="18" rx="5" fill={activo ? "currentColor" : "none"} />
+      <circle cx="12" cy="12" r="4" className={activo ? "fill-barra stroke-barra" : undefined} />
+      <circle cx="17.3" cy="6.7" r="0.9" stroke="none" className={activo ? "fill-barra" : "fill-current"} />
     </>
   ),
-  juegos: (
+  juegos: (activo) => (
     <>
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+      {[4, 10, 16].flatMap((y) =>
+        [4, 10, 16].map((x) => <rect key={`${x}-${y}`} x={x} y={y} width="4.5" height="4.5" rx="1.2" fill={activo ? "currentColor" : "none"} />),
+      )}
     </>
   ),
-  nosotros: <path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.6c0 5.7-7.5 10.3-7.5 10.3z" />,
+  nosotros: (activo) => (
+    <path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.6c0 5.7-7.5 10.3-7.5 10.3z" fill={activo ? "currentColor" : "none"} />
+  ),
 };
 
 export const NOMBRES_SECCION: Record<Seccion, string> = {
@@ -41,10 +53,22 @@ function Item({ s, actual }: { s: Seccion; actual: string }) {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         aria-current={activa ? "page" : undefined}
-        className={`flex flex-col items-center gap-0.5 py-2 text-[11px] transition ${activa ? "text-barra-texto" : "text-barra-suave hover:text-barra-texto"}`}
+        className={`flex flex-col items-center gap-0.5 py-2 text-[11px] transition active:scale-90 ${activa ? "font-medium text-barra-texto" : "text-barra-suave hover:text-barra-texto"}`}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activa ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          {ICONOS[s]}
+        <svg
+          key={activa ? "si" : "no"}
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={activa ? 2 : 1.7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={activa ? "icono-activo" : undefined}
+          aria-hidden
+        >
+          {ICONOS[s](activa)}
         </svg>
         {NOMBRES_SECCION[s]}
       </a>
@@ -62,7 +86,7 @@ export default function Navegacion({ actual, alCrear }: { actual: string; alCrea
           <button
             onClick={alCrear}
             aria-label="Crear"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-acento text-sobre-acento shadow-md transition active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-acento text-sobre-acento shadow-md transition active:scale-90"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
               <path d="M12 5v14M5 12h14" />

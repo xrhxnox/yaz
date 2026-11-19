@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { vibrar } from "@/lib/vibrar";
+import { confirmar } from "@/lib/confirmar";
 import { otra, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
@@ -11,6 +13,7 @@ import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { perfilDe } from "@/lib/navegar";
 import { useReproductor, type Pista } from "@/lib/reproductor";
 import { hay, limpiar } from "@/lib/intencion";
+import Esqueleto from "./Esqueleto";
 
 type Cancion = {
   id: number;
@@ -408,7 +411,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
         </label>
       )}
 
-      {!canciones && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!canciones && !error && <Esqueleto filas={4} />}
 
       {canciones && canciones.length === 0 && (
         !agregando && <Vacio icono={ICONOS_VACIO.musica} texto="Todavía no hay canciones." accion="Agregar la primera" alAccion={() => setAgregando(true)} />
@@ -430,12 +433,13 @@ export default function Playlist({ yo }: { yo: Persona }) {
               alCambiar={cargar}
               alCorazon={() => {
                 const valor = !c[`corazon_${yo}`];
+                if (valor) vibrar();
                 cambiar(c, { [`corazon_${yo}`]: valor });
                 hacer(api("/api/canciones", { id: c.id, corazon: valor }, "PATCH"));
               }}
               alDestacar={() => hacer(api("/api/canciones", { id: c.id, destacada: !c.destacada }, "PATCH"))}
-              alBorrar={() => {
-                if (confirm(`¿Quitar "${c.titulo}" de la playlist?`)) hacer(api(`/api/canciones?id=${c.id}`, undefined, "DELETE"));
+              alBorrar={async () => {
+                if (await confirmar({ titulo: `¿Quitar "${c.titulo}" de la playlist?`, accion: "Quitar", peligro: true })) hacer(api(`/api/canciones?id=${c.id}`, undefined, "DELETE"));
               }}
             />
           ))}

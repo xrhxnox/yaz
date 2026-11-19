@@ -1,5 +1,7 @@
 "use client";
 
+import { botonPrimario } from "@/lib/estilos";
+
 // Pantalla vacía: un ícono, un mensaje y (si hay) el botón para empezar
 export default function Vacio({ icono, texto, accion, alAccion }: { icono: string; texto: string; accion?: string; alAccion?: () => void }) {
   return (
@@ -11,7 +13,7 @@ export default function Vacio({ icono, texto, accion, alAccion }: { icono: strin
       </span>
       <p className="mt-3 max-w-xs font-serif text-lg text-suave italic">{texto}</p>
       {accion && alAccion && (
-        <button onClick={alAccion} className="mt-4 rounded-full bg-acento px-5 py-2 text-sm font-medium text-sobre-acento transition active:scale-95">
+        <button onClick={alAccion} className={`${botonPrimario} mt-4 px-5`}>
           {accion}
         </button>
       )}

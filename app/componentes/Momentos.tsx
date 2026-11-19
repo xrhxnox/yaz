@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, comprimirImagen, enCache } from "@/lib/cliente";
@@ -9,6 +10,7 @@ import { hay, limpiar } from "@/lib/intencion";
 import { botonPrimario, botonSecundario, caja, campo, enlace, titulo as tituloSeccion } from "@/lib/estilos";
 import Imagen from "./Imagen";
 import Corazon from "./Corazon";
+import Esqueleto from "./Esqueleto";
 
 type Foto = { id: number; url: string };
 type Momento = { id: number; fecha: string; titulo: string; descripcion: string | null; fotos: Foto[]; creado_por: Persona };
@@ -222,7 +224,7 @@ export default function Momentos() {
   useCarga(cargar);
 
   async function borrar(m: Momento) {
-    if (!confirm(`¿Borrar "${m.titulo}"${m.fotos.length ? " y sus fotos" : ""}?`)) return;
+    if (!(await confirmar({ titulo: `¿Borrar "${m.titulo}"?`, detalle: m.fotos.length ? "También se borran sus fotos." : undefined, accion: "Borrar", peligro: true }))) return;
     try {
       await api(`/api/momentos?id=${m.id}`, undefined, "DELETE");
     } catch (e) {
@@ -232,7 +234,7 @@ export default function Momentos() {
   }
 
   async function borrarFoto(f: Foto) {
-    if (!confirm("¿Borrar esta foto?")) return;
+    if (!(await confirmar({ titulo: "¿Borrar esta foto?", accion: "Borrar", peligro: true }))) return;
     try {
       await api(`/api/momentos?foto=${f.id}`, undefined, "DELETE");
     } catch (e) {
@@ -278,7 +280,7 @@ export default function Momentos() {
       )}
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!datos && !error && <Esqueleto filas={4} />}
       <input ref={selector} type="file" accept="image/*" multiple onChange={agregarFotos} className="hidden" />
 
       {momentos && momentos.length > 0 && (

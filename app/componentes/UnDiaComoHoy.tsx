@@ -21,6 +21,8 @@ const NOMBRE_TIPO: Record<string, string> = Object.fromEntries(TIPOS_DIARIO.map(
 // Lo que pasó en esta misma fecha en meses anteriores; si no hay nada, no se muestra
 export default function UnDiaComoHoy() {
   const { nombres, acentos } = usePareja();
+  // Plegado: se abre al tocarlo (así Hoy no se hace tan largo)
+  const [abierto, setAbierto] = useState(false);
   const [recuerdos, setRecuerdos] = useState<Recuerdo[] | null>(() => enCache<{ recuerdos: Recuerdo[] }>("/api/recuerdo")?.recuerdos ?? null);
 
   const cargar = useCallback(async () => {
@@ -37,7 +39,20 @@ export default function UnDiaComoHoy() {
 
   return (
     <section className={tarjeta}>
-      <p className={titulo}>Un día como hoy</p>
+      <button onClick={() => setAbierto((x) => !x)} aria-expanded={abierto} className="flex w-full items-center justify-between gap-3 text-left">
+        <span className="min-w-0">
+          <span className={`${titulo} block`}>Un día como hoy</span>
+          {!abierto && (
+            <span className="block truncate text-xs text-suave">
+              {recuerdos.map((r) => r.hace).join(" · ")} · toca para ver
+            </span>
+          )}
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-suave transition ${abierto ? "rotate-180" : ""}`} aria-hidden>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {abierto && (
       <div className="-mx-5 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0">
         {recuerdos.map((r) => (
           <article key={r.fecha} className={`shrink-0 snap-start rounded-2xl border border-borde bg-tarjeta p-3 ${recuerdos.length > 1 ? "w-[85%]" : "w-full"}`}>
@@ -70,6 +85,7 @@ export default function UnDiaComoHoy() {
           </article>
         ))}
       </div>
+      )}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { otra, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import { api } from "@/lib/cliente";
+import { botonPrimario } from "@/lib/estilos";
 
 function base64AUint8(base64: string) {
   const relleno = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -72,7 +73,7 @@ export default function Notificaciones({ yo, enPerfil }: { yo: Persona; enPerfil
       {situacion === "inactivas" && (
         <>
           <p>Activa las notificaciones para enterarte cuando {NOMBRES[otra(yo)]} te mande algo.</p>
-          <button onClick={activar} className="mt-3 rounded-full bg-acento px-4 py-2 font-medium text-sobre-acento">
+          <button onClick={activar} className={`${botonPrimario} mt-3`}>
             Activar notificaciones
           </button>
           {error && <p className="mt-2 text-acento-texto">{error}</p>}

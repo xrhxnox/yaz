@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { vibrar } from "@/lib/vibrar";
+import { confirmar } from "@/lib/confirmar";
 import { otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
@@ -11,6 +13,7 @@ import { componerHistorias } from "./ComponerHistoria";
 import { useCajaImagen } from "./CajaImagen";
 import TextoHistoria, { type EstiloTexto } from "./TextoHistoria";
 import { irA, perfilDe } from "@/lib/navegar";
+import Esqueleto from "./Esqueleto";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
 export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; texto_estilo?: EstiloTexto | null; texto_tam?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
@@ -40,12 +43,15 @@ export function Visor({
   yo,
   alCerrar,
   alCambiar,
+  alOtra,
 }: {
   historias: Historia[];
   inicio: number;
   yo: Persona;
   alCerrar: () => void;
   alCambiar: () => Promise<void>;
+  // Deslizar de lado: pasar a las historias de la otra persona (si tiene)
+  alOtra?: () => void;
 }) {
   const { nombres, acentos } = usePareja();
   const [i, setI] = useState(inicio);
@@ -61,6 +67,10 @@ export function Visor({
   const [corazones, setCorazones] = useState<Record<number, boolean>>(() => Object.fromEntries(historias.map((x) => [x.id, !!x.me_gusta])));
   const [latido, setLatido] = useState(0);
   const presionado = useRef(0);
+  // Deslizar: hacia abajo cierra, de lado cambia de persona
+  const gesto = useRef<{ x: number; y: number; modo: "abajo" | "lado" | null } | null>(null);
+  const [arrastre, setArrastre] = useState({ x: 0, y: 0 });
+  const [tocando, setTocando] = useState(false);
   const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen();
   const h = historias[i];
   const mia = h?.persona === yo;
@@ -118,7 +128,10 @@ export function Visor({
   async function alternarCorazon() {
     const valor = !meGusta;
     setCorazones((c) => ({ ...c, [h.id]: valor }));
-    if (valor) setLatido((x) => x + 1);
+    if (valor) {
+      setLatido((x) => x + 1);
+      vibrar();
+    }
     try {
       await api("/api/historias", { id: h.id, respuesta: { corazon: valor } }, "PATCH");
     } catch (e) {
@@ -128,7 +141,19 @@ export function Visor({
   }
 
   return (
-    <div role="dialog" aria-label={`Historia de ${nombres[h.persona]}`} className="visor-abrir fixed inset-0 z-[80] flex flex-col bg-black text-white select-none">
+    <div
+      role="dialog"
+      aria-label={`Historia de ${nombres[h.persona]}`}
+      className="visor-abrir fixed inset-0 z-[80] text-white select-none"
+      style={{ background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})` }}
+    >
+      <div
+        className={`flex h-full flex-col overflow-hidden bg-black ${tocando ? "" : "transition-transform duration-200"}`}
+        style={{
+          transform: `translate(${arrastre.x}px, ${arrastre.y}px) scale(${1 - Math.min(arrastre.y, 400) / 1600})`,
+          borderRadius: arrastre.y > 0 ? 24 : 0,
+        }}
+      >
       {/* Barritas de progreso */}
       <div className="flex gap-1 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         {historias.map((x, n) => (
@@ -180,7 +205,7 @@ export function Visor({
               <button
                 onClick={async () => {
                   setPausa(true);
-                  if (!confirm("¿Borrar esta historia?")) return setPausa(false);
+                  if (!(await confirmar({ titulo: "¿Borrar esta historia?", detalle: "Se quita para los dos.", accion: "Borrar", peligro: true }))) return setPausa(false);
                   await api(`/api/historias?id=${h.id}`, undefined, "DELETE");
                   await alCambiar();
                   alCerrar();
@@ -206,19 +231,53 @@ export function Visor({
       <div
         ref={cajaRef}
         className="relative min-h-0 flex-1 touch-none"
-        onPointerDown={() => {
+        onPointerDown={(e) => {
           presionado.current = Date.now();
+          gesto.current = { x: e.clientX, y: e.clientY, modo: null };
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          } catch {}
           setPausa(true);
         }}
+        onPointerMove={(e) => {
+          const g = gesto.current;
+          if (!g) return;
+          const dx = e.clientX - g.x;
+          const dy = e.clientY - g.y;
+          if (!g.modo && Math.hypot(dx, dy) > 12) {
+            g.modo = Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? "abajo" : null) : "lado";
+            if (g.modo) setTocando(true);
+          }
+          if (g.modo === "abajo") setArrastre({ x: 0, y: Math.max(0, dy) });
+          else if (g.modo === "lado") setArrastre({ x: dx, y: 0 });
+        }}
         onPointerUp={(e) => {
-          const largo = Date.now() - presionado.current > 250;
+          const g = gesto.current;
+          gesto.current = null;
           setPausa(false);
-          if (largo || escribiendo) return;
+          const dx = g ? e.clientX - g.x : 0;
+          const dy = g ? e.clientY - g.y : 0;
+          setArrastre({ x: 0, y: 0 });
+          setTocando(false);
+          if (g?.modo === "abajo") return dy > 110 ? alCerrar() : undefined;
+          if (g?.modo === "lado") {
+            if (Math.abs(dx) < 70) return;
+            if (alOtra) return alOtra();
+            return dx < 0 ? ir(i + 1) : ir(i - 1);
+          }
+          // Se movió poquito o lo dejó presionado: solo era pausa
+          const largo = Date.now() - presionado.current > 250;
+          if (largo || escribiendo || Math.hypot(dx, dy) > 12) return;
           const caja = e.currentTarget.getBoundingClientRect();
           if (e.clientX - caja.left < caja.width * 0.3) ir(i - 1);
           else ir(i + 1);
         }}
-        onPointerCancel={() => setPausa(false)}
+        onPointerCancel={() => {
+          gesto.current = null;
+          setArrastre({ x: 0, y: 0 });
+          setTocando(false);
+          setPausa(false);
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -304,6 +363,7 @@ export function Visor({
             )}
           </form>
         )}
+      </div>
       </div>
     </div>
   );
@@ -404,7 +464,7 @@ export default function Historias({ yo }: { yo: Persona }) {
     for (const h of historias ?? []) new Image().src = h.url;
   }, [historias]);
 
-  if (!historias) return null;
+  if (!historias) return error ? null : <Esqueleto tipo="historias" />;
   const de = (p: Persona) => historias.filter((h) => h.persona === p);
   const mias = de(yo);
   const suyas = de(tu);
@@ -437,6 +497,7 @@ export default function Historias({ yo }: { yo: Persona }) {
       {error && historias.length > 0 && <p className="mt-1 text-xs text-acento-texto">{error}</p>}
       {abierta && (
         <Visor
+          key={abierta.persona}
           historias={de(abierta.persona)}
           inicio={abierta.inicio}
           yo={yo}
@@ -444,6 +505,12 @@ export default function Historias({ yo }: { yo: Persona }) {
           alCerrar={() => {
             setAbierta(null);
             cargar();
+          }}
+          // De lado: a las historias de la otra persona, si tiene
+          alOtra={() => {
+            const otraP = otra(abierta.persona);
+            const lista = de(otraP);
+            if (lista.length) setAbierta({ persona: otraP, inicio: inicioDe(lista, otraP, yo) });
           }}
         />
       )}

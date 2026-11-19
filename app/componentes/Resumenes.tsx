@@ -7,6 +7,7 @@ import { useCarga } from "@/lib/useCarga";
 import { usePareja } from "@/lib/pareja";
 import { etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 import Imagen from "./Imagen";
+import Esqueleto from "./Esqueleto";
 
 type Mes = { n: number; inicio: string; fin: string; terminado: boolean };
 type Resumen = {
@@ -218,7 +219,7 @@ export default function Resumenes() {
   return (
     <div className="space-y-4">
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!meses && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!meses && !error && <Esqueleto />}
       {meses && (
         <ul className={`${tarjeta} divide-y divide-borde`}>
           {meses.map((m) => (

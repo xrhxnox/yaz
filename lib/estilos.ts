@@ -16,6 +16,7 @@ export const numero = "font-serif font-normal tabular-nums tracking-tight";
 
 export const campo =
   "w-full rounded-lg border border-borde bg-tarjeta px-4 py-2.5 outline-none placeholder:text-suave focus:border-suave";
-export const botonPrimario = "rounded-full bg-acento px-4 py-2 text-sm font-medium text-sobre-acento transition disabled:opacity-30";
-export const botonSecundario = "rounded-full border border-borde px-4 py-2 text-sm font-medium transition hover:bg-relleno disabled:opacity-30";
+// Todos los botones de la app: píldora; el principal relleno con el acento, el secundario con borde
+export const botonPrimario = "rounded-full bg-acento px-4 py-2 text-sm font-medium text-sobre-acento transition hover:brightness-105 active:scale-[0.97] disabled:opacity-30";
+export const botonSecundario = "rounded-full border border-borde px-4 py-2 text-sm font-medium transition hover:bg-relleno active:scale-[0.97] disabled:opacity-30";
 export const enlace = "text-sm text-suave underline decoration-borde underline-offset-4 hover:text-texto hover:decoration-suave";

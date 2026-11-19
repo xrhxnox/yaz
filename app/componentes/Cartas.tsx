@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { formatearFecha, hoyCompartido, otra, type Persona } from "@/lib/config";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { hay, limpiar } from "@/lib/intencion";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
+import Esqueleto from "./Esqueleto";
 
 type Recibida = {
   id: number;
@@ -147,7 +149,7 @@ export default function Cartas({ yo }: { yo: Persona }) {
   useCarga(cargar);
 
   async function abrir(c: Recibida) {
-    if (!c.abierta_at && c.condicion && !confirm(`Esta carta es para "${c.condicion.toLowerCase()}". ¿La abres ahora?`)) return;
+    if (!c.abierta_at && c.condicion && !(await confirmar({ titulo: "¿La abres ahora?", detalle: `Esta carta es para "${c.condicion.toLowerCase()}".`, accion: "Abrir carta" }))) return;
     try {
       if (!c.abierta_at) await api("/api/cartas", { id: c.id }, "PATCH");
       await cargar();
@@ -158,7 +160,7 @@ export default function Cartas({ yo }: { yo: Persona }) {
   }
 
   async function borrar(c: Enviada) {
-    if (!confirm(`¿Borrar la carta "${c.titulo}"?`)) return;
+    if (!(await confirmar({ titulo: `¿Borrar la carta "${c.titulo}"?`, accion: "Borrar", peligro: true }))) return;
     try {
       await api(`/api/cartas?id=${c.id}`, undefined, "DELETE");
     } catch (e) {
@@ -184,7 +186,7 @@ export default function Cartas({ yo }: { yo: Persona }) {
       )}
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!datos && !error && <Esqueleto />}
 
       {datos && (
         <section className={tarjeta}>

@@ -11,6 +11,8 @@ import Bienvenida from "./componentes/Bienvenida";
 import Portada from "./componentes/Portada";
 import UnDiaComoHoy from "./componentes/UnDiaComoHoy";
 import Historias from "./componentes/Historias";
+import Novedades from "./componentes/Novedades";
+import HojaConfirmar from "./componentes/HojaConfirmar";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import SeccionJuegos from "./componentes/SeccionJuegos";
@@ -90,10 +92,6 @@ export default function Inicio() {
       clearInterval(t);
     };
   }, []);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [seccion]);
 
   // Cada quien tiene su tema (Ric oscuro con azul, Yaz claro con rosa), o el que personalizó en su perfil
   // persona: undefined = todavía no se lee la sesión, null = no hay sesión
@@ -199,9 +197,12 @@ export default function Inicio() {
       <main className="mx-auto w-full max-w-md flex-1 space-y-5 px-5 pt-[env(safe-area-inset-top)] app:pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
         <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} yo={yo} alCrear={() => setCreando(true)} />
 
+        {/* Al cambiar de pestaña, la nueva aparece suave (como en una app) */}
+        <div key={seccion} className="entrar-seccion space-y-5 lg:space-y-10">
         {seccion === "inicio" && (
           <>
             <Historias yo={yo} />
+            <Novedades yo={yo} />
             {/* Solo lo que pide algo hoy */}
             <Cumpleanos yo={yo} />
             <AvisoTurno turnos={estado?.turnos} />
@@ -260,6 +261,7 @@ export default function Inicio() {
             alCambiarDatos={cargar}
             alSalir={salir}
           />}
+        </div>
         <EspacioReproductor />
       </main>
 
@@ -268,6 +270,7 @@ export default function Inicio() {
       <ComponerHistoria yo={yo} />
       <TirarParaActualizar />
       <Reproductor />
+      <HojaConfirmar />
       <Corazones lista={corazones} />
       {aviso && (
         <div className="fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-8">

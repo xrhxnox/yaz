@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { TIPOS_DIARIO, formatearFecha, hoyCompartido, otra, type Persona, type TipoDiario } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import { api, enCache } from "@/lib/cliente";
@@ -11,6 +12,7 @@ import Reacciones, { type Reaccion } from "./Reacciones";
 import { useReproductor } from "@/lib/reproductor";
 import { embedDe } from "@/lib/embed";
 import { perfilDe } from "@/lib/navegar";
+import Esqueleto from "./Esqueleto";
 
 type Entrada = {
   id: number;
@@ -257,7 +259,7 @@ export default function Diario({ yo }: { yo: Persona }) {
   }
 
   async function borrar(x: Entrada) {
-    if (!confirm(`¿Borrar "${x.texto}"?`)) return;
+    if (!(await confirmar({ titulo: "¿Borrar esta anotación?", detalle: x.texto, accion: "Borrar", peligro: true }))) return;
     try {
       await api(`/api/diario?id=${x.id}`, undefined, "DELETE");
     } catch (e) {
@@ -329,7 +331,7 @@ export default function Diario({ yo }: { yo: Persona }) {
         </div>
 
         {error && <p className="mt-4 text-sm text-acento-texto">{error}</p>}
-        {!delDia && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+        {!delDia && !error && <Esqueleto filas={4} />}
         {delDia && (
           <div className="mt-5 grid gap-6 sm:grid-cols-2">
             <Lista persona={yo} yo={yo} nombre="Tú" entradas={delDia.filter((e) => e.persona === yo)} alBorrar={borrar} alCambiar={cargar} />

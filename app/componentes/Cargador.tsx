@@ -25,15 +25,9 @@ function listo() {
 
 type Fase = "visible" | "saliendo" | "oculto";
 
-// #inicio, #juegos/gato… (sin hash = inicio)
-function pestanaActual() {
-  return window.location.hash.slice(1) || "inicio";
-}
 
-// Pestañas que ya cargaron una vez en esta visita: al regresar a ellas no sale el cargador
-const visitadas = new Set<string>();
 
-// Pantalla de carga: al abrir la app y al entrar por primera vez a una pestaña, hasta que todo aparece
+// Pantalla de carga al abrir la app, hasta que todo aparece
 export default function Cargador() {
   const [fase, setFase] = useState<Fase>("visible");
 
@@ -51,7 +45,6 @@ export default function Cargador() {
         estables = listo() ? estables + 1 : 0;
         const pasado = Date.now() - inicio;
         if (estables >= REVISIONES_ESTABLES || pasado > MAXIMO) {
-          if (document.querySelector("main")) visitadas.add(pestanaActual());
           if (mostrado) {
             setFase("saliendo");
             salida = setTimeout(() => setFase("oculto"), 300);
@@ -67,17 +60,9 @@ export default function Cargador() {
       paso();
     }
 
+    // Solo al abrir la app; al cambiar de pestaña cada sección muestra su esqueleto
     vigilar(true);
-    const alNavegar = () => {
-      if (visitadas.has(pestanaActual())) {
-        clearTimeout(reloj);
-        return;
-      }
-      vigilar(false);
-    };
-    window.addEventListener("hashchange", alNavegar);
     return () => {
-      window.removeEventListener("hashchange", alNavegar);
       clearTimeout(reloj);
       clearTimeout(salida);
     };

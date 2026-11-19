@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { vibrar } from "@/lib/vibrar";
+import { confirmar } from "@/lib/confirmar";
 import { otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
 import { api, comprimirImagen, enCache } from "@/lib/cliente";
@@ -12,6 +14,7 @@ import Historias from "./Historias";
 import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { perfilDe } from "@/lib/navegar";
 import { hay, limpiar } from "@/lib/intencion";
+import Esqueleto from "./Esqueleto";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
 export type Publicacion = {
@@ -89,6 +92,7 @@ function Componer({ maximo, alListo, alCancelar }: { maximo: number; alListo: ()
         form.set("miniatura", e.mini, "mini.jpg");
         await api("/api/muro", form, "PUT");
       }
+      vibrar();
       await alListo();
     } catch (err) {
       setError((err as Error).message);
@@ -143,7 +147,7 @@ function Componer({ maximo, alListo, alCancelar }: { maximo: number; alListo: ()
 }
 
 // ---------- Carrusel con doble toque para dar me gusta ----------
-function Carrusel({ fotos, alDobleToque }: { fotos: Publicacion["fotos"]; alDobleToque: () => void }) {
+function Carrusel({ fotos, color, alDobleToque }: { fotos: Publicacion["fotos"]; color: string; alDobleToque: () => void }) {
   const [indice, setIndice] = useState(0);
   const [latido, setLatido] = useState(0);
   const ultimoToque = useRef(0);
@@ -160,6 +164,7 @@ function Carrusel({ fotos, alDobleToque }: { fotos: Publicacion["fotos"]; alDobl
           const ahora = Date.now();
           if (ahora - ultimoToque.current < 300) {
             alDobleToque();
+            vibrar([10, 40, 14]);
             setLatido((x) => x + 1);
             ultimoToque.current = 0;
           } else ultimoToque.current = ahora;
@@ -173,8 +178,16 @@ function Carrusel({ fotos, alDobleToque }: { fotos: Publicacion["fotos"]; alDobl
         ))}
       </div>
       {latido > 0 && (
-        <span key={latido} className="corazon-doble pointer-events-none absolute inset-0 flex items-center justify-center text-white drop-shadow-lg">
-          <Corazon size={96} />
+        <span key={latido} className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ color }}>
+          {/* El corazón grande en el color de quien lo da, y unos chiquitos que salen volando */}
+          <span className="corazon-doble inline-block drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+            <Corazon size={110} />
+          </span>
+          {[-46, -22, 0, 24, 48].map((x, n) => (
+            <span key={n} className="corazon-chispa absolute" style={{ "--x": `${x}px`, animationDelay: `${80 + n * 40}ms` } as React.CSSProperties}>
+              <Corazon size={14 + (n % 3) * 4} />
+            </span>
+          ))}
         </span>
       )}
       {fotos.length > 1 && (
@@ -314,7 +327,7 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
                 <button
                   onClick={async () => {
                     setMenu(false);
-                    if (!confirm("¿Borrar esta publicación? Se borran sus fotos y comentarios.")) return;
+                    if (!(await confirmar({ titulo: "¿Borrar esta publicación?", detalle: "Se borran sus fotos y comentarios.", accion: "Borrar", peligro: true }))) return;
                     await api(`/api/muro?id=${p.id}`, undefined, "DELETE");
                     await alCambiar();
                   }}
@@ -328,7 +341,7 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
         )}
       </header>
 
-      <Carrusel fotos={p.fotos} alDobleToque={() => !meGusta && alLike(true)} />
+      <Carrusel fotos={p.fotos} color={acentos[yo]} alDobleToque={() => !meGusta && alLike(true)} />
 
       <div className="space-y-1.5 px-3 pt-2.5 pb-3">
         <div className="flex items-center gap-4">
@@ -398,7 +411,7 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
             {c.persona === yo && (
               <button
                 onClick={async () => {
-                  if (!confirm("¿Borrar tu comentario?")) return;
+                  if (!(await confirmar({ titulo: "¿Borrar tu comentario?", accion: "Borrar", peligro: true }))) return;
                   await api(`/api/comentarios?id=${c.id}`, undefined, "DELETE");
                   await alCambiar();
                 }}
@@ -456,6 +469,7 @@ export default function Muro({ yo }: { yo: Persona }) {
   useCarga(cargar, 60000);
 
   function like(p: Publicacion, valor: boolean) {
+    if (valor) vibrar();
     setDatos((d) => d && { ...d, publicaciones: d.publicaciones.map((x) => (x.id === p.id ? { ...x, likes: valor ? [...x.likes.filter((l) => l !== yo), yo] : x.likes.filter((l) => l !== yo) } : x)) });
     api("/api/muro", { id: p.id, like: valor }, "PATCH").catch((e) => setError((e as Error).message));
   }
@@ -523,7 +537,7 @@ export default function Muro({ yo }: { yo: Persona }) {
       )}
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!datos && !error && <Esqueleto tipo="publicaciones" />}
       {datos && visibles.length === 0 && !componiendo && (
         <Vacio
           icono={ICONOS_VACIO.foto}

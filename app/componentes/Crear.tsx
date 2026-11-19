@@ -53,12 +53,12 @@ export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerra
     <>
       <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
       {abierto && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={alCerrar} role="presentation">
+        <div className="fondo-aparecer fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={alCerrar} role="presentation">
           <div
             role="dialog"
             aria-label="Crear"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-t-3xl border border-borde bg-tarjeta px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:rounded-3xl lg:pb-4"
+            className="hoja-subir w-full max-w-md rounded-t-3xl border border-borde bg-tarjeta px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:rounded-3xl lg:pb-4"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-borde lg:hidden" />
             <div className="mb-2 flex items-baseline justify-between px-1">

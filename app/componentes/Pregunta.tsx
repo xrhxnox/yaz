@@ -7,6 +7,7 @@ import Avatar from "./Avatar";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, campo, enlace, etiqueta, junto, tarjeta, titulo } from "@/lib/estilos";
+import Esqueleto from "./Esqueleto";
 
 type Datos = {
   fecha: string;
@@ -64,7 +65,7 @@ export default function Pregunta({ yo }: { yo: Persona }) {
     }
   }
 
-  if (!datos) return <p className="py-10 text-center text-sm text-suave">{error || "Cargando…"}</p>;
+  if (!datos) return error ? <p className="py-10 text-center text-sm text-suave">{error}</p> : <Esqueleto filas={2} />;
 
   const formulario = (
     <form onSubmit={responder} className="mt-4 space-y-2">

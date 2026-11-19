@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { vibrar } from "@/lib/vibrar";
+import { confirmar } from "@/lib/confirmar";
 import { FUENTES, TALLAS, TEMA_INICIAL, otra, type Fuente, type Persona, type Tallas } from "@/lib/config";
 import { useNombres, usePareja } from "@/lib/pareja";
 import Avatar from "./Avatar";
@@ -16,6 +18,7 @@ import RuedaColor from "./RuedaColor";
 import { VerPublicaciones, type Publicacion } from "./Muro";
 import { Visor, inicioDe, useHistorias } from "./Historias";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
+import Esqueleto from "./Esqueleto";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
 type Datos = { perfiles: Record<Persona, { tallas: Tallas; tema: Tema | null; favoritos: Favorito[] }>; deseos: Deseo[] };
@@ -1103,7 +1106,7 @@ type Pestana = "fotos" | "favoritos" | "tallas" | "wishlist";
 
 // Cuadrícula de las fotos del muro de una persona; tocar una lleva al muro
 function FotosDe({ publicaciones, editable, alAbrir }: { publicaciones: PublicacionMini[] | null; editable: boolean; alAbrir: (id: number) => void }) {
-  if (!publicaciones) return <p className="py-8 text-center text-sm text-suave">Cargando…</p>;
+  if (!publicaciones) return <Esqueleto tipo="cuadricula" filas={2} />;
   if (!publicaciones.length)
     return (
       <div className="py-8 text-center">
@@ -1245,8 +1248,8 @@ export default function Perfil({
         <SeccionAjustes yo={yo} ubicacion={ubicacion} alCambiar={alCambiarDatos} />
         <SeccionCuenta />
         <button
-          onClick={() => {
-            if (confirm("¿Cerrar sesión en este dispositivo?")) alSalir();
+          onClick={async () => {
+            if (await confirmar({ titulo: "¿Cerrar sesión en este dispositivo?", accion: "Cerrar sesión", peligro: true })) alSalir();
           }}
           className={`${enlace} mx-auto block pt-2`}
         >
@@ -1258,6 +1261,7 @@ export default function Perfil({
 
   // Me gusta desde la publicación abierta: se ve al instante y se guarda
   function like(id: number, valor: boolean) {
+    if (valor) vibrar();
     setPublicaciones(
       (lista) =>
         lista &&
@@ -1307,7 +1311,7 @@ export default function Perfil({
       />
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!datos && !error && <Esqueleto />}
 
       {datos && (
         <>
@@ -1366,8 +1370,8 @@ export default function Perfil({
                   });
                   hacer(api("/api/deseos", { orden: ids }, "PATCH")).catch(() => {});
                 }}
-                alBorrar={(d) => {
-                  if (confirm(`¿Borrar "${d.titulo}"?`)) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
+                alBorrar={async (d) => {
+                  if (await confirmar({ titulo: `¿Borrar "${d.titulo}"?`, accion: "Borrar", peligro: true })) hacer(api(`/api/deseos?id=${d.id}`, undefined, "DELETE")).catch(() => {});
                 }}
                 alMarcar={(d) => {
                   setDatos((x) => x && { ...x, deseos: x.deseos.map((y) => (y.id === d.id ? { ...y, comprado: !d.comprado } : y)) });

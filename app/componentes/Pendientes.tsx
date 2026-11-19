@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { CATEGORIAS, formatearFecha, hoyCompartido, type Categoria, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import { api, comprimirImagen, enCache } from "@/lib/cliente";
@@ -8,6 +9,7 @@ import { useCarga } from "@/lib/useCarga";
 import { hay, limpiar } from "@/lib/intencion";
 import { botonPrimario, botonSecundario, caja, campo, tarjeta, titulo } from "@/lib/estilos";
 import Imagen from "./Imagen";
+import Esqueleto from "./Esqueleto";
 
 type Pendiente = {
   id: number;
@@ -255,8 +257,8 @@ export default function Pendientes() {
     hacer(api("/api/pendientes", { id: p.id, hecho: false }, "PATCH"));
   }
 
-  function borrar(p: Pendiente) {
-    if (!confirm(`¿Borrar "${p.texto}"?`)) return;
+  async function borrar(p: Pendiente) {
+    if (!(await confirmar({ titulo: "¿Borrar este pendiente?", detalle: p.texto, accion: "Borrar", peligro: true }))) return;
     setLista((l) => l?.filter((x) => x.id !== p.id) ?? null);
     hacer(api(`/api/pendientes?id=${p.id}`, undefined, "DELETE"));
   }
@@ -359,7 +361,7 @@ export default function Pendientes() {
             Por hacer {porHacer.length > 0 && <span className="text-acento-texto">· {porHacer.length}</span>}
           </p>
           {lista === null ? (
-            <p className="mt-2 text-sm text-suave">{error || "Cargando…"}</p>
+            error ? <p className="mt-2 text-sm text-suave">{error}</p> : <Esqueleto filas={2} />
           ) : porHacer.length === 0 ? (
             <p className="mt-2 font-serif italic text-suave">Nada pendiente aquí.</p>
           ) : (

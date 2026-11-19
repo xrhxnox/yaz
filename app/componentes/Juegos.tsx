@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { otra, type Persona } from "@/lib/config";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
@@ -8,6 +9,7 @@ import { usePareja } from "@/lib/pareja";
 import { JUEGOS, caidaEnColumna, type Ficha, type Resultado, type TipoJuego } from "@/lib/juegos";
 import { botonPrimario, enlace, numero } from "@/lib/estilos";
 import Corazon from "./Corazon";
+import Esqueleto from "./Esqueleto";
 
 type Partida = {
   id: number;
@@ -267,7 +269,7 @@ export default function Juegos({ yo, tipo }: { yo: Persona; tipo: TipoJuego }) {
       )}
 
       {error && <p className="text-center text-sm text-acento-texto">{error}</p>}
-      {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!datos && !error && <Esqueleto filas={2} />}
       {datos && (
         <JuegoActual
           key={`${tipo}-${p?.id ?? "nueva"}`}
@@ -278,8 +280,8 @@ export default function Juegos({ yo, tipo }: { yo: Persona; tipo: TipoJuego }) {
           limite={datos.limite ?? 3}
           alJugar={(posicion) => p && jugar(p, posicion)}
           alNueva={() => hacer(api("/api/juegos", { tipo }))}
-          alAbandonar={(x) => {
-            if (confirm("¿Abandonar esta partida? No cuenta en el marcador.")) hacer(api(`/api/juegos?id=${x.id}`, undefined, "DELETE"));
+          alAbandonar={async (x) => {
+            if (await confirmar({ titulo: "¿Abandonar esta partida?", detalle: "No cuenta en el marcador.", accion: "Abandonar", peligro: true })) hacer(api(`/api/juegos?id=${x.id}`, undefined, "DELETE"));
           }}
         />
       )}

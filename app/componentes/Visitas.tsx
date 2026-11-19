@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { confirmar } from "@/lib/confirmar";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
+import Esqueleto from "./Esqueleto";
 
 type Visita = { id: number; inicio: string; fin: string; ciudad: string | null; nota: string | null; creado_por: Persona };
 type Datos = { inicio: string; fin: string; ciudad: string; nota: string };
@@ -93,7 +95,7 @@ export default function Visitas() {
   useCarga(cargar);
 
   async function borrar(v: Visita) {
-    if (!confirm(`¿Borrar la visita del ${rango(v)}?`)) return;
+    if (!(await confirmar({ titulo: `¿Borrar la visita del ${rango(v)}?`, accion: "Borrar", peligro: true }))) return;
     try {
       await api(`/api/visitas?id=${v.id}`, undefined, "DELETE");
     } catch (e) {
@@ -143,7 +145,7 @@ export default function Visitas() {
       )}
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
-      {!visitas && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
+      {!visitas && !error && <Esqueleto />}
       {visitas && visitas.length === 0 && !agregando && (
         <Vacio icono={ICONOS_VACIO.lugar} texto="Todavía no registran visitas. Agreguen cada vez que se vean." />
       )}

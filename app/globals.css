@@ -229,8 +229,18 @@ body {
   45%, 70% { transform: scale(1); opacity: 0.95; }
   100% { transform: scale(1.1); opacity: 0; }
 }
-.corazon-doble > * {
+.corazon-doble {
   animation: corazon-doble 0.9s ease-out forwards;
+}
+/* Corazoncitos que salen volando del grande */
+@keyframes corazon-chispa {
+  0% { transform: translate(0, 10px) scale(0.3); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(var(--x), -120px) scale(1); opacity: 0; }
+}
+.corazon-chispa {
+  opacity: 0;
+  animation: corazon-chispa 0.85s ease-out forwards;
 }
 
 /* Historias: la barrita avanza con CSS (sin redibujar todo en cada cuadro) */
@@ -262,6 +272,54 @@ body {
 .corazon-latido {
   display: inline-block;
   animation: corazon-latido 0.35s ease-out;
+}
+
+/* Al cambiar de pestaña: aparece suave y sube un poquito (sin dejar transform al terminar) */
+@keyframes entrar-seccion {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.entrar-seccion {
+  animation: entrar-seccion 0.18s ease-out;
+}
+/* Hojas que salen desde abajo */
+@keyframes hoja-subir {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+.hoja-subir {
+  animation: hoja-subir 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes fondo-aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fondo-aparecer {
+  animation: fondo-aparecer 0.18s ease-out;
+}
+/* Esqueletos mientras carga: la forma de lo que viene, con un brillo que pasa */
+@keyframes esqueleto {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.esqueleto {
+  background-color: var(--relleno);
+  background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--texto) 7%, transparent) 50%, transparent 100%);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: esqueleto 1.3s ease-in-out infinite;
+}
+/* Ícono de la barra al volverse la pestaña activa */
+@keyframes icono-activo {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.icono-activo {
+  animation: icono-activo 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrar-seccion, .hoja-subir, .fondo-aparecer, .icono-activo, .esqueleto { animation: none; }
 }
 
 /* Corazón del cargador */

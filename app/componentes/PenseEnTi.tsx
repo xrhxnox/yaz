@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { vibrar } from "@/lib/vibrar";
 import { MAX_MENSAJE, MENSAJES, otra, type Persona } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import Avatar from "./Avatar";
@@ -41,6 +42,7 @@ export default function PenseEnTi({
   const texto = personalizado.trim() || mensaje;
 
   async function enviar() {
+    vibrar([10, 50, 10]);
     setPulso((p) => p + 1);
     setEnviando(true);
     try {

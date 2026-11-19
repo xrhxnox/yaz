@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FECHA_INICIO, NOMBRES, formatearFecha, type Persona } from "@/lib/config";
 import { api, type Sesion } from "@/lib/cliente";
 import { iniciarSesion } from "@/lib/cuenta";
-import { campo } from "@/lib/estilos";
+import { botonPrimario, campo } from "@/lib/estilos";
 
 export default function Bienvenida({ alEntrar }: { alEntrar: (s: Sesion) => void }) {
   const [correo, setCorreo] = useState("");
@@ -58,7 +58,7 @@ export default function Bienvenida({ alEntrar }: { alEntrar: (s: Sesion) => void
 
         <button
           disabled={!correo.trim() || !contrasena || cargando}
-          className="mt-4 w-full rounded-full bg-acento py-2.5 font-medium text-sobre-acento transition disabled:opacity-30"
+          className={`${botonPrimario} mt-4 w-full py-2.5 text-base`}
         >
           {cargando ? "Entrando…" : "Entrar"}
         </button>
