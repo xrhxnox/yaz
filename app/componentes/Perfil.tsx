@@ -13,6 +13,7 @@ import { derivarTema, type Tema } from "@/lib/colores";
 import { useCarga } from "@/lib/useCarga";
 import { useSubseccion } from "@/lib/subseccion";
 import RuedaColor from "./RuedaColor";
+import { VerPublicacion, type Publicacion } from "./Muro";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
 type Deseo = { id: number; persona: Persona; titulo: string; url: string; nota: string | null; comprado: boolean };
@@ -1085,11 +1086,11 @@ function SeccionDatos({
 // ---------- Perfil ----------
 
 type Conteos = { publicaciones: number; fotos: number; canciones: number };
-type PublicacionMini = { id: number; persona: Persona; fotos: { id: number; url: string }[] };
+type PublicacionMini = Publicacion;
 type Pestana = "fotos" | "favoritos" | "tallas" | "wishlist";
 
 // Cuadrícula de las fotos del muro de una persona; tocar una lleva al muro
-function FotosDe({ publicaciones, editable }: { publicaciones: PublicacionMini[] | null; editable: boolean }) {
+function FotosDe({ publicaciones, editable, alAbrir }: { publicaciones: PublicacionMini[] | null; editable: boolean; alAbrir: (id: number) => void }) {
   if (!publicaciones) return <p className="py-8 text-center text-sm text-suave">Cargando…</p>;
   if (!publicaciones.length)
     return (
@@ -1105,7 +1106,7 @@ function FotosDe({ publicaciones, editable }: { publicaciones: PublicacionMini[]
   return (
     <div className="grid grid-cols-3 gap-0.5 overflow-hidden rounded-xl">
       {publicaciones.map((p) => (
-        <a key={p.id} href="#muro" aria-label="Ver en el muro" className="relative aspect-square bg-relleno">
+        <button key={p.id} onClick={() => alAbrir(p.id)} aria-label="Ver publicación" className="relative aspect-square bg-relleno">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={p.fotos[0].url} alt="" loading="lazy" className="h-full w-full object-cover" />
           {p.fotos.length > 1 && (
@@ -1113,7 +1114,7 @@ function FotosDe({ publicaciones, editable }: { publicaciones: PublicacionMini[]
               <path d="M8 3h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM3 7v12a2 2 0 0 0 2 2h12v-2H5V7z" />
             </svg>
           )}
-        </a>
+        </button>
       ))}
     </div>
   );
@@ -1149,6 +1150,8 @@ export default function Perfil({
   const [publicaciones, setPublicaciones] = useState<PublicacionMini[] | null>(
     () => enCache<{ publicaciones: PublicacionMini[] }>("/api/muro")?.publicaciones ?? null,
   );
+  // Publicación abierta desde la cuadrícula de fotos
+  const [abierta, setAbierta] = useState<number | null>(null);
   const [canciones, setCanciones] = useState<{ persona: Persona }[] | null>(() => enCache<{ canciones: { persona: Persona }[] }>("/api/canciones")?.canciones ?? null);
 
   const cargar = useCallback(async () => {
@@ -1236,6 +1239,17 @@ export default function Perfil({
     );
   }
 
+  // Me gusta desde la publicación abierta: se ve al instante y se guarda
+  function like(id: number, valor: boolean) {
+    setPublicaciones(
+      (lista) =>
+        lista &&
+        lista.map((x) => (x.id === id ? { ...x, likes: valor ? [...x.likes.filter((l) => l !== yo), yo] : x.likes.filter((l) => l !== yo) } : x)),
+    );
+    api("/api/muro", { id, like: valor }, "PATCH").catch((e) => setError((e as Error).message));
+  }
+  const publicacionAbierta = publicaciones?.find((p) => p.id === abierta);
+
   // ---------- Perfil ----------
   const pestanas: [Pestana, string, number][] = datos
     ? [
@@ -1295,7 +1309,7 @@ export default function Perfil({
           </div>
 
           <div className="[&>section]:border-t-0 [&>section]:pt-0">
-            {pestana === "fotos" && <FotosDe publicaciones={publicaciones && suyas} editable={mio} />}
+            {pestana === "fotos" && <FotosDe publicaciones={publicaciones && suyas} editable={mio} alAbrir={setAbierta} />}
             {pestana === "favoritos" && (
               <SeccionFavoritos
                 key={`favoritos-${viendo}`}
@@ -1343,6 +1357,19 @@ export default function Perfil({
             )}
           </div>
         </>
+      )}
+      {publicacionAbierta && (
+        <VerPublicacion
+          p={publicacionAbierta}
+          yo={yo}
+          alCerrar={() => setAbierta(null)}
+          alLike={(valor) => like(publicacionAbierta.id, valor)}
+          alCambiar={async () => {
+            await cargarExtras();
+            // Si la borraron, se cierra
+            if (!enCache<{ publicaciones: Publicacion[] }>("/api/muro")?.publicaciones.some((p) => p.id === publicacionAbierta.id)) setAbierta(null);
+          }}
+        />
       )}
     </div>
   );

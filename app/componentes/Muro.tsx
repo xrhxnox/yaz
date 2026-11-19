@@ -13,7 +13,7 @@ import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { hay, limpiar } from "@/lib/intencion";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
-type Publicacion = {
+export type Publicacion = {
   id: number;
   persona: Persona;
   fecha: string;
@@ -185,6 +185,59 @@ function Carrusel({ fotos, alDobleToque }: { fotos: Publicacion["fotos"]; alDobl
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ---------- Una sola publicación encima de la pantalla (al tocar una foto del perfil) ----------
+export function VerPublicacion({
+  p,
+  yo,
+  alCerrar,
+  alCambiar,
+  alLike,
+}: {
+  p: Publicacion;
+  yo: Persona;
+  alCerrar: () => void;
+  alCambiar: () => Promise<void>;
+  alLike: (valor: boolean) => void;
+}) {
+  // Sin scroll de la página mientras está abierta; Escape cierra
+  useEffect(() => {
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && alCerrar();
+    window.addEventListener("keydown", tecla);
+    return () => {
+      document.body.style.overflow = antes;
+      window.removeEventListener("keydown", tecla);
+    };
+  }, [alCerrar]);
+
+  return (
+    <div className="fixed inset-0 z-[75] overflow-y-auto bg-black/70 backdrop-blur-sm" onClick={alCerrar} role="presentation">
+      <div className="flex min-h-full items-center justify-center px-3 pt-[max(3.5rem,calc(env(safe-area-inset-top)+3rem))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div role="dialog" aria-label="Publicación" onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md">
+          <button
+            onClick={alCerrar}
+            aria-label="Cerrar"
+            className="absolute -top-11 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <Tarjeta
+            p={p}
+            yo={yo}
+            alLike={alLike}
+            alCambiar={async () => {
+              await alCambiar();
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
