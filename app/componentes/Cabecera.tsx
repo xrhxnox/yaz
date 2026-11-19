@@ -5,6 +5,8 @@ import { FECHA_INICIO } from "@/lib/config";
 import { useNombres } from "@/lib/pareja";
 import type { Ubicacion } from "@/lib/cliente";
 import { NOMBRES_SECCION, SECCIONES } from "./Navegacion";
+import Campana from "./Campana";
+import type { Persona } from "@/lib/config";
 
 // Días desde que empezamos (el "número de edición" del diario)
 export function diasJuntos(ahora: Date) {
@@ -17,11 +19,13 @@ export default function Cabecera({
   ahora,
   ubicaciones,
   seccion,
+  yo,
   alCrear,
 }: {
   ahora: Date;
   ubicaciones?: { a: Ubicacion | null; b: Ubicacion | null };
   seccion: string;
+  yo: Persona;
   alCrear: () => void;
 }) {
   const NOMBRES = useNombres();
@@ -85,6 +89,7 @@ export default function Cabecera({
           </svg>
           <span className="hidden sm:inline">Actualizar</span>
         </button>
+        <Campana yo={yo} />
         <a
           href={enPerfil ? "#inicio" : "#perfil"}
           className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs transition lg:h-9 lg:px-4 lg:text-sm ${

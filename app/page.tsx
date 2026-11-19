@@ -20,7 +20,6 @@ import Nosotros from "./componentes/Nosotros";
 import Crear from "./componentes/Crear";
 import Buscar from "./componentes/Buscar";
 import Animo from "./componentes/Animo";
-import AvisoResumen from "./componentes/AvisoResumen";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
 import Cabecera from "./componentes/Cabecera";
@@ -184,14 +183,13 @@ export default function Inicio() {
     <ProveedorPareja value={pareja}>
       <ProveedorReproductor>
       <main className="mx-auto w-full max-w-md flex-1 space-y-6 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] app:pt-[calc(env(safe-area-inset-top)+1.75rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:max-w-6xl lg:space-y-10 lg:px-10 lg:pt-8 lg:pb-16">
-        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} alCrear={() => setCreando(true)} />
+        <Cabecera ahora={ahora} ubicaciones={estado?.ubicaciones} seccion={seccion} yo={yo} alCrear={() => setCreando(true)} />
 
         {seccion === "inicio" && (
           <>
             <Historias yo={yo} />
             {/* Solo lo que pide algo hoy */}
             <Cumpleanos yo={yo} />
-            <AvisoResumen />
             <AvisoTurno turnos={estado?.turnos} />
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas, como la portada de un periódico */}
