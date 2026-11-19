@@ -9,6 +9,7 @@ import { botonPrimario, botonSecundario, caja, campo } from "@/lib/estilos";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 import Historias from "./Historias";
+import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { hay, limpiar } from "@/lib/intencion";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
@@ -405,6 +406,14 @@ export default function Muro({ yo }: { yo: Persona }) {
   return (
     <div className="space-y-4">
       <Historias yo={yo} />
+      <div className="flex items-end justify-between gap-3">
+        <p className="font-serif text-3xl leading-tight tracking-tight">Muro</p>
+        {!componiendo && (
+          <button onClick={() => setComponiendo(true)} className={`${botonPrimario} shrink-0`}>
+            + Publicar
+          </button>
+        )}
+      </div>
       <div className="flex items-center justify-between gap-3">
         {/* Filtro por persona */}
         <div className="flex gap-1 rounded-full bg-relleno p-1 text-sm">
@@ -442,7 +451,7 @@ export default function Muro({ yo }: { yo: Persona }) {
         </div>
       </div>
 
-      {componiendo ? (
+      {componiendo && (
         <Componer
           maximo={datos?.maximo ?? 10}
           alCancelar={() => setComponiendo(false)}
@@ -452,18 +461,17 @@ export default function Muro({ yo }: { yo: Persona }) {
             await cargar();
           }}
         />
-      ) : (
-        <button onClick={() => setComponiendo(true)} className={`${botonPrimario} w-full py-2.5`}>
-          + Publicar fotos
-        </button>
       )}
 
       {error && <p className="text-sm text-acento-texto">{error}</p>}
       {!datos && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
-      {datos && visibles.length === 0 && (
-        <p className="py-8 text-center font-serif text-lg italic text-suave">
-          {filtro === "todos" ? "Todavía no hay publicaciones. Sube la primera." : "Nada por aquí todavía."}
-        </p>
+      {datos && visibles.length === 0 && !componiendo && (
+        <Vacio
+          icono={ICONOS_VACIO.foto}
+          texto={filtro === "todos" ? "Todavía no hay publicaciones." : "Nada por aquí todavía."}
+          accion={filtro === "todos" || filtro === yo ? "Publicar fotos" : undefined}
+          alAccion={() => setComponiendo(true)}
+        />
       )}
 
       {vista === "lista" ? (

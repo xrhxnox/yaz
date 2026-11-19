@@ -7,6 +7,7 @@ import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
 import { botonPrimario, caja, campo, etiqueta, titulo } from "@/lib/estilos";
 import Corazon from "./Corazon";
+import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { useReproductor, type Pista } from "@/lib/reproductor";
 import { hay, limpiar } from "@/lib/intencion";
 
@@ -407,7 +408,7 @@ export default function Playlist({ yo }: { yo: Persona }) {
       {!canciones && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
 
       {canciones && canciones.length === 0 && (
-        <p className="py-6 text-center font-serif text-lg italic text-suave">Todavía no hay canciones. Agrega la primera.</p>
+        !agregando && <Vacio icono={ICONOS_VACIO.musica} texto="Todavía no hay canciones." accion="Agregar la primera" alAccion={() => setAgregando(true)} />
       )}
 
       {canciones && canciones.length > 0 && lista.length === 0 && (

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { formatearFecha, hoyCompartido, type Persona } from "@/lib/config";
 import { api, enCache } from "@/lib/cliente";
 import { useCarga } from "@/lib/useCarga";
+import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { usePareja } from "@/lib/pareja";
 import { botonPrimario, botonSecundario, caja, campo, enlace, etiqueta, numero, tarjeta, titulo as tituloSeccion } from "@/lib/estilos";
 
@@ -144,7 +145,7 @@ export default function Visitas() {
       {error && <p className="text-sm text-acento-texto">{error}</p>}
       {!visitas && !error && <p className="py-10 text-center text-sm text-suave">Cargando…</p>}
       {visitas && visitas.length === 0 && !agregando && (
-        <p className="font-serif italic text-suave">Todavía no registran visitas. Agreguen cada vez que se vean.</p>
+        <Vacio icono={ICONOS_VACIO.lugar} texto="Todavía no registran visitas. Agreguen cada vez que se vean." />
       )}
 
       {visitas && visitas.length > 0 && (

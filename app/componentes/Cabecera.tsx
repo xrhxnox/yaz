@@ -7,6 +7,7 @@ import type { Ubicacion } from "@/lib/cliente";
 import { NOMBRES_SECCION, SECCIONES } from "./Navegacion";
 import Campana from "./Campana";
 import Avatar from "./Avatar";
+import { actualizarApp } from "./TirarParaActualizar";
 import type { Persona } from "@/lib/config";
 
 // Días desde que empezamos (el "número de edición" del diario)
@@ -36,11 +37,7 @@ export default function Cabecera({
   // Recarga la app; en la versión instalada también busca una versión nueva primero
   async function actualizar() {
     setActualizando(true);
-    try {
-      const registro = await navigator.serviceWorker?.getRegistration();
-      await registro?.update();
-    } catch {}
-    window.location.reload();
+    await actualizarApp();
   }
   const fecha = ahora.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
   const ruta = ubicaciones?.a && ubicaciones?.b ? `${ubicaciones.b.ciudad} — ${ubicaciones.a.ciudad}` : null;
@@ -71,7 +68,7 @@ export default function Cabecera({
           aria-label="Actualizar"
           title="Actualizar"
           disabled={actualizando}
-          className="flex h-7 items-center gap-1.5 rounded-full border border-borde px-2.5 text-xs transition hover:text-texto disabled:opacity-50 sm:px-3 lg:h-9 lg:px-4 lg:text-sm"
+          className="hidden h-7 items-center gap-1.5 rounded-full border border-borde px-2.5 text-xs transition hover:text-texto disabled:opacity-50 sm:px-3 lg:flex lg:h-9 lg:px-4 lg:text-sm"
         >
           <svg
             width="14"
