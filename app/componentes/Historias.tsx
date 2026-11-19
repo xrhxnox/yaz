@@ -261,7 +261,7 @@ export function Visor({
               <p key={n} className="flex items-center gap-1.5">
                 <span style={{ color: acentos[r.persona] }}>{nombres[r.persona]}:</span>
                 {r.corazon && (
-                  <span className="text-[#ff3b5c]">
+                  <span style={{ color: acentos[r.persona] }}>
                     <Corazon size={14} />
                   </span>
                 )}
@@ -296,7 +296,7 @@ export function Visor({
                 aria-label={meGusta ? "Quitar corazón" : "Mandar un corazón"}
                 className="p-1.5 transition active:scale-90"
               >
-                <span key={meGusta ? `si-${latido}` : "no"} className={meGusta ? "corazon-latido text-[#ff3b5c]" : "text-white"}>
+                <span key={meGusta ? `si-${latido}` : "no"} className={meGusta ? "corazon-latido" : "text-white"} style={meGusta ? { color: acentos[yo] } : undefined}>
                   <Corazon size={28} contorno={!meGusta} grosor={1.8} />
                 </span>
               </button>
