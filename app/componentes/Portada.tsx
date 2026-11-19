@@ -71,19 +71,23 @@ export default function Portada({
 
   return (
     <div className="space-y-3">
-      {/* Cuánto falta para vernos */}
+      {/* Los días juntos al centro; abajo, cuánto falta para vernos (tocar abre el reencuentro) */}
       <button
         onClick={() => alternar("reencuentro")}
         aria-expanded={abierto === "reencuentro"}
-        className="block w-full overflow-hidden rounded-3xl border border-borde bg-tarjeta px-5 pt-4 pb-5 text-center transition active:scale-[0.99]"
+        className="block w-full overflow-hidden rounded-3xl border border-borde bg-tarjeta px-5 pt-4 pb-4 text-center transition active:scale-[0.99]"
         style={{ backgroundImage: `radial-gradient(320px 200px at 50% 0%, color-mix(in srgb, ${acentos[yo]} 16%, transparent), transparent 70%)` }}
       >
-        <span className="block text-xs tracking-wide text-suave">Próximo reencuentro</span>
-        <span className={`${numero} mt-1 block text-6xl leading-none text-acento-texto lg:text-7xl`}>{reencuentro.grande}</span>
-        <span className="mt-1.5 block text-xs text-suave first-letter:uppercase">{reencuentro.chico}</span>
-        <span className="mt-3 block border-t border-borde pt-3 text-sm">
-          <span className="font-serif italic">Juntos hace {plural(total, "día", "días")}</span>
-          {partes.length > 1 && <span className="text-xs text-suave"> · {partes.join(" · ")}</span>}
+        <span className="block text-xs tracking-wide text-suave">
+          Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+        </span>
+        <span className={`${numero} mt-1 block text-7xl leading-none text-acento-texto lg:text-8xl`}>{total}</span>
+        <span className="mt-1 block font-serif text-lg italic">{total === 1 ? "día juntos" : "días juntos"}</span>
+        {partes.length > 1 && <span className="block text-xs text-suave">{partes.join(" · ")}</span>}
+        <span className="mt-3 flex items-center justify-center gap-1.5 border-t border-borde pt-3 text-sm">
+          <span className="text-suave">Próximo reencuentro</span>
+          <span className="font-medium text-acento-texto">{reencuentro.grande}</span>
+          <span className="truncate text-xs text-suave first-letter:uppercase">· {reencuentro.chico}</span>
         </span>
       </button>
       {abierto === "reencuentro" && (
