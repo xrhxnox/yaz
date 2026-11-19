@@ -116,6 +116,8 @@ export async function GET(req: Request) {
       visitas,
       planes: planes ?? [],
       turnos: (misTurnos ?? []).map((t) => t.tipo),
+      // ¿Me falta responder la pregunta del día? (null si no existe la tabla)
+      preguntaPendiente: respuestasFilas ? !respuestasFilas.some((r) => r.fecha === hoy && r.persona === yo) : null,
       temas,
       nombres,
       cumples,

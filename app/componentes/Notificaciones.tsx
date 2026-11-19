@@ -18,6 +18,15 @@ export default function Notificaciones({ yo, enPerfil }: { yo: Persona; enPerfil
   const NOMBRES = useNombres();
   const [situacion, setSituacion] = useState<Situacion>("cargando");
   const [error, setError] = useState("");
+  // En Hoy el aviso se puede cerrar (y no vuelve en este dispositivo)
+  const claveCerrado = `nosotros:aviso-notificaciones:${yo}`;
+  const [cerrado, setCerrado] = useState(() => {
+    try {
+      return localStorage.getItem(claveCerrado) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     (async () => {
@@ -56,10 +65,28 @@ export default function Notificaciones({ yo, enPerfil }: { yo: Persona; enPerfil
     }
   }
 
-  if (situacion === "cargando" || (situacion === "activas" && !enPerfil)) return null;
+  if (situacion === "cargando") return null;
+  // En Hoy solo se avisa lo que se puede resolver ahí mismo; lo demás vive en el perfil
+  if (!enPerfil && (cerrado || !(situacion === "inactivas" || situacion === "instalar-ios"))) return null;
 
   return (
-    <section className={enPerfil ? "text-sm" : "rounded-xl bg-relleno p-4 text-sm"}>
+    <section className={enPerfil ? "text-sm" : "relative rounded-2xl bg-relleno p-4 pr-10 text-sm"}>
+      {!enPerfil && (
+        <button
+          onClick={() => {
+            setCerrado(true);
+            try {
+              localStorage.setItem(claveCerrado, "1");
+            } catch {}
+          }}
+          aria-label="Cerrar aviso"
+          className="absolute top-2 right-2 rounded-full p-1.5 text-suave hover:bg-tarjeta hover:text-texto"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      )}
       {situacion === "activas" && (
         <p className="flex items-center gap-2">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-acento text-sobre-acento">

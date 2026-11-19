@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FECHA_INICIO, type Persona } from "@/lib/config";
+import { FECHA_INICIO, otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
 import type { Estado } from "@/lib/cliente";
-import { numero } from "@/lib/estilos";
-import HoraClima, { describir, horaEn, useClima } from "./HoraClima";
+import { enlace, numero } from "@/lib/estilos";
+import HoraClima, { BuscarCiudad, describir, guardarCiudad, horaEn, useClima } from "./HoraClima";
 import Reencuentro from "./Reencuentro";
+import EditarAnimo, { hace } from "./Animo";
+import Avatar from "./Avatar";
 
 function plural(n: number, uno: string, varios: string) {
   return `${n} ${n === 1 ? uno : varios}`;
@@ -21,9 +23,9 @@ function desglose(inicio: Date, hoy: Date) {
   return { anios: Math.floor(meses / 12), meses: meses % 12, dias };
 }
 
-// Cuánto falta para vernos, en corto
+// Cuánto falta para vernos
 function faltan(fecha: string | null, ahora: Date): { grande: string; chico: string } {
-  if (!fecha) return { grande: "Sin fecha", chico: "Toca para ponerla" };
+  if (!fecha) return { grande: "¿Cuándo?", chico: "Toca para poner la fecha" };
   const ms = new Date(fecha).getTime() - ahora.getTime();
   const dia = new Date(fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
   if (ms <= 0) return { grande: "¡Ya!", chico: dia };
@@ -33,8 +35,10 @@ function faltan(fecha: string | null, ahora: Date): { grande: string; chico: str
   return { grande: plural(dias, "día", "días"), chico: dia };
 }
 
-// La portada de Hoy: días juntos, reencuentro, racha y la hora y el clima de cada quien.
-// Tocar el reencuentro o el clima abre debajo el detalle para editarlo
+type Abierto = "reencuentro" | "yo" | "clima" | null;
+
+// Lo principal de Hoy: cuánto falta para verse (con los días juntos abajo) y "Ustedes ahora":
+// cómo está cada quien, dónde, qué hora es y qué clima hace. Tocar algo abre debajo su detalle
 export default function Portada({
   yo,
   ahora,
@@ -49,8 +53,13 @@ export default function Portada({
   alGuardarFecha: (fecha: string | null) => Promise<void>;
 }) {
   const { nombres, acentos } = usePareja();
-  const [abierto, setAbierto] = useState<"reencuentro" | "clima" | null>(null);
+  const [abierto, setAbierto] = useState<Abierto>(null);
+  const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
   const clima = useClima(estado?.ubicaciones);
+  const alternar = (que: Abierto) => {
+    setCambiandoCiudad(false);
+    setAbierto((x) => (x === que ? null : que));
+  };
 
   const [a, m, d] = FECHA_INICIO.split("-").map(Number);
   const inicio = new Date(a, m - 1, d);
@@ -58,83 +67,100 @@ export default function Portada({
   const total = Math.round((hoy.getTime() - inicio.getTime()) / 864e5);
   const { anios, meses, dias } = desglose(inicio, hoy);
   const partes = [anios && plural(anios, "año", "años"), meses && plural(meses, "mes", "meses"), dias && plural(dias, "día", "días")].filter(Boolean);
-  const esMesiversario = hoy.getDate() === inicio.getDate() && total > 0;
-  const esAniversario = esMesiversario && hoy.getMonth() === inicio.getMonth();
-
   const reencuentro = faltan(estado?.proximoEncuentro ?? null, ahora);
-  const racha = estado?.rachas;
-  const alternar = (que: "reencuentro" | "clima") => setAbierto((x) => (x === que ? null : que));
-  const caja = "rounded-2xl bg-relleno p-3 text-left transition hover:brightness-110";
 
   return (
-    <div className="space-y-4">
-      <section
-        className="overflow-hidden rounded-3xl border border-borde bg-tarjeta p-5"
-        style={{ backgroundImage: `radial-gradient(320px 200px at 0% 0%, color-mix(in srgb, ${acentos[yo]} 16%, transparent), transparent 70%)` }}
+    <div className="space-y-3">
+      {/* Cuánto falta para vernos */}
+      <button
+        onClick={() => alternar("reencuentro")}
+        aria-expanded={abierto === "reencuentro"}
+        className="block w-full overflow-hidden rounded-3xl border border-borde bg-tarjeta px-5 pt-4 pb-5 text-center transition active:scale-[0.99]"
+        style={{ backgroundImage: `radial-gradient(320px 200px at 50% 0%, color-mix(in srgb, ${acentos[yo]} 16%, transparent), transparent 70%)` }}
       >
-        <p className="text-xs tracking-wide text-suave first-letter:uppercase">
-          {ahora.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
-          <span className="lg:hidden"> · </span>
-          <span className="block lg:inline">Juntos desde el {inicio.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span>
-        </p>
-        <div className="mt-1 flex items-end gap-3">
-          <p className={`${numero} text-7xl leading-none text-acento-texto lg:text-8xl`}>{total}</p>
-          <div className="pb-1.5">
-            <p className="font-serif text-lg leading-tight italic">días juntos</p>
-            {partes.length > 0 && <p className="text-xs text-suave">{partes.join(" · ")}</p>}
-          </div>
-        </div>
-        {esMesiversario && (
-          <p className="mt-3 border-l-2 border-acento-texto pl-3 font-serif text-lg italic text-acento-texto">
-            {esAniversario ? `Hoy cumplimos ${plural(anios, "año", "años")}` : `Hoy cumplimos ${plural(anios * 12 + meses, "mes", "meses")}`}
-          </p>
-        )}
-
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <button onClick={() => alternar("reencuentro")} aria-expanded={abierto === "reencuentro"} className={caja}>
-            <span className="block text-[11px] text-suave">Próximo reencuentro</span>
-            <span className={`${numero} block text-2xl leading-tight text-acento-texto`}>{reencuentro.grande}</span>
-            <span className="block truncate text-[11px] text-suave first-letter:uppercase">{reencuentro.chico}</span>
-          </button>
-          <a href="#muro" className={caja}>
-            <span className="block text-[11px] text-suave">Racha con fotos</span>
-            <span className={`${numero} block text-2xl leading-tight text-acento-texto`}>{plural(racha?.fotos ?? 0, "día", "días")}</span>
-            <span className="block truncate text-[11px] text-suave">{racha?.preguntas ? `y ${racha.preguntas} con la pregunta` : "seguidos, los dos"}</span>
-          </a>
-        </div>
-
-        {/* La hora y el clima de cada quien */}
-        <button onClick={() => alternar("clima")} aria-expanded={abierto === "clima"} className="mt-2.5 grid w-full grid-cols-2 gap-2.5 text-left">
-          {(["b", "a"] as Persona[]).map((p) => {
-            const u = estado?.ubicaciones?.[p];
-            const h = u ? horaEn(u.zona, ahora) : null;
-            const c = clima[p];
-            return (
-              <span key={p} className={`${caja} block`}>
-                <span className="block text-[11px]" style={{ color: acentos[p] }}>
-                  {p === yo ? "Tú" : nombres[p]}
-                </span>
-                {u && h ? (
-                  <>
-                    <span className="block truncate font-serif text-base leading-tight">{u.ciudad}</span>
-                    <span className="block text-xs text-suave">
-                      {h.hora}
-                      {c ? ` · ${c.temp}° ${describir(c.codigo).toLowerCase()}` : ""}
-                    </span>
-                    {h.deNoche && p !== yo && <span className="block text-[11px] text-suave italic">Probablemente durmiendo</span>}
-                  </>
-                ) : (
-                  <span className="block font-serif text-sm text-suave italic">{p === yo ? "Pon tu ciudad" : "Sin ciudad"}</span>
-                )}
-              </span>
-            );
-          })}
-        </button>
-      </section>
-
+        <span className="block text-xs tracking-wide text-suave">Próximo reencuentro</span>
+        <span className={`${numero} mt-1 block text-6xl leading-none text-acento-texto lg:text-7xl`}>{reencuentro.grande}</span>
+        <span className="mt-1.5 block text-xs text-suave first-letter:uppercase">{reencuentro.chico}</span>
+        <span className="mt-3 block border-t border-borde pt-3 text-sm">
+          <span className="font-serif italic">Juntos hace {plural(total, "día", "días")}</span>
+          {partes.length > 1 && <span className="text-xs text-suave"> · {partes.join(" · ")}</span>}
+        </span>
+      </button>
       {abierto === "reencuentro" && (
         <Reencuentro fecha={estado?.proximoEncuentro ?? null} ahora={ahora} planes={estado?.planes} visitas={estado?.visitas} alGuardar={alGuardarFecha} />
       )}
+
+      {/* Ustedes ahora: una columna por persona */}
+      <section className="rounded-2xl border border-borde bg-tarjeta p-1.5" aria-label="Ustedes ahora">
+        <div className="grid grid-cols-2 gap-1.5">
+          {([otra(yo), yo] as Persona[]).map((p) => {
+            const u = estado?.ubicaciones?.[p];
+            const h = u ? horaEn(u.zona, ahora) : null;
+            const c = clima[p];
+            const animo = estado?.animos?.[p];
+            const mia = p === yo;
+            const activo = abierto === (mia ? "yo" : "clima");
+            return (
+              <button
+                key={p}
+                onClick={() => alternar(mia ? "yo" : "clima")}
+                aria-expanded={activo}
+                className={`flex min-w-0 flex-col justify-start rounded-xl p-2.5 text-left transition hover:bg-relleno ${activo ? "bg-relleno" : ""}`}
+              >
+                <span className="flex items-center gap-2">
+                  <Avatar persona={p} size={26} />
+                  <span className="truncate text-sm font-medium" style={{ color: acentos[p] }}>
+                    {mia ? "Tú" : nombres[p]}
+                  </span>
+                </span>
+                <span className={`mt-1.5 block font-serif text-[15px] leading-snug italic ${animo ? "" : "text-suave"}`}>
+                  {animo ? animo.texto : mia ? "¿Cómo estás?" : "Sin estado"}
+                </span>
+                {animo && <span className="block text-[11px] text-suave">{hace(animo.updated_at)}</span>}
+                {u && h ? (
+                  <span className="mt-1.5 block text-xs text-suave">
+                    <span className="block truncate">{u.ciudad}</span>
+                    <span className="block truncate">
+                      {h.hora}
+                      {c ? ` · ${c.temp}° ${describir(c.codigo).toLowerCase()}` : ""}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="mt-1.5 block text-xs text-suave">{mia ? "Pon tu ciudad" : "Sin ciudad"}</span>
+                )}
+                {h?.deNoche && !mia && <span className="block text-[11px] text-suave italic">Probablemente durmiendo</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mi columna: cambiar mi estado y mi ciudad */}
+        {abierto === "yo" && (
+          <div className="border-t border-borde px-2.5 pt-3 pb-2">
+            <EditarAnimo
+              tengo={!!estado?.animos?.[yo]}
+              alCambiar={async () => {
+                await alCambiar();
+                setAbierto(null);
+              }}
+            />
+            {cambiandoCiudad ? (
+              <BuscarCiudad
+                alCancelar={() => setCambiandoCiudad(false)}
+                alElegir={async (r) => {
+                  await guardarCiudad(r);
+                  await alCambiar();
+                  setCambiandoCiudad(false);
+                }}
+              />
+            ) : (
+              <button onClick={() => setCambiandoCiudad(true)} className={`${enlace} mt-3 block text-xs`}>
+                {estado?.ubicaciones?.[yo] ? "Cambiar mi ciudad" : "Poner mi ciudad"}
+              </button>
+            )}
+          </div>
+        )}
+      </section>
       {abierto === "clima" && <HoraClima yo={yo} ubicaciones={estado?.ubicaciones} ahora={ahora} alCambiar={alCambiar} />}
     </div>
   );

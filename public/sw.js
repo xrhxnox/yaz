@@ -90,6 +90,8 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
+  // En desarrollo (localhost) no se guarda nada: los archivos cambian con cada edición
+  if (self.location.hostname === "localhost" || self.location.hostname === "127.0.0.1") return;
 
   // La app misma
   if (request.mode === "navigate" && url.origin === self.location.origin) {

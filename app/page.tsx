@@ -16,20 +16,18 @@ import HojaConfirmar from "./componentes/HojaConfirmar";
 import PenseEnTi from "./componentes/PenseEnTi";
 import Notificaciones from "./componentes/Notificaciones";
 import SeccionJuegos from "./componentes/SeccionJuegos";
-import AvisoTurno from "./componentes/AvisoTurno";
+import ParaHoy from "./componentes/ParaHoy";
 import Muro from "./componentes/Muro";
 import Nosotros from "./componentes/Nosotros";
 import Crear from "./componentes/Crear";
 import ComponerHistoria from "./componentes/ComponerHistoria";
 import TirarParaActualizar from "./componentes/TirarParaActualizar";
 import Buscar from "./componentes/Buscar";
-import Animo from "./componentes/Animo";
 import Navegacion, { SECCIONES, type Seccion } from "./componentes/Navegacion";
 import Perfil from "./componentes/Perfil";
 import Cabecera from "./componentes/Cabecera";
 import Reproductor, { EspacioReproductor } from "./componentes/Reproductor";
 import { ProveedorReproductor } from "@/lib/reproductor";
-import Cumpleanos from "./componentes/Cumpleanos";
 import Corazones, { crearCorazones, type Particula } from "./componentes/Corazones";
 
 // La sección actual vive en el #hash de la URL (así las notificaciones pueden abrir una sección)
@@ -203,49 +201,47 @@ export default function Inicio() {
           <>
             <Historias yo={yo} />
             <Novedades yo={yo} />
-            {/* Solo lo que pide algo hoy */}
-            <Cumpleanos yo={yo} />
-            <AvisoTurno turnos={estado?.turnos} />
             <Notificaciones yo={yo} />
-            {/* En escritorio: dos columnas, como la portada de un periódico */}
-            <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
-            <div className="space-y-6 lg:col-span-7 lg:space-y-8">
-            <Portada
-              yo={yo}
-              ahora={ahora}
-              estado={estado}
-              alCambiar={cargar}
-              alGuardarFecha={async (fecha) => {
-                await api("/api/proximo", { fecha });
-                await cargar();
-              }}
-            />
-            <Animo yo={yo} animos={estado?.animos} alCambiar={cargar} />
-            <UnDiaComoHoy />
-            </div>
-            <div className="lg:col-span-5 lg:border-l lg:border-borde lg:pl-12">
-            <PenseEnTi
-              yo={yo}
-              estado={estado}
-              ahora={ahora}
-              alEnviar={async (mensaje) => {
-                lanzarCorazones();
-                try {
-                  await api("/api/pensar", { mensaje });
-                  mostrarAviso(`Enviado a ${pareja.nombres[otra(yo)]}`);
-                  await cargar();
-                } catch (e) {
-                  mostrarAviso(`No se pudo enviar: ${(e as Error).message}`);
-                }
-              }}
-            />
-            </div>
+            {/* En escritorio: dos columnas */}
+            <div className="space-y-4 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">
+              <div className="space-y-4 lg:col-span-7">
+                {/* Lo que pide algo hoy, luego cuánto falta para verse y cómo está cada quien */}
+                <ParaHoy yo={yo} ahora={ahora} estado={estado} />
+                <Portada
+                  yo={yo}
+                  ahora={ahora}
+                  estado={estado}
+                  alCambiar={cargar}
+                  alGuardarFecha={async (fecha) => {
+                    await api("/api/proximo", { fecha });
+                    await cargar();
+                  }}
+                />
+              </div>
+              <div className="space-y-4 lg:col-span-5">
+                <PenseEnTi
+                  yo={yo}
+                  estado={estado}
+                  ahora={ahora}
+                  alEnviar={async (mensaje) => {
+                    lanzarCorazones();
+                    try {
+                      await api("/api/pensar", { mensaje });
+                      mostrarAviso(`Enviado a ${pareja.nombres[otra(yo)]}`);
+                      await cargar();
+                    } catch (e) {
+                      mostrarAviso(`No se pudo enviar: ${(e as Error).message}`);
+                    }
+                  }}
+                />
+                <UnDiaComoHoy />
+              </div>
             </div>
           </>
         )}
         {seccion === "muro" && (
           <div className="lg:mx-auto lg:max-w-xl">
-            <Muro yo={yo} />
+            <Muro yo={yo} racha={estado?.rachas?.fotos} />
           </div>
         )}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}

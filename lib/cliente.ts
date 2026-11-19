@@ -15,6 +15,7 @@ export type Estado = {
   visitas?: { veces: number; dias: number } | null;
   planes?: { id: number; texto: string }[];
   turnos?: string[];
+  preguntaPendiente?: boolean | null;
   nombres: Record<Persona, string>;
   cumples: Record<Persona, string | null>;
   avatares: Record<Persona, string | null>;

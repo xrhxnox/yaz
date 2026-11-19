@@ -463,7 +463,7 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
 }
 
 // ---------- El muro ----------
-export default function Muro({ yo }: { yo: Persona }) {
+export default function Muro({ yo, racha }: { yo: Persona; racha?: number }) {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
   const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/muro"));
@@ -498,7 +498,10 @@ export default function Muro({ yo }: { yo: Persona }) {
     <div className="space-y-4">
       <Historias yo={yo} />
       <div className="flex items-end justify-between gap-3">
-        <p className="font-serif text-3xl leading-tight tracking-tight">Muro</p>
+        <div>
+          <p className="font-serif text-3xl leading-tight tracking-tight">Muro</p>
+          {!!racha && <p className="text-xs text-suave">Racha: {racha} {racha === 1 ? "día" : "días"} seguidos con fotos de los dos</p>}
+        </div>
         {!componiendo && (
           <button onClick={() => setComponiendo(true)} className={`${botonPrimario} shrink-0`}>
             + Publicar

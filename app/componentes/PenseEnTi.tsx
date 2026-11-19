@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { vibrar } from "@/lib/vibrar";
 import { MAX_MENSAJE, MENSAJES, otra, type Persona } from "@/lib/config";
-import { useNombres } from "@/lib/pareja";
+import { usePareja } from "@/lib/pareja";
 import Avatar from "./Avatar";
 import type { Estado } from "@/lib/cliente";
 import Corazon from "./Corazon";
-import { campo, enlace, numero, tarjeta, titulo } from "@/lib/estilos";
-
-// Mensajes recientes que se ven sin abrir la lista completa
-const VISIBLES = 5;
+import { campo, enlace, numero } from "@/lib/estilos";
 
 function hace(iso: string, ahora: Date) {
   const min = Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000);
@@ -21,6 +18,7 @@ function hace(iso: string, ahora: Date) {
   return new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 }
 
+// Mandar un "pensé en ti" en un toque; los números y todos los mensajes se ven en una hoja aparte
 export default function PenseEnTi({
   yo,
   estado,
@@ -32,14 +30,28 @@ export default function PenseEnTi({
   ahora: Date;
   alEnviar: (mensaje: string) => Promise<void>;
 }) {
-  const NOMBRES = useNombres();
+  const { nombres, acentos } = usePareja();
   const [mensaje, setMensaje] = useState(MENSAJES[0]);
+  const [escribiendo, setEscribiendo] = useState(false);
   const [personalizado, setPersonalizado] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [pulso, setPulso] = useState(0);
   const [verTodos, setVerTodos] = useState(false);
   const tu = otra(yo);
-  const texto = personalizado.trim() || mensaje;
+  const texto = (escribiendo && personalizado.trim()) || mensaje;
+  const ultimoSuyo = estado?.recientes.find((p) => p.de === tu);
+
+  useEffect(() => {
+    if (!verTodos) return;
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && setVerTodos(false);
+    window.addEventListener("keydown", tecla);
+    return () => {
+      document.body.style.overflow = antes;
+      window.removeEventListener("keydown", tecla);
+    };
+  }, [verTodos]);
 
   async function enviar() {
     vibrar([10, 50, 10]);
@@ -48,38 +60,53 @@ export default function PenseEnTi({
     try {
       await alEnviar(texto);
       setPersonalizado("");
+      setEscribiendo(false);
     } finally {
       setEnviando(false);
     }
   }
 
-  return (
-    <section className={tarjeta}>
-      <p className={titulo}>Para {NOMBRES[tu]}</p>
+  const chip = (activo: boolean) =>
+    `shrink-0 rounded-full border px-3 py-1 text-sm transition active:scale-95 ${activo ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"}`;
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+  return (
+    <section className="rounded-2xl border border-borde bg-tarjeta p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="font-serif text-xl leading-tight">Pensé en ti</p>
+        {estado && estado.recientes.length > 0 && (
+          <button onClick={() => setVerTodos(true)} className={`${enlace} text-xs`}>
+            Ver todos
+          </button>
+        )}
+      </div>
+
+      <div className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] lg:flex-wrap">
         {MENSAJES.map((m) => (
           <button
             key={m}
             onClick={() => {
               setMensaje(m);
-              setPersonalizado("");
+              setEscribiendo(false);
             }}
-            className={`rounded-full border px-3 py-1 text-sm transition ${
-              mensaje === m && !personalizado.trim() ? "border-acento bg-acento text-sobre-acento" : "border-borde hover:bg-relleno"
-            }`}
+            className={chip(mensaje === m && !escribiendo)}
           >
             {m}
           </button>
         ))}
+        <button onClick={() => setEscribiendo(true)} className={chip(escribiendo)}>
+          Otro…
+        </button>
       </div>
-      <input
-        value={personalizado}
-        onChange={(e) => setPersonalizado(e.target.value)}
-        maxLength={MAX_MENSAJE}
-        placeholder="O escribe tu propio mensaje"
-        className={`${campo} mt-2 text-sm`}
-      />
+      {escribiendo && (
+        <input
+          value={personalizado}
+          onChange={(e) => setPersonalizado(e.target.value)}
+          maxLength={MAX_MENSAJE}
+          placeholder={`Escríbele algo a ${nombres[tu]}`}
+          autoFocus
+          className={`${campo} mt-2 text-sm`}
+        />
+      )}
 
       <button
         onClick={enviar}
@@ -87,45 +114,63 @@ export default function PenseEnTi({
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-acento py-3 font-medium text-sobre-acento transition active:scale-[0.98] disabled:opacity-60"
       >
         <Corazon key={pulso} size={18} className={pulso ? "pulso" : ""} />
-        Enviar “{texto}”
+        <span className="truncate">Enviar “{texto}”</span>
       </button>
 
-      {estado && (
-        <>
-          <div className="mt-6 grid grid-cols-2 divide-x divide-borde border-y border-borde py-3">
-            <div className="pr-4">
-              <p className={`${numero} text-3xl`}>{estado.hoy[yo]}</p>
-              <p className="text-xs text-suave">enviados hoy</p>
-            </div>
-            <div className="pl-4">
-              <p className={`${numero} text-3xl text-acento-texto`}>{estado.hoy[tu]}</p>
-              <p className="text-xs text-suave">recibidos de {NOMBRES[tu]}</p>
-            </div>
-          </div>
+      {ultimoSuyo && (
+        <p className="mt-3 flex items-start gap-2 text-sm">
+          <Avatar persona={tu} size={20} />
+          <span className="min-w-0">
+            <span style={{ color: acentos[tu] }}>{nombres[tu]}</span>
+            <span className="font-serif italic"> “{ultimoSuyo.mensaje}”</span>
+            <span className="text-xs text-suave"> · {hace(ultimoSuyo.created_at, ahora)}</span>
+          </span>
+        </p>
+      )}
 
-          {estado.recientes.length > 0 && (
-            <ul
-              className={`mt-5 space-y-4 ${verTodos ? "-mr-2 max-h-80 overflow-y-auto overscroll-contain pr-2" : ""}`}
-              aria-label="Mensajes recientes"
-            >
-              {(verTodos ? estado.recientes : estado.recientes.slice(0, VISIBLES)).map((p) => (
+      {/* Todos los mensajes, en una hoja desde abajo */}
+      {verTodos && estado && (
+        <div className="fondo-aparecer fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={() => setVerTodos(false)} role="presentation">
+          <div
+            role="dialog"
+            aria-label="Mensajes"
+            onClick={(e) => e.stopPropagation()}
+            className="hoja-subir flex max-h-[80vh] w-full max-w-md flex-col rounded-t-3xl border border-borde bg-tarjeta px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:rounded-3xl"
+          >
+            <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-borde lg:hidden" />
+            <div className="flex items-baseline justify-between">
+              <p className="font-serif text-2xl">Pensé en ti</p>
+              <button onClick={() => setVerTodos(false)} className="text-sm text-suave hover:text-texto">
+                Cerrar
+              </button>
+            </div>
+            <div className="mt-3 grid shrink-0 grid-cols-3 divide-x divide-borde border-y border-borde py-3 text-center">
+              <div>
+                <p className={`${numero} text-2xl`}>{estado.hoy[yo]}</p>
+                <p className="text-[11px] text-suave">enviaste hoy</p>
+              </div>
+              <div>
+                <p className={`${numero} text-2xl text-acento-texto`}>{estado.hoy[tu]}</p>
+                <p className="text-[11px] text-suave">de {nombres[tu]} hoy</p>
+              </div>
+              <div>
+                <p className={`${numero} text-2xl`}>{estado.total.a + estado.total.b}</p>
+                <p className="text-[11px] text-suave">desde el inicio</p>
+              </div>
+            </div>
+            <ul className="mt-3 min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2" aria-label="Mensajes recientes">
+              {estado.recientes.map((p) => (
                 <li key={p.id} className={`border-l-2 pl-3 ${p.de === yo ? "border-borde" : "border-acento-texto"}`}>
                   <p className="font-serif text-lg leading-snug break-words">“{p.mensaje}”</p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-suave">
                     <Avatar persona={p.de} size={18} />
-                    {p.de === yo ? "Tú" : NOMBRES[p.de]}, {hace(p.created_at, ahora)}
+                    {p.de === yo ? "Tú" : nombres[p.de]}, {hace(p.created_at, ahora)}
                   </p>
                 </li>
               ))}
             </ul>
-          )}
-          {estado.recientes.length > VISIBLES && (
-            <button onClick={() => setVerTodos((v) => !v)} className={`${enlace} mt-4 text-xs`}>
-              {verTodos ? "Ver menos" : `Ver más (${estado.recientes.length - VISIBLES})`}
-            </button>
-          )}
-          <p className="mt-5 text-xs text-suave">{estado.total.a + estado.total.b} mensajes desde el principio</p>
-        </>
+          </div>
+        </div>
       )}
     </section>
   );
