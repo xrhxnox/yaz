@@ -7,6 +7,8 @@ type Fila = {
   persona: Persona;
   path: string;
   texto: string | null;
+  texto_x?: number | null;
+  texto_y?: number | null;
   vista_at: string | null;
   created_at: string;
   historia_respuestas: { persona: Persona; corazon: boolean; texto: string | null; created_at: string }[];
@@ -19,14 +21,15 @@ export async function GET(req: Request) {
 
   try {
     const desde = new Date(Date.now() - DURACION_HISTORIA_MS).toISOString();
-    const filas: Fila[] =
-      revisar(
-        await db()
-          .from("historias")
-          .select("id, persona, path, texto, vista_at, created_at, historia_respuestas(persona, corazon, texto, created_at)")
-          .gte("created_at", desde)
-          .order("created_at"),
-      ) ?? [];
+    const consulta = (extra: string) =>
+      db()
+        .from("historias")
+        .select(`id, persona, path, texto${extra}, vista_at, created_at, historia_respuestas(persona, corazon, texto, created_at)`)
+        .gte("created_at", desde)
+        .order("created_at");
+    let r = await consulta(", texto_x, texto_y");
+    if (r.error && /texto_/.test(r.error.message)) r = await consulta("");
+    const filas: Fila[] = (revisar(r) as Fila[] | null) ?? [];
     const urls = await firmar(filas.map((h) => h.path));
     return Response.json({
       historias: filas
@@ -56,11 +59,17 @@ export async function POST(req: Request) {
     const hacePoco = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { count } = await db().from("historias").select("*", { count: "exact", head: true }).eq("persona", yo).gte("created_at", hacePoco);
     const path = await subirImagen(form.get("foto"), "historias");
-    revisar(
-      await db()
-        .from("historias")
-        .insert({ persona: yo, path, texto: typeof texto === "string" && texto.trim() ? texto.trim().slice(0, 200) : null }),
-    );
+    // Posición del texto (0 a 1); si no viene, al centro
+    const lugar = (v: FormDataEntryValue | null) => {
+      const n = Number(v);
+      return v !== null && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : null;
+    };
+    const fila: Record<string, unknown> = { persona: yo, path, texto: typeof texto === "string" && texto.trim() ? texto.trim().slice(0, 200) : null };
+    const x = lugar(form.get("texto_x"));
+    const y = lugar(form.get("texto_y"));
+    const r = await db().from("historias").insert(x !== null && y !== null ? { ...fila, texto_x: x, texto_y: y } : fila);
+    if (r.error && /texto_/.test(r.error.message)) revisar(await db().from("historias").insert(fila));
+    else revisar(r);
     if (!count) await notificar(otra(yo), "Historia nueva", `${(await nombresActuales())[yo]} subió una historia`, "/#inicio");
     return Response.json({ ok: true });
   } catch (e) {

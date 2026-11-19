@@ -296,6 +296,9 @@ create table if not exists historias (
   created_at timestamptz not null default now()
 );
 create index if not exists historias_creada on historias (created_at desc);
+-- Dónde va el texto sobre la foto (0 a 1, desde la esquina de arriba a la izquierda)
+alter table historias add column if not exists texto_x real;
+alter table historias add column if not exists texto_y real;
 
 -- Respuestas a una historia: corazón o mensajito
 create table if not exists historia_respuestas (

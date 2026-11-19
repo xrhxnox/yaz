@@ -8,10 +8,11 @@ import { useCarga } from "@/lib/useCarga";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 import { componerHistorias } from "./ComponerHistoria";
+import { posicionEn, useCajaImagen } from "./CajaImagen";
 import { irA, perfilDe } from "@/lib/navegar";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
-export type Historia = { id: number; persona: Persona; url: string; texto: string | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
+export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
 // Texto que se lee sobre un color: oscuro sobre colores claros, blanco sobre oscuros
@@ -54,6 +55,7 @@ export function Visor({
   const [aviso, setAviso] = useState("");
   const presionado = useRef(0);
   const avance = useRef(0);
+  const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen();
   const h = historias[i];
   const mia = h?.persona === yo;
   const detenida = pausa || escribiendo;
@@ -193,6 +195,7 @@ export function Visor({
 
       {/* Foto: tocar a la izquierda regresa, a la derecha avanza; mantener presionado pausa */}
       <div
+        ref={cajaRef}
         className="relative min-h-0 flex-1 touch-none"
         onPointerDown={() => {
           presionado.current = Date.now();
@@ -209,11 +212,21 @@ export function Visor({
         onPointerCancel={() => setPausa(false)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={h.url} alt={h.texto ?? `Historia de ${nombres[h.persona]}`} draggable={false} className="pointer-events-none h-full w-full object-contain" />
+        <img
+          src={h.url}
+          alt={h.texto ?? `Historia de ${nombres[h.persona]}`}
+          draggable={false}
+          onLoad={alCargarFoto}
+          className="pointer-events-none h-full w-full object-contain"
+        />
         {h.texto && (
           <p
-            className="absolute top-1/2 left-1/2 max-w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-2xl px-4 py-2.5 text-center text-lg leading-snug font-semibold break-words shadow-lg"
-            style={{ background: acentos[h.persona], color: textoSobreColor(acentos[h.persona]) }}
+            className="pointer-events-none absolute max-w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-2xl px-4 py-2.5 text-center text-lg leading-snug font-semibold break-words shadow-lg"
+            style={{
+              ...posicionEn(rectFoto, h.texto_x ?? 0.5, h.texto_y ?? 0.5),
+              background: acentos[h.persona],
+              color: textoSobreColor(acentos[h.persona]),
+            }}
           >
             {h.texto}
           </p>
