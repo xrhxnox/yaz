@@ -9,6 +9,8 @@ type Fila = {
   texto: string | null;
   texto_x?: number | null;
   texto_y?: number | null;
+  texto_estilo?: string | null;
+  texto_tam?: number | null;
   vista_at: string | null;
   created_at: string;
   historia_respuestas: { persona: Persona; corazon: boolean; texto: string | null; created_at: string }[];
@@ -27,7 +29,9 @@ export async function GET(req: Request) {
         .select(`id, persona, path, texto${extra}, vista_at, created_at, historia_respuestas(persona, corazon, texto, created_at)`)
         .gte("created_at", desde)
         .order("created_at");
-    let r = await consulta(", texto_x, texto_y");
+    // Las columnas del texto se agregaron después: si faltan, se pide sin ellas
+    let r = await consulta(", texto_x, texto_y, texto_estilo, texto_tam");
+    if (r.error && /texto_(estilo|tam)/.test(r.error.message)) r = await consulta(", texto_x, texto_y");
     if (r.error && /texto_/.test(r.error.message)) r = await consulta("");
     const filas: Fila[] = (revisar(r) as Fila[] | null) ?? [];
     const urls = await firmar(filas.map((h) => h.path));
@@ -68,9 +72,15 @@ export async function POST(req: Request) {
     const fila: Record<string, unknown> = { persona: yo, path, texto: typeof texto === "string" && texto.trim() ? texto.trim().slice(0, 200) : null };
     const x = lugar(form.get("texto_x"));
     const y = lugar(form.get("texto_y"));
-    const r = await db().from("historias").insert(x !== null && y !== null ? { ...fila, texto_x: x, texto_y: y } : fila);
-    if (r.error && /texto_/.test(r.error.message)) revisar(await db().from("historias").insert(fila));
-    else revisar(r);
+    const conLugar = x !== null && y !== null ? { ...fila, texto_x: x, texto_y: y } : fila;
+    const estilo = form.get("texto_estilo") === "libre" ? "libre" : "rect";
+    const tam = Number(form.get("texto_tam"));
+    const completa = fila.texto ? { ...conLugar, texto_estilo: estilo, texto_tam: Number.isFinite(tam) && tam > 0 ? Math.min(0.2, Math.max(0.03, tam)) : null } : conLugar;
+    // Si faltan columnas nuevas en la base, se guarda con lo que sí hay
+    let r = await db().from("historias").insert(completa);
+    if (r.error && /texto_(estilo|tam)/.test(r.error.message)) r = await db().from("historias").insert(conLugar);
+    if (r.error && /texto_/.test(r.error.message)) r = await db().from("historias").insert(fila);
+    revisar(r);
     if (!count) await notificar(otra(yo), "Historia nueva", `${(await nombresActuales())[yo]} subió una historia`, "/#inicio");
     return Response.json({ ok: true });
   } catch (e) {

@@ -8,11 +8,12 @@ import { useCarga } from "@/lib/useCarga";
 import Avatar from "./Avatar";
 import Corazon from "./Corazon";
 import { componerHistorias } from "./ComponerHistoria";
-import { posicionEn, useCajaImagen } from "./CajaImagen";
+import { useCajaImagen } from "./CajaImagen";
+import TextoHistoria, { type EstiloTexto } from "./TextoHistoria";
 import { irA, perfilDe } from "@/lib/navegar";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
-export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
+export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; texto_estilo?: EstiloTexto | null; texto_tam?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
 // Texto que se lee sobre un color: oscuro sobre colores claros, blanco sobre oscuros
@@ -239,16 +240,16 @@ export function Visor({
           </span>
         )}
         {h.texto && lista && (
-          <p
-            className="pointer-events-none absolute max-w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-2xl px-4 py-2.5 text-center text-lg leading-snug font-semibold break-words shadow-lg"
-            style={{
-              ...posicionEn(rectFoto, h.texto_x ?? 0.5, h.texto_y ?? 0.5),
-              background: acentos[h.persona],
-              color: textoSobreColor(acentos[h.persona]),
-            }}
-          >
-            {h.texto}
-          </p>
+          <TextoHistoria
+            texto={h.texto}
+            estilo={h.texto_estilo}
+            tam={h.texto_tam}
+            color={acentos[h.persona]}
+            rect={rectFoto}
+            x={h.texto_x ?? 0.5}
+            y={h.texto_y ?? 0.5}
+            className="pointer-events-none"
+          />
         )}
         {aviso && <p className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{aviso}</p>}
       </div>
