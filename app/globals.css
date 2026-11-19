@@ -233,6 +233,37 @@ body {
   animation: corazon-doble 0.9s ease-out forwards;
 }
 
+/* Historias: la barrita avanza con CSS (sin redibujar todo en cada cuadro) */
+@keyframes llenar-historia {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.barra-historia {
+  width: 0;
+  animation-name: llenar-historia;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+/* El visor aparece suave */
+@keyframes visor-abrir {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.visor-abrir {
+  animation: visor-abrir 0.18s ease-out;
+}
+/* Corazón que late al darle me gusta */
+@keyframes corazon-latido {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.corazon-latido {
+  display: inline-block;
+  animation: corazon-latido 0.35s ease-out;
+}
+
 /* Corazón del cargador */
 @keyframes latido {
   0%, 100% { transform: scale(1); }

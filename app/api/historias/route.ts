@@ -37,8 +37,9 @@ export async function GET(req: Request) {
         .map(({ path, historia_respuestas, ...h }) => ({
           ...h,
           url: urls[path],
-          // Las respuestas solo las ve quien subió la historia
+          // Las respuestas solo las ve quien subió la historia; la otra persona solo sabe si ya le dio corazón
           respuestas: h.persona === yo ? [...historia_respuestas].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at)) : [],
+          me_gusta: h.persona !== yo && historia_respuestas.some((r) => r.persona === yo && r.corazon),
         })),
     });
   } catch (e) {
@@ -101,12 +102,22 @@ export async function PATCH(req: Request) {
 
     if (respuesta && typeof respuesta === "object") {
       if (h.persona === yo) return invalido("No puedes responder a tu propia historia");
-      const corazon = respuesta.corazon === true;
       const texto = typeof respuesta.texto === "string" ? respuesta.texto.trim().slice(0, 300) : "";
-      if (!corazon && !texto) return invalido();
-      revisar(await db().from("historia_respuestas").insert({ historia_id: id, persona: yo, corazon, texto: texto || null }));
       const nombre = (await nombresActuales())[yo];
-      await notificar(h.persona, texto ? `${nombre} respondió a tu historia` : "Le encantó", texto || `A ${nombre} le encantó tu historia`, "/#inicio");
+      if (texto) {
+        revisar(await db().from("historia_respuestas").insert({ historia_id: id, persona: yo, corazon: false, texto }));
+        await notificar(h.persona, `${nombre} respondió a tu historia`, texto, "/#inicio");
+      } else if (respuesta.corazon === false) {
+        // Quitar el corazón
+        revisar(await db().from("historia_respuestas").delete().eq("historia_id", id).eq("persona", yo).eq("corazon", true).is("texto", null));
+      } else if (respuesta.corazon === true) {
+        // Un solo corazón por historia (y un solo aviso)
+        const { count } = await db().from("historia_respuestas").select("*", { count: "exact", head: true }).eq("historia_id", id).eq("persona", yo).eq("corazon", true);
+        if (!count) {
+          revisar(await db().from("historia_respuestas").insert({ historia_id: id, persona: yo, corazon: true, texto: null }));
+          await notificar(h.persona, "Le encantó", `A ${nombre} le encantó tu historia`, "/#inicio");
+        }
+      } else return invalido();
     }
 
     if (alMuro === true) {

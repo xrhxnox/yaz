@@ -12,7 +12,7 @@ import { posicionEn, useCajaImagen } from "./CajaImagen";
 import { irA, perfilDe } from "@/lib/navegar";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
-export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[] };
+export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
 // Texto que se lee sobre un color: oscuro sobre colores claros, blanco sobre oscuros
@@ -48,52 +48,40 @@ export function Visor({
 }) {
   const { nombres, acentos } = usePareja();
   const [i, setI] = useState(inicio);
-  const [progreso, setProgreso] = useState(0);
+  // Cambia cada vez que se pasa de historia: reinicia la barrita aunque sea la misma
+  const [vuelta, setVuelta] = useState(0);
+  // La historia cuya foto ya cargó (la barrita no avanza antes)
+  const [cargada, setCargada] = useState<number | null>(null);
   const [pausa, setPausa] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
   const [respuesta, setRespuesta] = useState("");
   const [aviso, setAviso] = useState("");
+  // Corazones que ya di (se ven al instante, aunque el servidor tarde)
+  const [corazones, setCorazones] = useState<Record<number, boolean>>(() => Object.fromEntries(historias.map((x) => [x.id, !!x.me_gusta])));
+  const [latido, setLatido] = useState(0);
   const presionado = useRef(0);
-  const avance = useRef(0);
   const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen();
   const h = historias[i];
   const mia = h?.persona === yo;
-  const detenida = pausa || escribiendo;
+  const lista = !!h && cargada === h.id;
+  const detenida = pausa || escribiendo || !lista;
+  const meGusta = !!h && !!corazones[h.id];
 
-  const siguiente = useCallback(() => {
-    avance.current = 0;
-    setProgreso(0);
-    setAviso("");
-    if (i + 1 < historias.length) setI(i + 1);
-    else alCerrar();
-  }, [i, historias.length, alCerrar]);
-  const siguienteRef = useRef(siguiente);
+  const ir = useCallback(
+    (n: number) => {
+      setAviso("");
+      setVuelta((v) => v + 1);
+      if (n >= historias.length) return alCerrar();
+      setI(Math.max(0, n));
+    },
+    [historias.length, alCerrar],
+  );
+
+  // La siguiente se va bajando mientras ves esta
   useEffect(() => {
-    siguienteRef.current = siguiente;
-  }, [siguiente]);
-
-  const anterior = () => {
-    avance.current = 0;
-    setProgreso(0);
-    setAviso("");
-    setI((x) => Math.max(0, x - 1));
-  };
-
-  // Avance automático (se detiene al presionar o al escribir)
-  useEffect(() => {
-    if (detenida) return;
-    let ultimo = performance.now();
-    let cuadro = 0;
-    const paso = (ahora: number) => {
-      avance.current += (ahora - ultimo) / DURACION;
-      ultimo = ahora;
-      if (avance.current >= 1) return siguienteRef.current();
-      setProgreso(avance.current);
-      cuadro = requestAnimationFrame(paso);
-    };
-    cuadro = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(cuadro);
-  }, [detenida, i]);
+    const sig = historias[i + 1];
+    if (sig) new Image().src = sig.url;
+  }, [i, historias]);
 
   // Marcar como vista la historia de la otra persona
   useEffect(() => {
@@ -116,23 +104,43 @@ export function Visor({
 
   if (!h) return null;
 
-  async function responder(datos: { corazon?: boolean; texto?: string }) {
+  async function responder(texto: string) {
     try {
-      await api("/api/historias", { id: h.id, respuesta: datos }, "PATCH");
-      setAviso(datos.texto ? "Respuesta enviada" : "Le mandaste un corazón");
+      await api("/api/historias", { id: h.id, respuesta: { texto } }, "PATCH");
+      setAviso("Respuesta enviada");
       setRespuesta("");
     } catch (e) {
       setAviso((e as Error).message);
     }
   }
 
+  async function alternarCorazon() {
+    const valor = !meGusta;
+    setCorazones((c) => ({ ...c, [h.id]: valor }));
+    if (valor) setLatido((x) => x + 1);
+    try {
+      await api("/api/historias", { id: h.id, respuesta: { corazon: valor } }, "PATCH");
+    } catch (e) {
+      setCorazones((c) => ({ ...c, [h.id]: !valor }));
+      setAviso((e as Error).message);
+    }
+  }
+
   return (
-    <div role="dialog" aria-label={`Historia de ${nombres[h.persona]}`} className="fixed inset-0 z-[80] flex flex-col bg-black text-white select-none">
+    <div role="dialog" aria-label={`Historia de ${nombres[h.persona]}`} className="visor-abrir fixed inset-0 z-[80] flex flex-col bg-black text-white select-none">
       {/* Barritas de progreso */}
       <div className="flex gap-1 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         {historias.map((x, n) => (
           <div key={x.id} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
-            <div className="h-full bg-white" style={{ width: `${n < i ? 100 : n === i ? progreso * 100 : 0}%` }} />
+            {n < i && <div className="h-full w-full bg-white" />}
+            {n === i && (
+              <div
+                key={`${x.id}-${vuelta}`}
+                className="barra-historia h-full bg-white"
+                style={{ animationDuration: `${DURACION}ms`, animationPlayState: detenida ? "paused" : "running" }}
+                onAnimationEnd={() => ir(i + 1)}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -206,20 +214,31 @@ export function Visor({
           setPausa(false);
           if (largo || escribiendo) return;
           const caja = e.currentTarget.getBoundingClientRect();
-          if (e.clientX - caja.left < caja.width * 0.3) anterior();
-          else siguiente();
+          if (e.clientX - caja.left < caja.width * 0.3) ir(i - 1);
+          else ir(i + 1);
         }}
         onPointerCancel={() => setPausa(false)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          key={h.id}
           src={h.url}
           alt={h.texto ?? `Historia de ${nombres[h.persona]}`}
           draggable={false}
-          onLoad={alCargarFoto}
-          className="pointer-events-none h-full w-full object-contain"
+          decoding="async"
+          onLoad={(e) => {
+            alCargarFoto(e);
+            setCargada(h.id);
+          }}
+          onError={() => setCargada(h.id)}
+          className={`pointer-events-none h-full w-full object-contain transition-opacity duration-150 ${lista ? "opacity-100" : "opacity-0"}`}
         />
-        {h.texto && (
+        {!lista && (
+          <span className="absolute inset-0 flex items-center justify-center" aria-label="Cargando">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+          </span>
+        )}
+        {h.texto && lista && (
           <p
             className="pointer-events-none absolute max-w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-2xl px-4 py-2.5 text-center text-lg leading-snug font-semibold break-words shadow-lg"
             style={{
@@ -241,7 +260,11 @@ export function Visor({
             {h.respuestas.map((r, n) => (
               <p key={n} className="flex items-center gap-1.5">
                 <span style={{ color: acentos[r.persona] }}>{nombres[r.persona]}:</span>
-                {r.corazon && <Corazon size={14} className="text-[#ff4d6d]" />}
+                {r.corazon && (
+                  <span className="text-[#ff3b5c]">
+                    <Corazon size={14} />
+                  </span>
+                )}
                 {r.texto && <span>{r.texto}</span>}
               </p>
             ))}
@@ -250,7 +273,7 @@ export function Visor({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (respuesta.trim()) responder({ texto: respuesta });
+              if (respuesta.trim()) responder(respuesta);
             }}
             className="flex items-center gap-2"
           >
@@ -266,8 +289,16 @@ export function Visor({
             {respuesta.trim() ? (
               <button className="px-1 text-sm font-medium">Enviar</button>
             ) : (
-              <button type="button" onClick={() => responder({ corazon: true })} aria-label="Mandar un corazón" className="p-1.5 transition active:scale-90">
-                <Corazon size={26} contorno grosor={1.8} />
+              <button
+                type="button"
+                onClick={alternarCorazon}
+                aria-pressed={meGusta}
+                aria-label={meGusta ? "Quitar corazón" : "Mandar un corazón"}
+                className="p-1.5 transition active:scale-90"
+              >
+                <span key={meGusta ? `si-${latido}` : "no"} className={meGusta ? "corazon-latido text-[#ff3b5c]" : "text-white"}>
+                  <Corazon size={28} contorno={!meGusta} grosor={1.8} />
+                </span>
               </button>
             )}
           </form>
@@ -366,6 +397,11 @@ export default function Historias({ yo }: { yo: Persona }) {
     // Antes de compartir: la vista previa para escribir sobre cada foto
     if (archivos.length) componerHistorias(archivos);
   }
+
+  // Las fotos se bajan desde que se ven los círculos, para que al abrir salgan al instante
+  useEffect(() => {
+    for (const h of historias ?? []) new Image().src = h.url;
+  }, [historias]);
 
   if (!historias) return null;
   const de = (p: Persona) => historias.filter((h) => h.persona === p);
