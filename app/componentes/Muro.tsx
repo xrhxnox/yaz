@@ -15,6 +15,7 @@ import Vacio, { ICONOS_VACIO } from "./Vacio";
 import { perfilDe } from "@/lib/navegar";
 import { hay, limpiar } from "@/lib/intencion";
 import Esqueleto from "./Esqueleto";
+import Pellizcable from "./Pellizcable";
 
 type Comentario = { id: number; persona: Persona; texto: string; created_at: string };
 export type Publicacion = {
@@ -151,6 +152,9 @@ function Carrusel({ fotos, color, alDobleToque }: { fotos: Publicacion["fotos"];
   const [indice, setIndice] = useState(0);
   const [latido, setLatido] = useState(0);
   const ultimoToque = useRef(0);
+  // Si hubo dos dedos (zoom), al soltar no cuenta como doble toque
+  const dedos = useRef(0);
+  const multitoque = useRef(false);
 
   return (
     <div className="relative">
@@ -160,7 +164,21 @@ function Carrusel({ fotos, color, alDobleToque }: { fotos: Publicacion["fotos"];
           const c = e.currentTarget;
           setIndice(Math.round(c.scrollLeft / c.clientWidth));
         }}
+        onPointerDown={() => {
+          dedos.current++;
+          if (dedos.current > 1) multitoque.current = true;
+        }}
+        onPointerCancel={() => {
+          dedos.current = Math.max(0, dedos.current - 1);
+          if (!dedos.current) multitoque.current = false;
+        }}
         onPointerUp={() => {
+          dedos.current = Math.max(0, dedos.current - 1);
+          if (multitoque.current) {
+            if (!dedos.current) multitoque.current = false;
+            ultimoToque.current = 0;
+            return;
+          }
           const ahora = Date.now();
           if (ahora - ultimoToque.current < 300) {
             alDobleToque();
@@ -171,10 +189,10 @@ function Carrusel({ fotos, color, alDobleToque }: { fotos: Publicacion["fotos"];
         }}
       >
         {fotos.map((f, i) => (
-          <div key={f.id} className="aspect-[4/5] w-full shrink-0 snap-center bg-relleno">
+          <Pellizcable key={f.id} className="aspect-[4/5] w-full shrink-0 snap-center bg-relleno">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={f.url} alt={`Foto ${i + 1} de ${fotos.length}`} loading="lazy" draggable={false} className="h-full w-full object-cover select-none" />
-          </div>
+          </Pellizcable>
         ))}
       </div>
       {latido > 0 && (

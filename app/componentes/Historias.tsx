@@ -12,6 +12,7 @@ import Corazon from "./Corazon";
 import { componerHistorias } from "./ComponerHistoria";
 import { useCajaImagen } from "./CajaImagen";
 import TextoHistoria, { type EstiloTexto } from "./TextoHistoria";
+import Pellizcable from "./Pellizcable";
 import { irA, perfilDe } from "@/lib/navegar";
 import Esqueleto from "./Esqueleto";
 
@@ -71,6 +72,9 @@ export function Visor({
   const gesto = useRef<{ x: number; y: number; modo: "abajo" | "lado" | null } | null>(null);
   const [arrastre, setArrastre] = useState({ x: 0, y: 0 });
   const [tocando, setTocando] = useState(false);
+  // Cuántos dedos hay en la foto (con dos se está haciendo zoom)
+  const dedos = useRef(0);
+  const multitoque = useRef(false);
   const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen();
   const h = historias[i];
   const mia = h?.persona === yo;
@@ -232,6 +236,16 @@ export function Visor({
         ref={cajaRef}
         className="relative min-h-0 flex-1 touch-none"
         onPointerDown={(e) => {
+          // Con dos dedos es zoom: ni se pasa de historia ni se desliza
+          dedos.current++;
+          if (dedos.current > 1) {
+            multitoque.current = true;
+            gesto.current = null;
+            setArrastre({ x: 0, y: 0 });
+            setTocando(false);
+            return;
+          }
+          multitoque.current = false;
           presionado.current = Date.now();
           gesto.current = { x: e.clientX, y: e.clientY, modo: null };
           try {
@@ -252,6 +266,14 @@ export function Visor({
           else if (g.modo === "lado") setArrastre({ x: dx, y: 0 });
         }}
         onPointerUp={(e) => {
+          dedos.current = Math.max(0, dedos.current - 1);
+          if (multitoque.current) {
+            if (dedos.current === 0) {
+              multitoque.current = false;
+              setPausa(false);
+            }
+            return;
+          }
           const g = gesto.current;
           gesto.current = null;
           setPausa(false);
@@ -273,15 +295,18 @@ export function Visor({
           else ir(i + 1);
         }}
         onPointerCancel={() => {
+          dedos.current = Math.max(0, dedos.current - 1);
+          if (dedos.current === 0) multitoque.current = false;
           gesto.current = null;
           setArrastre({ x: 0, y: 0 });
           setTocando(false);
           setPausa(false);
         }}
       >
+        {/* La foto y su texto: se pueden agrandar pellizcando */}
+        <Pellizcable key={h.id} className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          key={h.id}
           src={h.url}
           alt={h.texto ?? `Historia de ${nombres[h.persona]}`}
           draggable={false}
@@ -293,11 +318,6 @@ export function Visor({
           onError={() => setCargada(h.id)}
           className={`pointer-events-none h-full w-full object-contain transition-opacity duration-150 ${lista ? "opacity-100" : "opacity-0"}`}
         />
-        {!lista && (
-          <span className="absolute inset-0 flex items-center justify-center" aria-label="Cargando">
-            <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
-          </span>
-        )}
         {h.texto && lista && (
           <TextoHistoria
             texto={h.texto}
@@ -309,6 +329,12 @@ export function Visor({
             y={h.texto_y ?? 0.5}
             className="pointer-events-none"
           />
+        )}
+        </Pellizcable>
+        {!lista && (
+          <span className="absolute inset-0 flex items-center justify-center" aria-label="Cargando">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+          </span>
         )}
         {aviso && <p className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{aviso}</p>}
       </div>
