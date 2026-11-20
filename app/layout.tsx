@@ -44,6 +44,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // El teclado se pone encima de la página (no la encoge): así se comporta igual en Android y iPhone
+  interactiveWidget: "resizes-visual",
 };
 
 

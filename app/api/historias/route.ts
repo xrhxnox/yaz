@@ -41,8 +41,10 @@ export async function GET(req: Request) {
         .map(({ path, historia_respuestas, ...h }) => ({
           ...h,
           url: urls[path],
-          // Las respuestas solo las ve quien subió la historia; la otra persona solo sabe si ya le dio corazón
-          respuestas: h.persona === yo ? [...historia_respuestas].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at)) : [],
+          // Quien subió la historia ve todas las respuestas; la otra persona ve solo lo que ella misma escribió
+          respuestas: [...historia_respuestas]
+            .filter((r) => h.persona === yo || (r.persona === yo && r.texto))
+            .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at)),
           me_gusta: h.persona !== yo && historia_respuestas.some((r) => r.persona === yo && r.corazon),
         })),
     });

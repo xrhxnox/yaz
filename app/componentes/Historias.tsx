@@ -64,6 +64,11 @@ export function Visor({
   const [pausa, setPausa] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
   const [respuesta, setRespuesta] = useState("");
+  // Lo que respondí en esta visita (se ve al instante, sin esperar a que recargue)
+  const [enviadas, setEnviadas] = useState<Record<number, string[]>>({});
+  // Teclado: cuánto tapa y cuánto se movió la pantalla visible (para que la barra quede justo encima)
+  const [teclado, setTeclado] = useState({ alto: 0, arriba: 0 });
+  const campoRespuesta = useRef<HTMLInputElement>(null);
   const [aviso, setAviso] = useState("");
   // Corazones que ya di (se ven al instante, aunque el servidor tarde)
   const [corazones, setCorazones] = useState<Record<number, boolean>>(() => Object.fromEntries(historias.map((x) => [x.id, !!x.me_gusta])));
@@ -104,6 +109,19 @@ export function Visor({
     if (h && !mia && !h.vista_at) api("/api/historias", { id: h.id, vista: true }, "PATCH").catch(() => {});
   }, [h, mia]);
 
+  // Como en Instagram: al escribir, la foto se queda quieta y la barra sube justo encima del teclado
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const medir = () => setTeclado({ alto: Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), arriba: Math.round(vv.offsetTop) });
+    vv.addEventListener("resize", medir);
+    vv.addEventListener("scroll", medir);
+    return () => {
+      vv.removeEventListener("resize", medir);
+      vv.removeEventListener("scroll", medir);
+    };
+  }, []);
+
   // Sin scroll de la página mientras está abierto; Escape cierra
   useEffect(() => {
     const antes = document.body.style.overflow;
@@ -123,8 +141,10 @@ export function Visor({
   async function responder(texto: string) {
     try {
       await api("/api/historias", { id: h.id, respuesta: { texto } }, "PATCH");
+      setEnviadas((e) => ({ ...e, [h.id]: [...(e[h.id] ?? []), texto.trim()] }));
       setAviso("Respuesta enviada");
       setRespuesta("");
+      campoRespuesta.current?.blur();
     } catch (e) {
       setAviso((e as Error).message);
     }
@@ -150,7 +170,7 @@ export function Visor({
       role="dialog"
       aria-label={`Historia de ${nombres[h.persona]}`}
       className="visor-abrir fixed inset-0 z-[80] text-white select-none"
-      style={{ background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})` }}
+      style={{ background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})`, transform: teclado.arriba ? `translateY(${teclado.arriba}px)` : undefined }}
     >
       <div
         className={`flex h-full flex-col overflow-hidden bg-black ${tocando ? "" : "transition-transform duration-200"}`}
@@ -278,6 +298,8 @@ export function Visor({
           const g = gesto.current;
           gesto.current = null;
           setPausa(false);
+          // Sin gesto empezado aquí (ej. el toque cerró el teclado): no hace nada más
+          if (!g) return;
           const dx = g ? e.clientX - g.x : 0;
           const dy = g ? e.clientY - g.y : 0;
           setArrastre({ x: 0, y: 0 });
@@ -337,10 +359,25 @@ export function Visor({
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
           </span>
         )}
-        {aviso && <p className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{aviso}</p>}
+        {escribiendo && (
+          <button
+            type="button"
+            aria-label="Dejar de escribir"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              campoRespuesta.current?.blur();
+            }}
+            className="fondo-aparecer absolute inset-0 z-10 bg-black/55"
+          />
+        )}
+        {aviso && <p className="absolute inset-x-0 top-3 z-20 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{aviso}</p>}
       </div>
 
-      <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div
+        className={`relative z-20 px-3 pt-2 transition-transform duration-150 ${teclado.alto ? "bg-black pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+        style={teclado.alto ? { transform: `translateY(-${teclado.alto}px)` } : undefined}
+      >
         {mia ? (
           <div className="space-y-1 text-sm">
             <p className="text-white/70">{h.vista_at ? `Visto por ${nombres[otra(yo)]} ✓` : "Todavía no la ve"}</p>
@@ -357,6 +394,21 @@ export function Visor({
             ))}
           </div>
         ) : (
+          <>
+          {/* Lo que yo le respondí a esta historia */}
+          {(() => {
+            const mias = [...h.respuestas.filter((r) => r.persona === yo && r.texto).map((r) => r.texto!), ...(enviadas[h.id] ?? [])];
+            return mias.length > 0 && !escribiendo ? (
+              <div className="mb-2 space-y-1 text-sm">
+                {mias.slice(-3).map((t, n) => (
+                  <p key={n} className="flex items-baseline gap-1.5">
+                    <span className="shrink-0 text-white/60">Respondiste:</span>
+                    <span className="min-w-0 break-words">{t}</span>
+                  </p>
+                ))}
+              </div>
+            ) : null;
+          })()}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -365,6 +417,8 @@ export function Visor({
             className="flex items-center gap-2"
           >
             <input
+              ref={campoRespuesta}
+              enterKeyHint="send"
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}
               onFocus={() => setEscribiendo(true)}
@@ -389,6 +443,7 @@ export function Visor({
               </button>
             )}
           </form>
+          </>
         )}
       </div>
       </div>
@@ -477,7 +532,7 @@ function Nota({
       aria-expanded={mia ? undefined : abierta}
       aria-label={mia ? (texto ? `Tu estado: ${texto}. Cambiar` : "Poner tu estado") : `Estado: ${texto}`}
       className={`z-10 rounded-2xl border px-2 py-1 text-[11px] leading-tight font-medium shadow-sm transition active:scale-95 ${
-        abierta ? "absolute top-0 left-0 w-max max-w-[180px] text-left" : "relative max-w-[84px] text-center"
+        abierta ? "absolute top-0 left-0 w-max max-w-[180px] text-left" : "relative w-max max-w-[84px] text-center"
       } ${texto ? "" : "border-dashed bg-tarjeta"}`}
       style={estilo}
     >
