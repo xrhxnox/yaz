@@ -476,7 +476,7 @@ function Nota({
       aria-expanded={mia ? undefined : abierta}
       aria-label={mia ? (texto ? `Tu estado: ${texto}. Cambiar` : "Poner tu estado") : `Estado: ${texto}`}
       className={`absolute top-0 z-10 rounded-2xl border px-2 py-1 text-[11px] leading-tight font-medium shadow-sm transition active:scale-95 ${
-        abierta ? "left-0 w-max max-w-[180px] text-left" : "left-1/2 max-w-[84px] -translate-x-1/2"
+        abierta ? "left-0 w-max max-w-[180px] text-left" : "left-1/2 max-w-[78px] -translate-x-1/2"
       } ${texto ? "" : "border-dashed bg-tarjeta"}`}
       style={estilo}
     >
@@ -573,7 +573,7 @@ export default function Historias({
 
   return (
     <div>
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center ${animos ? "gap-5" : "gap-3"}`}>
         <Circulo
           persona={yo}
           propia
