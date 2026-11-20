@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { vibrar } from "@/lib/vibrar";
 import { confirmar } from "@/lib/confirmar";
 import { otra, type Persona } from "@/lib/config";
@@ -27,6 +28,9 @@ export function textoSobreColor(hex: string) {
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#1a1a1a" : "#ffffff";
 }
+
+// Dónde se recuerda cuánto mide el teclado del teléfono
+const CLAVE_TECLADO = "nosotros:alto-teclado";
 
 // Cuánto se ve cada historia
 const DURACION = 5000;
@@ -69,6 +73,15 @@ export function Visor({
   // La parte de la pantalla que se ve (sin el teclado): el visor se ajusta a ella para que la barra quede justo encima
   // Teclado: cuánto tapa abajo y cuánto recorrió el iPhone la pantalla visible
   const [teclado, setTeclado] = useState({ tapa: 0, arriba: 0 });
+  // Antes de abrir el teclado la barra sube a donde va a quedar (así el iPhone no recorre la pantalla)
+  const [preparando, setPreparando] = useState(false);
+  const [estimado] = useState(() => {
+    try {
+      const guardado = Number(localStorage.getItem(CLAVE_TECLADO));
+      if (guardado > 100) return guardado;
+    } catch {}
+    return Math.round(window.innerHeight * 0.42);
+  });
   // Dónde estaba la página detrás (iPhone la recorre al abrir el teclado; se regresa al salir)
   const scrollAntes = useRef(0);
   // Medir en cada cuadro mientras el teclado entra o sale (los avisos del iPhone llegan tarde)
@@ -133,6 +146,12 @@ export function Visor({
       const tapa = Math.max(0, Math.round(document.documentElement.clientHeight - vv.height));
       const arriba = Math.max(0, Math.round(vv.offsetTop));
       setTeclado((t) => (t.tapa === tapa && t.arriba === arriba ? t : { tapa, arriba }));
+      // Se recuerda cuánto mide el teclado para la próxima vez
+      if (tapa > 150) {
+        try {
+          localStorage.setItem(CLAVE_TECLADO, String(tapa));
+        } catch {}
+      }
     };
     medirVisible.current = medir;
     vv.addEventListener("resize", medir);
@@ -403,8 +422,8 @@ export function Visor({
       </div>
 
       <div
-        className={`relative z-20 bg-black px-3 pt-2 transition-transform duration-75 ease-out ${escribiendo ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
-        style={teclado.tapa ? { transform: `translateY(-${teclado.tapa}px)` } : undefined}
+        className={`relative z-20 bg-black px-3 pt-2 ${preparando && !teclado.tapa ? "" : "transition-transform duration-200 ease-out"} ${escribiendo || preparando ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+        style={teclado.tapa || preparando ? { transform: `translateY(-${teclado.tapa || estimado}px)` } : undefined}
       >
         {mia ? (
           <div className="space-y-1 text-sm">
@@ -449,12 +468,26 @@ export function Visor({
               enterKeyHint="send"
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}
+              onPointerDown={(e) => {
+                // Primero sube la barra y luego se abre el teclado: como el campo ya queda visible,
+                // el iPhone no recorre la pantalla (y no se asoma lo de atrás)
+                if (e.pointerType !== "touch" || document.activeElement === e.currentTarget) return;
+                e.preventDefault();
+                flushSync(() => setPreparando(true));
+                e.currentTarget.focus({ preventScroll: true });
+                // Si no aparece teclado en pantalla (ej. teclado físico), la barra regresa a su lugar
+                setTimeout(() => {
+                  const vv = window.visualViewport;
+                  if (vv && document.documentElement.clientHeight - vv.height < 100) setPreparando(false);
+                }, 900);
+              }}
               onFocus={() => {
                 setEscribiendo(true);
                 seguirTeclado();
               }}
               onBlur={() => {
                 setEscribiendo(false);
+                setPreparando(false);
                 seguirTeclado();
                 requestAnimationFrame(() => window.scrollTo(0, scrollAntes.current));
               }}
