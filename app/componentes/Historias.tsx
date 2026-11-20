@@ -422,7 +422,7 @@ export function Visor({
       </div>
 
       <div
-        className={`relative z-20 bg-black px-3 pt-2 ${preparando && !teclado.tapa ? "" : "transition-transform duration-200 ease-out"} ${escribiendo || preparando ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+        className={`relative z-20 px-3 pt-2 ${preparando && !teclado.tapa ? "" : "transition-transform duration-200 ease-out"} ${escribiendo || preparando ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
         style={teclado.tapa || preparando ? { transform: `translateY(-${teclado.tapa || estimado}px)` } : undefined}
       >
         {mia ? (
