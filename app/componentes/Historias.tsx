@@ -451,21 +451,45 @@ function Circulo({
 type Animos = Record<Persona, { texto: string; updated_at: string } | null>;
 
 // La burbujita de estado sobre el círculo. La mía abre el editor; la de la otra persona se abre completa
-function Nota({ texto, mia, abierta, cuando, alTocar }: { texto: string | null; mia: boolean; abierta: boolean; cuando?: string; alTocar: () => void }) {
+function Nota({
+  texto,
+  mia,
+  abierta,
+  cuando,
+  color,
+  alTocar,
+}: {
+  texto: string | null;
+  mia: boolean;
+  abierta: boolean;
+  cuando?: string;
+  // Acento de quien la escribe
+  color: string;
+  alTocar: () => void;
+}) {
   if (!texto && !mia) return <span className="absolute top-0 h-6" aria-hidden />;
+  // Con estado: rellena con el acento; sin estado (la mía): solo el borde punteado del acento
+  const estilo: React.CSSProperties = texto ? { background: color, color: textoSobreColor(color), borderColor: color } : { borderColor: color, color };
   return (
     <button
       onClick={alTocar}
       aria-expanded={mia ? undefined : abierta}
       aria-label={mia ? (texto ? `Tu estado: ${texto}. Cambiar` : "Poner tu estado") : `Estado: ${texto}`}
-      className={`absolute top-0 z-10 rounded-2xl border border-borde bg-tarjeta px-2 py-1 text-[11px] leading-tight shadow-sm transition active:scale-95 ${
-        abierta ? "left-0 w-max max-w-[180px] text-left whitespace-normal" : "left-1/2 max-w-[84px] -translate-x-1/2 truncate"
-      } ${texto ? "" : "border-dashed text-suave"}`}
+      className={`absolute top-0 z-10 rounded-2xl border px-2 py-1 text-[11px] leading-tight font-medium shadow-sm transition active:scale-95 ${
+        abierta ? "left-0 w-max max-w-[180px] text-left" : "left-1/2 max-w-[84px] -translate-x-1/2"
+      } ${texto ? "" : "border-dashed bg-tarjeta"}`}
+      style={estilo}
     >
-      {texto ?? "+ Tu estado"}
-      {abierta && cuando && <span className="mt-0.5 block text-[10px] text-suave">{cuando}</span>}
+      <span className={abierta ? "block whitespace-normal" : "block truncate"}>{texto ?? "+ Tu estado"}</span>
+      {abierta && cuando && <span className="mt-0.5 block text-[10px] font-normal opacity-75">{cuando}</span>}
       {/* Colita de "pensamiento" */}
-      {!abierta && <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full border border-borde bg-tarjeta" aria-hidden />}
+      {!abierta && (
+        <span
+          className={`absolute -bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full border ${texto ? "" : "bg-tarjeta"}`}
+          style={texto ? { background: color, borderColor: color } : { borderColor: color }}
+          aria-hidden
+        />
+      )}
     </button>
   );
 }
@@ -559,7 +583,7 @@ export default function Historias({
           acento={acentos[yo]}
           alAbrir={() => (mias.length ? setAbierta({ persona: yo, inicio: 0 }) : selector.current?.click())}
           alAgregar={() => selector.current?.click()}
-          nota={animos && <Nota texto={animos[yo]?.texto ?? null} mia abierta={false} alTocar={() => setEditandoAnimo(true)} />}
+          nota={animos && <Nota texto={animos[yo]?.texto ?? null} mia abierta={false} color={acentos[yo]} alTocar={() => setEditandoAnimo(true)} />}
         />
         <Circulo
           persona={tu}
@@ -574,6 +598,7 @@ export default function Historias({
               <Nota
                 texto={animos[tu]?.texto ?? null}
                 mia={false}
+                color={acentos[tu]}
                 abierta={notaAbierta}
                 cuando={animos[tu] ? haceAnimo(animos[tu]!.updated_at) : undefined}
                 alTocar={() => setNotaAbierta((x) => !x)}
