@@ -70,6 +70,16 @@ export function Visor({
   const [visible, setVisible] = useState<{ alto: number; arriba: number } | null>(null);
   // Dónde estaba la página detrás (iPhone la recorre al abrir el teclado; se regresa al salir)
   const scrollAntes = useRef(0);
+  // Medir en cada cuadro mientras el teclado entra o sale (los avisos del iPhone llegan tarde)
+  const medirVisible = useRef<() => void>(() => {});
+  const seguirTeclado = () => {
+    const fin = performance.now() + 900;
+    const paso = () => {
+      medirVisible.current();
+      if (performance.now() < fin) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  };
   const campoRespuesta = useRef<HTMLInputElement>(null);
   const [aviso, setAviso] = useState("");
   // Corazones que ya di (se ven al instante, aunque el servidor tarde)
@@ -118,6 +128,7 @@ export function Visor({
     scrollAntes.current = window.scrollY;
     if (!vv) return;
     const medir = () => setVisible({ alto: Math.round(vv.height), arriba: Math.round(vv.offsetTop) });
+    medirVisible.current = medir;
     vv.addEventListener("resize", medir);
     vv.addEventListener("scroll", medir);
     return () => {
@@ -180,6 +191,8 @@ export function Visor({
         ...(visible ? { top: visible.arriba, height: visible.alto, bottom: "auto" } : {}),
       }}
     >
+      {/* Negro más allá de la pantalla: mientras el iPhone acomoda el teclado no se alcanza a ver lo de atrás */}
+      {arrastre.y === 0 && arrastre.x === 0 && <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-[100vh] -bottom-[100vh] -z-10 bg-black" />}
       <div
         className={`flex h-full flex-col overflow-hidden bg-black ${tocando ? "" : "transition-transform duration-200"}`}
         style={{
@@ -428,9 +441,13 @@ export function Visor({
               enterKeyHint="send"
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}
-              onFocus={() => setEscribiendo(true)}
+              onFocus={() => {
+                setEscribiendo(true);
+                seguirTeclado();
+              }}
               onBlur={() => {
                 setEscribiendo(false);
+                seguirTeclado();
                 requestAnimationFrame(() => window.scrollTo(0, scrollAntes.current));
               }}
               maxLength={300}
