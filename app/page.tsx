@@ -199,8 +199,10 @@ export default function Inicio() {
         <div key={seccion} className="entrar-seccion space-y-5 lg:space-y-10">
         {seccion === "inicio" && (
           <>
-            <Historias yo={yo} />
-            <Novedades yo={yo} />
+            {/* Junto a las historias: lo nuevo de la otra persona (o un saludo) */}
+            <Historias yo={yo}>
+              <Novedades yo={yo} ahora={ahora} />
+            </Historias>
             <Notificaciones yo={yo} />
             {/* En escritorio: dos columnas */}
             <div className="space-y-4 lg:grid lg:grid-cols-12 lg:gap-12 lg:space-y-0">

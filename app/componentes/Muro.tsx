@@ -496,18 +496,20 @@ export default function Muro({ yo, racha }: { yo: Persona; racha?: number }) {
 
   return (
     <div className="space-y-4">
-      <Historias yo={yo} />
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="font-serif text-3xl leading-tight tracking-tight">Muro</p>
-          {!!racha && <p className="text-xs text-suave">Racha: {racha} {racha === 1 ? "día" : "días"} seguidos con fotos de los dos</p>}
-        </div>
+      {/* Junto a las historias: el título, la racha y el botón para publicar */}
+      <Historias yo={yo}>
+        <p className="font-serif text-3xl leading-none tracking-tight">Muro</p>
+        {!!racha && (
+          <p className="mt-1 text-[11px] leading-tight text-suave">
+            Racha: {racha} {racha === 1 ? "día" : "días"} con fotos
+          </p>
+        )}
         {!componiendo && (
-          <button onClick={() => setComponiendo(true)} className={`${botonPrimario} shrink-0`}>
+          <button onClick={() => setComponiendo(true)} className={`${botonPrimario} mt-2 py-1.5`}>
             + Publicar
           </button>
         )}
-      </div>
+      </Historias>
       <div className="flex items-center justify-between gap-3">
         {/* Filtro por persona */}
         <div className="flex gap-1 rounded-full bg-relleno p-1 text-sm">

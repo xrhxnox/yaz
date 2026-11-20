@@ -471,7 +471,8 @@ export function inicioDe(lista: Historia[], persona: Persona, yo: Persona) {
   return persona === yo ? 0 : Math.max(0, lista.findIndex((h) => !h.vista_at));
 }
 
-export default function Historias({ yo }: { yo: Persona }) {
+// children: lo que va a la derecha de los círculos (con dos personas sobra espacio ahí)
+export default function Historias({ yo, children }: { yo: Persona; children?: React.ReactNode }) {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
   const { historias, error, cargar } = useHistorias();
@@ -490,7 +491,15 @@ export default function Historias({ yo }: { yo: Persona }) {
     for (const h of historias ?? []) new Image().src = h.url;
   }, [historias]);
 
-  if (!historias) return error ? null : <Esqueleto tipo="historias" />;
+  if (!historias)
+    return error ? (
+      <>{children}</>
+    ) : (
+      <div className="flex items-center gap-3">
+        <Esqueleto tipo="historias" />
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    );
   const de = (p: Persona) => historias.filter((h) => h.persona === p);
   const mias = de(yo);
   const suyas = de(tu);
@@ -498,7 +507,7 @@ export default function Historias({ yo }: { yo: Persona }) {
 
   return (
     <div>
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
         <Circulo
           persona={yo}
           propia
@@ -518,6 +527,7 @@ export default function Historias({ yo }: { yo: Persona }) {
           // Empieza por la primera que no ha visto
           alAbrir={() => setAbierta({ persona: tu, inicio: inicioDe(suyas, tu, yo) })}
         />
+        {children && <div className="min-w-0 flex-1 self-center pl-1">{children}</div>}
       </div>
       <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
       {error && historias.length > 0 && <p className="mt-1 text-xs text-acento-texto">{error}</p>}

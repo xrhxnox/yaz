@@ -25,7 +25,7 @@ function desglose(inicio: Date, hoy: Date) {
 
 // Cuánto falta para vernos
 function faltan(fecha: string | null, ahora: Date): { grande: string; chico: string } {
-  if (!fecha) return { grande: "¿Cuándo?", chico: "Toca para poner la fecha" };
+  if (!fecha) return { grande: "Sin fecha", chico: "toca para ponerla" };
   const ms = new Date(fecha).getTime() - ahora.getTime();
   const dia = new Date(fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
   if (ms <= 0) return { grande: "¡Ya!", chico: dia };
@@ -85,8 +85,8 @@ export default function Portada({
         <span className="mt-1 block font-serif text-lg italic">{total === 1 ? "día juntos" : "días juntos"}</span>
         {partes.length > 1 && <span className="block text-xs text-suave">{partes.join(" · ")}</span>}
         <span className="mt-3 flex items-center justify-center gap-1.5 border-t border-borde pt-3 text-sm">
-          <span className="text-suave">Próximo reencuentro</span>
-          <span className="font-medium text-acento-texto">{reencuentro.grande}</span>
+          <span className="shrink-0 whitespace-nowrap text-suave">Próximo reencuentro</span>
+          <span className="shrink-0 font-medium whitespace-nowrap text-acento-texto">{reencuentro.grande}</span>
           <span className="truncate text-xs text-suave first-letter:uppercase">· {reencuentro.chico}</span>
         </span>
       </button>
