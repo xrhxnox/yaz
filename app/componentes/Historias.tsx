@@ -66,8 +66,10 @@ export function Visor({
   const [respuesta, setRespuesta] = useState("");
   // Lo que respondí en esta visita (se ve al instante, sin esperar a que recargue)
   const [enviadas, setEnviadas] = useState<Record<number, string[]>>({});
-  // Teclado: cuánto tapa y cuánto se movió la pantalla visible (para que la barra quede justo encima)
-  const [teclado, setTeclado] = useState({ alto: 0, arriba: 0 });
+  // La parte de la pantalla que se ve (sin el teclado): el visor se ajusta a ella para que la barra quede justo encima
+  const [visible, setVisible] = useState<{ alto: number; arriba: number } | null>(null);
+  // Dónde estaba la página detrás (iPhone la recorre al abrir el teclado; se regresa al salir)
+  const scrollAntes = useRef(0);
   const campoRespuesta = useRef<HTMLInputElement>(null);
   const [aviso, setAviso] = useState("");
   // Corazones que ya di (se ven al instante, aunque el servidor tarde)
@@ -109,16 +111,19 @@ export function Visor({
     if (h && !mia && !h.vista_at) api("/api/historias", { id: h.id, vista: true }, "PATCH").catch(() => {});
   }, [h, mia]);
 
-  // Como en Instagram: al escribir, la foto se queda quieta y la barra sube justo encima del teclado
+  // Al abrirse el teclado (sobre todo en iPhone) la parte visible se achica y se recorre:
+  // el visor toma exactamente ese tamaño y lugar, así lo que escribes nunca queda tapado
   useEffect(() => {
     const vv = window.visualViewport;
+    scrollAntes.current = window.scrollY;
     if (!vv) return;
-    const medir = () => setTeclado({ alto: Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), arriba: Math.round(vv.offsetTop) });
+    const medir = () => setVisible({ alto: Math.round(vv.height), arriba: Math.round(vv.offsetTop) });
     vv.addEventListener("resize", medir);
     vv.addEventListener("scroll", medir);
     return () => {
       vv.removeEventListener("resize", medir);
       vv.removeEventListener("scroll", medir);
+      window.scrollTo(0, scrollAntes.current);
     };
   }, []);
 
@@ -170,7 +175,10 @@ export function Visor({
       role="dialog"
       aria-label={`Historia de ${nombres[h.persona]}`}
       className="visor-abrir fixed inset-0 z-[80] text-white select-none"
-      style={{ background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})`, transform: teclado.arriba ? `translateY(${teclado.arriba}px)` : undefined }}
+      style={{
+        background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})`,
+        ...(visible ? { top: visible.arriba, height: visible.alto, bottom: "auto" } : {}),
+      }}
     >
       <div
         className={`flex h-full flex-col overflow-hidden bg-black ${tocando ? "" : "transition-transform duration-200"}`}
@@ -375,8 +383,7 @@ export function Visor({
       </div>
 
       <div
-        className={`relative z-20 px-3 pt-2 transition-transform duration-150 ${teclado.alto ? "bg-black pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
-        style={teclado.alto ? { transform: `translateY(-${teclado.alto}px)` } : undefined}
+        className={`relative z-20 bg-black px-3 pt-2 ${escribiendo ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
       >
         {mia ? (
           <div className="space-y-1 text-sm">
@@ -422,7 +429,10 @@ export function Visor({
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}
               onFocus={() => setEscribiendo(true)}
-              onBlur={() => setEscribiendo(false)}
+              onBlur={() => {
+                setEscribiendo(false);
+                requestAnimationFrame(() => window.scrollTo(0, scrollAntes.current));
+              }}
               maxLength={300}
               placeholder={`Responder a ${nombres[h.persona]}…`}
               className="min-w-0 flex-1 rounded-full border border-white/40 bg-transparent px-4 py-2.5 text-base text-white outline-none placeholder:text-white/60 focus:border-white"

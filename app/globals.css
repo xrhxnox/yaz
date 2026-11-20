@@ -274,10 +274,11 @@ body {
   animation: corazon-latido 0.35s ease-out;
 }
 
-/* Al cambiar de pestaña: aparece suave y sube un poquito (sin dejar transform al terminar) */
+/* Al cambiar de pestaña: aparece suave. Solo opacidad: un transform aquí atraparía
+   lo que va en pantalla completa (visor de historias, hojas) dentro de la sección */
 @keyframes entrar-seccion {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .entrar-seccion {
   animation: entrar-seccion 0.18s ease-out;
