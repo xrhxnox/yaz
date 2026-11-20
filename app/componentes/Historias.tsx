@@ -421,8 +421,9 @@ function Circulo({
 }) {
   const anillo = hay ? (nuevas ? acento : "var(--borde)") : "transparent";
   return (
-    <div className={`relative flex w-[72px] shrink-0 flex-col items-center ${nota !== undefined ? "pt-5" : ""}`}>
-      {nota}
+    <div className={`relative flex w-[72px] shrink-0 flex-col items-center ${nota !== undefined ? "pt-9" : ""}`}>
+      {/* La burbuja se apoya sobre el círculo: crece hacia arriba si ocupa dos líneas */}
+      {nota !== undefined && <div className="absolute inset-x-0 top-0 flex h-9 items-end justify-center">{nota}</div>}
     <button onClick={alAbrir} disabled={!hay && !propia} className="flex w-full flex-col items-center gap-1 disabled:opacity-50">
       <span className="relative rounded-full p-[3px]" style={{ background: anillo }}>
         <span className="block rounded-full border-[3px] border-fondo">
@@ -467,7 +468,7 @@ function Nota({
   color: string;
   alTocar: () => void;
 }) {
-  if (!texto && !mia) return <span className="absolute top-0 h-6" aria-hidden />;
+  if (!texto && !mia) return null;
   // Con estado: rellena con el acento; sin estado (la mía): solo el borde punteado del acento
   const estilo: React.CSSProperties = texto ? { background: color, color: textoSobreColor(color), borderColor: color } : { borderColor: color, color };
   return (
@@ -475,12 +476,12 @@ function Nota({
       onClick={alTocar}
       aria-expanded={mia ? undefined : abierta}
       aria-label={mia ? (texto ? `Tu estado: ${texto}. Cambiar` : "Poner tu estado") : `Estado: ${texto}`}
-      className={`absolute top-0 z-10 rounded-2xl border px-2 py-1 text-[11px] leading-tight font-medium shadow-sm transition active:scale-95 ${
-        abierta ? "left-0 w-max max-w-[180px] text-left" : "left-1/2 max-w-[78px] -translate-x-1/2"
+      className={`z-10 rounded-2xl border px-2 py-1 text-[11px] leading-tight font-medium shadow-sm transition active:scale-95 ${
+        abierta ? "absolute top-0 left-0 w-max max-w-[180px] text-left" : "relative max-w-[84px] text-center"
       } ${texto ? "" : "border-dashed bg-tarjeta"}`}
       style={estilo}
     >
-      <span className={abierta ? "block whitespace-normal" : "block truncate"}>{texto ?? "+ Tu estado"}</span>
+      <span className={abierta ? "block whitespace-normal" : "line-clamp-2 break-words"}>{texto ?? "+ Tu estado"}</span>
       {abierta && cuando && <span className="mt-0.5 block text-[10px] font-normal opacity-75">{cuando}</span>}
       {/* Colita de "pensamiento" */}
       {!abierta && (
@@ -606,7 +607,7 @@ export default function Historias({
             )
           }
         />
-        {children && <div className={`min-w-0 flex-1 self-center pl-1 ${animos ? "pt-5" : ""}`}>{children}</div>}
+        {children && <div className={`min-w-0 flex-1 self-center pl-1 ${animos ? "pt-8" : ""}`}>{children}</div>}
       </div>
       <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
       {/* Cambiar mi estado: hoja desde abajo */}
