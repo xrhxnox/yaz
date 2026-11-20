@@ -67,7 +67,8 @@ export function Visor({
   // Lo que respondí en esta visita (se ve al instante, sin esperar a que recargue)
   const [enviadas, setEnviadas] = useState<Record<number, string[]>>({});
   // La parte de la pantalla que se ve (sin el teclado): el visor se ajusta a ella para que la barra quede justo encima
-  const [visible, setVisible] = useState<{ alto: number; arriba: number } | null>(null);
+  // Teclado: cuánto tapa abajo y cuánto recorrió el iPhone la pantalla visible
+  const [teclado, setTeclado] = useState({ tapa: 0, arriba: 0 });
   // Dónde estaba la página detrás (iPhone la recorre al abrir el teclado; se regresa al salir)
   const scrollAntes = useRef(0);
   // Medir en cada cuadro mientras el teclado entra o sale (los avisos del iPhone llegan tarde)
@@ -121,13 +122,18 @@ export function Visor({
     if (h && !mia && !h.vista_at) api("/api/historias", { id: h.id, vista: true }, "PATCH").catch(() => {});
   }, [h, mia]);
 
-  // Al abrirse el teclado (sobre todo en iPhone) la parte visible se achica y se recorre:
-  // el visor toma exactamente ese tamaño y lugar, así lo que escribes nunca queda tapado
+  // Como en Instagram: la foto se queda quieta (el teclado tapa su parte de abajo) y solo la barra
+  // para responder sube justo encima del teclado. Todo con transform, para que se mueva suave
   useEffect(() => {
     const vv = window.visualViewport;
     scrollAntes.current = window.scrollY;
     if (!vv) return;
-    const medir = () => setVisible({ alto: Math.round(vv.height), arriba: Math.round(vv.offsetTop) });
+    const medir = () => {
+      // Alto de la pantalla sin teclado (no cambia al abrirlo) menos lo que se ve = lo que tapa el teclado
+      const tapa = Math.max(0, Math.round(document.documentElement.clientHeight - vv.height));
+      const arriba = Math.max(0, Math.round(vv.offsetTop));
+      setTeclado((t) => (t.tapa === tapa && t.arriba === arriba ? t : { tapa, arriba }));
+    };
     medirVisible.current = medir;
     vv.addEventListener("resize", medir);
     vv.addEventListener("scroll", medir);
@@ -188,7 +194,8 @@ export function Visor({
       className="visor-abrir fixed inset-0 z-[80] text-white select-none"
       style={{
         background: `rgba(0, 0, 0, ${Math.max(0.15, 1 - arrastre.y / 450)})`,
-        ...(visible ? { top: visible.arriba, height: visible.alto, bottom: "auto" } : {}),
+        // Si el iPhone recorrió la pantalla, el visor se recorre igual para seguir viéndose completo
+        transform: teclado.arriba ? `translateY(${teclado.arriba}px)` : undefined,
       }}
     >
       {/* Negro más allá de la pantalla: mientras el iPhone acomoda el teclado no se alcanza a ver lo de atrás */}
@@ -396,7 +403,8 @@ export function Visor({
       </div>
 
       <div
-        className={`relative z-20 bg-black px-3 pt-2 ${escribiendo ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+        className={`relative z-20 bg-black px-3 pt-2 transition-transform duration-75 ease-out ${escribiendo ? "pb-2" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+        style={teclado.tapa ? { transform: `translateY(-${teclado.tapa}px)` } : undefined}
       >
         {mia ? (
           <div className="space-y-1 text-sm">
