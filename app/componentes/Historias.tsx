@@ -13,6 +13,7 @@ import { componerHistorias } from "./ComponerHistoria";
 import { useCajaImagen } from "./CajaImagen";
 import TextoHistoria, { type EstiloTexto } from "./TextoHistoria";
 import Pellizcable from "./Pellizcable";
+import EditarAnimo, { hace as haceAnimo } from "./Animo";
 import { irA, perfilDe } from "@/lib/navegar";
 import Esqueleto from "./Esqueleto";
 
@@ -405,6 +406,7 @@ function Circulo({
   acento,
   alAbrir,
   alAgregar,
+  nota,
 }: {
   persona: Persona;
   propia?: boolean;
@@ -414,10 +416,14 @@ function Circulo({
   acento: string;
   alAbrir: () => void;
   alAgregar?: () => void;
+  // Burbuja de estado encima del círculo (como las notas de Instagram); undefined = sin burbujas
+  nota?: React.ReactNode;
 }) {
   const anillo = hay ? (nuevas ? acento : "var(--borde)") : "transparent";
   return (
-    <button onClick={alAbrir} disabled={!hay && !propia} className="flex w-[72px] flex-col items-center gap-1 disabled:opacity-50">
+    <div className={`relative flex w-[72px] shrink-0 flex-col items-center ${nota !== undefined ? "pt-5" : ""}`}>
+      {nota}
+    <button onClick={alAbrir} disabled={!hay && !propia} className="flex w-full flex-col items-center gap-1 disabled:opacity-50">
       <span className="relative rounded-full p-[3px]" style={{ background: anillo }}>
         <span className="block rounded-full border-[3px] border-fondo">
           <Avatar persona={persona} size={56} />
@@ -437,6 +443,29 @@ function Circulo({
         )}
       </span>
       <span className="w-full truncate text-center text-[11px] text-suave">{etiqueta}</span>
+    </button>
+    </div>
+  );
+}
+
+type Animos = Record<Persona, { texto: string; updated_at: string } | null>;
+
+// La burbujita de estado sobre el círculo. La mía abre el editor; la de la otra persona se abre completa
+function Nota({ texto, mia, abierta, cuando, alTocar }: { texto: string | null; mia: boolean; abierta: boolean; cuando?: string; alTocar: () => void }) {
+  if (!texto && !mia) return <span className="absolute top-0 h-6" aria-hidden />;
+  return (
+    <button
+      onClick={alTocar}
+      aria-expanded={mia ? undefined : abierta}
+      aria-label={mia ? (texto ? `Tu estado: ${texto}. Cambiar` : "Poner tu estado") : `Estado: ${texto}`}
+      className={`absolute top-0 z-10 rounded-2xl border border-borde bg-tarjeta px-2 py-1 text-[11px] leading-tight shadow-sm transition active:scale-95 ${
+        abierta ? "left-0 w-max max-w-[180px] text-left whitespace-normal" : "left-1/2 max-w-[84px] -translate-x-1/2 truncate"
+      } ${texto ? "" : "border-dashed text-suave"}`}
+    >
+      {texto ?? "+ Tu estado"}
+      {abierta && cuando && <span className="mt-0.5 block text-[10px] text-suave">{cuando}</span>}
+      {/* Colita de "pensamiento" */}
+      {!abierta && <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full border border-borde bg-tarjeta" aria-hidden />}
     </button>
   );
 }
@@ -472,11 +501,24 @@ export function inicioDe(lista: Historia[], persona: Persona, yo: Persona) {
 }
 
 // children: lo que va a la derecha de los círculos (con dos personas sobra espacio ahí)
-export default function Historias({ yo, children }: { yo: Persona; children?: React.ReactNode }) {
+// animos: el estado de cada quien, como burbuja sobre su círculo (si no se pasa, no hay burbujas)
+export default function Historias({
+  yo,
+  children,
+  animos,
+  alCambiarAnimo,
+}: {
+  yo: Persona;
+  children?: React.ReactNode;
+  animos?: Animos;
+  alCambiarAnimo?: () => Promise<void>;
+}) {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
   const { historias, error, cargar } = useHistorias();
   const [abierta, setAbierta] = useState<{ persona: Persona; inicio: number } | null>(null);
+  const [notaAbierta, setNotaAbierta] = useState(false);
+  const [editandoAnimo, setEditandoAnimo] = useState(false);
   const selector = useRef<HTMLInputElement>(null);
 
   async function subir(e: React.ChangeEvent<HTMLInputElement>) {
@@ -517,6 +559,7 @@ export default function Historias({ yo, children }: { yo: Persona; children?: Re
           acento={acentos[yo]}
           alAbrir={() => (mias.length ? setAbierta({ persona: yo, inicio: 0 }) : selector.current?.click())}
           alAgregar={() => selector.current?.click()}
+          nota={animos && <Nota texto={animos[yo]?.texto ?? null} mia abierta={false} alTocar={() => setEditandoAnimo(true)} />}
         />
         <Circulo
           persona={tu}
@@ -526,10 +569,47 @@ export default function Historias({ yo, children }: { yo: Persona; children?: Re
           acento={acentos[tu]}
           // Empieza por la primera que no ha visto
           alAbrir={() => setAbierta({ persona: tu, inicio: inicioDe(suyas, tu, yo) })}
+          nota={
+            animos && (
+              <Nota
+                texto={animos[tu]?.texto ?? null}
+                mia={false}
+                abierta={notaAbierta}
+                cuando={animos[tu] ? haceAnimo(animos[tu]!.updated_at) : undefined}
+                alTocar={() => setNotaAbierta((x) => !x)}
+              />
+            )
+          }
         />
-        {children && <div className="min-w-0 flex-1 self-center pl-1">{children}</div>}
+        {children && <div className={`min-w-0 flex-1 self-center pl-1 ${animos ? "pt-5" : ""}`}>{children}</div>}
       </div>
       <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
+      {/* Cambiar mi estado: hoja desde abajo */}
+      {editandoAnimo && alCambiarAnimo && (
+        <div className="fondo-aparecer fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={() => setEditandoAnimo(false)} role="presentation">
+          <div
+            role="dialog"
+            aria-label="Tu estado"
+            onClick={(e) => e.stopPropagation()}
+            className="hoja-subir w-full max-w-md rounded-t-3xl border border-borde bg-tarjeta px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl lg:rounded-3xl"
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-borde lg:hidden" />
+            <div className="mb-2 flex items-baseline justify-between">
+              <p className="font-serif text-2xl">Tu estado</p>
+              <button onClick={() => setEditandoAnimo(false)} className="text-sm text-suave hover:text-texto">
+                Cerrar
+              </button>
+            </div>
+            <EditarAnimo
+              tengo={!!animos?.[yo]}
+              alCambiar={async () => {
+                await alCambiarAnimo();
+                setEditandoAnimo(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
       {error && historias.length > 0 && <p className="mt-1 text-xs text-acento-texto">{error}</p>}
       {abierta && (
         <Visor

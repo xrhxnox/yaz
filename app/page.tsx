@@ -200,7 +200,7 @@ export default function Inicio() {
         {seccion === "inicio" && (
           <>
             {/* Junto a las historias: lo nuevo de la otra persona (o un saludo) */}
-            <Historias yo={yo}>
+            <Historias yo={yo} animos={estado?.animos} alCambiarAnimo={cargar}>
               <Novedades yo={yo} ahora={ahora} />
             </Historias>
             <Notificaciones yo={yo} />
@@ -243,7 +243,7 @@ export default function Inicio() {
         )}
         {seccion === "muro" && (
           <div className="lg:mx-auto lg:max-w-xl">
-            <Muro yo={yo} racha={estado?.rachas?.fotos} />
+            <Muro yo={yo} racha={estado?.rachas?.fotos} animos={estado?.animos} alCambiarAnimo={cargar} />
           </div>
         )}
         {seccion === "juegos" && <SeccionJuegos yo={yo} turnos={estado?.turnos} />}

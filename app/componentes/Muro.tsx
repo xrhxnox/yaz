@@ -463,7 +463,17 @@ function Tarjeta({ p, yo, alCambiar, alLike }: { p: Publicacion; yo: Persona; al
 }
 
 // ---------- El muro ----------
-export default function Muro({ yo, racha }: { yo: Persona; racha?: number }) {
+export default function Muro({
+  yo,
+  racha,
+  animos,
+  alCambiarAnimo,
+}: {
+  yo: Persona;
+  racha?: number;
+  animos?: Record<Persona, { texto: string; updated_at: string } | null>;
+  alCambiarAnimo?: () => Promise<void>;
+}) {
   const { nombres, acentos } = usePareja();
   const tu = otra(yo);
   const [datos, setDatos] = useState<Datos | null>(() => enCache("/api/muro"));
@@ -497,7 +507,7 @@ export default function Muro({ yo, racha }: { yo: Persona; racha?: number }) {
   return (
     <div className="space-y-4">
       {/* Junto a las historias: el título, la racha y el botón para publicar */}
-      <Historias yo={yo}>
+      <Historias yo={yo} animos={animos} alCambiarAnimo={alCambiarAnimo}>
         <p className="font-serif text-3xl leading-none tracking-tight">Muro</p>
         {!!racha && (
           <p className="mt-1 text-[11px] leading-tight text-suave">

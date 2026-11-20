@@ -4,10 +4,9 @@ import { useState } from "react";
 import { FECHA_INICIO, otra, type Persona } from "@/lib/config";
 import { usePareja } from "@/lib/pareja";
 import type { Estado } from "@/lib/cliente";
-import { enlace, numero } from "@/lib/estilos";
+import { numero } from "@/lib/estilos";
 import HoraClima, { BuscarCiudad, describir, guardarCiudad, horaEn, useClima } from "./HoraClima";
 import Reencuentro from "./Reencuentro";
-import EditarAnimo, { hace } from "./Animo";
 import Avatar from "./Avatar";
 
 function plural(n: number, uno: string, varios: string) {
@@ -54,12 +53,8 @@ export default function Portada({
 }) {
   const { nombres, acentos } = usePareja();
   const [abierto, setAbierto] = useState<Abierto>(null);
-  const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
   const clima = useClima(estado?.ubicaciones);
-  const alternar = (que: Abierto) => {
-    setCambiandoCiudad(false);
-    setAbierto((x) => (x === que ? null : que));
-  };
+  const alternar = (que: Abierto) => setAbierto((x) => (x === que ? null : que));
 
   const [a, m, d] = FECHA_INICIO.split("-").map(Number);
   const inicio = new Date(a, m - 1, d);
@@ -94,14 +89,13 @@ export default function Portada({
         <Reencuentro fecha={estado?.proximoEncuentro ?? null} ahora={ahora} planes={estado?.planes} visitas={estado?.visitas} alGuardar={alGuardarFecha} />
       )}
 
-      {/* Ustedes ahora: una columna por persona */}
+      {/* Ustedes ahora: dónde está cada quien, qué hora es y qué clima hace (el estado va en la burbuja de las historias) */}
       <section className="rounded-2xl border border-borde bg-tarjeta p-1.5" aria-label="Ustedes ahora">
         <div className="grid grid-cols-2 gap-1.5">
           {([otra(yo), yo] as Persona[]).map((p) => {
             const u = estado?.ubicaciones?.[p];
             const h = u ? horaEn(u.zona, ahora) : null;
             const c = clima[p];
-            const animo = estado?.animos?.[p];
             const mia = p === yo;
             const activo = abierto === (mia ? "yo" : "clima");
             return (
@@ -117,10 +111,6 @@ export default function Portada({
                     {mia ? "Tú" : nombres[p]}
                   </span>
                 </span>
-                <span className={`mt-1.5 block font-serif text-[15px] leading-snug italic ${animo ? "" : "text-suave"}`}>
-                  {animo ? animo.texto : mia ? "¿Cómo estás?" : "Sin estado"}
-                </span>
-                {animo && <span className="block text-[11px] text-suave">{hace(animo.updated_at)}</span>}
                 {u && h ? (
                   <span className="mt-1.5 block text-xs text-suave">
                     <span className="block truncate">{u.ciudad}</span>
@@ -138,30 +128,17 @@ export default function Portada({
           })}
         </div>
 
-        {/* Mi columna: cambiar mi estado y mi ciudad */}
+        {/* Mi columna: cambiar mi ciudad */}
         {abierto === "yo" && (
-          <div className="border-t border-borde px-2.5 pt-3 pb-2">
-            <EditarAnimo
-              tengo={!!estado?.animos?.[yo]}
-              alCambiar={async () => {
+          <div className="px-2.5 pb-2">
+            <BuscarCiudad
+              alCancelar={() => setAbierto(null)}
+              alElegir={async (r) => {
+                await guardarCiudad(r);
                 await alCambiar();
                 setAbierto(null);
               }}
             />
-            {cambiandoCiudad ? (
-              <BuscarCiudad
-                alCancelar={() => setCambiandoCiudad(false)}
-                alElegir={async (r) => {
-                  await guardarCiudad(r);
-                  await alCambiar();
-                  setCambiandoCiudad(false);
-                }}
-              />
-            ) : (
-              <button onClick={() => setCambiandoCiudad(true)} className={`${enlace} mt-3 block text-xs`}>
-                {estado?.ubicaciones?.[yo] ? "Cambiar mi ciudad" : "Poner mi ciudad"}
-              </button>
-            )}
           </div>
         )}
       </section>
