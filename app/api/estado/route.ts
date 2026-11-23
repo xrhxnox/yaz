@@ -1,6 +1,7 @@
 import { db, error, autenticar, firmar } from "@/lib/servidor";
 import { NOMBRES, hoyCompartido, type Persona, type Estilo } from "@/lib/config";
 import { fotosDelMuro } from "@/lib/muro";
+import { quienResponde } from "@/lib/preguntas";
 
 // Lee algo opcional: si la tabla o columna aún no existe en Supabase, devuelve null en vez de fallar
 async function opcional<T>(consulta: PromiseLike<{ data: T | null; error: unknown }>): Promise<T | null> {
@@ -17,10 +18,11 @@ function diaAnterior(fecha: string) {
 }
 
 // Días seguidos (hasta hoy, o hasta ayer si hoy aún no se completa) en que los DOS hicieron algo
-function racha(filas: { fecha: string; persona: string }[] | null, hoy: string) {
+// minimo: cuántas personas deben tener algo ese día (fotos: los dos; pregunta: basta quien le tocó)
+function racha(filas: { fecha: string; persona: string }[] | null, hoy: string, minimo = 2) {
   const porDia = new Map<string, Set<string>>();
   for (const f of filas ?? []) porDia.set(f.fecha, (porDia.get(f.fecha) ?? new Set()).add(f.persona));
-  const completo = (d: string) => (porDia.get(d)?.size ?? 0) >= 2;
+  const completo = (d: string) => (porDia.get(d)?.size ?? 0) >= minimo;
   let dia = completo(hoy) ? hoy : diaAnterior(hoy);
   let n = 0;
   while (completo(dia)) {
@@ -90,7 +92,7 @@ export async function GET(req: Request) {
 
     // Extras opcionales: ánimo, rachas, visitas y planes del reencuentro
     const hoy = hoyCompartido();
-    const [animosFilas, respuestasFilas, fotosFilas, visitasFilas, planes, misTurnos] = await Promise.all([
+    const [animosFilas, respuestasFilas, fotosFilas, visitasFilas, planes, misTurnos, numerosHoy] = await Promise.all([
       opcional<{ persona: Persona; texto: string; updated_at: string }[]>(db().from("animos").select("persona, texto, updated_at")),
       opcional<{ fecha: string; persona: string }[]>(db().from("respuestas").select("fecha, persona").order("fecha", { ascending: false }).limit(800)),
       fotosDelMuro({}, 1500),
@@ -100,7 +102,19 @@ export async function GET(req: Request) {
       ),
       // Juegos en los que me toca jugar
       opcional<{ tipo: string }[]>(db().from("partidas").select("tipo").eq("turno", yo).is("ganador", null)),
+      // Números de la pregunta de hoy (null si todavía no existe esa tabla)
+      opcional<{ persona: Persona; numero: number }[]>(db().from("pregunta_numeros").select("persona, numero").eq("fecha", hoyCompartido())),
     ]);
+    // Pregunta del día: ¿me falta elegir número o me toca responder?
+    const preguntaPendiente = (): "elegir" | "responder" | null => {
+      const respondi = !!respuestasFilas?.some((r) => r.fecha === hoy && r.persona === yo);
+      if (!numerosHoy) return respuestasFilas && !respondi ? "responder" : null;
+      const mio = numerosHoy.find((n) => n.persona === yo);
+      if (!mio) return "elegir";
+      const na = numerosHoy.find((n) => n.persona === "a")?.numero;
+      const nb = numerosHoy.find((n) => n.persona === "b")?.numero;
+      return na && nb && quienResponde(na, nb) === yo && !respondi ? "responder" : null;
+    };
     const animos: Record<Persona, { texto: string; updated_at: string } | null> = { a: null, b: null };
     for (const a of animosFilas ?? []) animos[a.persona] = { texto: a.texto, updated_at: a.updated_at };
     const visitas = visitasFilas
@@ -112,12 +126,12 @@ export async function GET(req: Request) {
 
     return Response.json({
       animos,
-      rachas: { preguntas: racha(respuestasFilas, hoy), fotos: racha(fotosFilas, hoy) },
+      rachas: { preguntas: racha(respuestasFilas, hoy, 1), fotos: racha(fotosFilas, hoy) },
       visitas,
       planes: planes ?? [],
       turnos: (misTurnos ?? []).map((t) => t.tipo),
       // ¿Me falta responder la pregunta del día? (null si no existe la tabla)
-      preguntaPendiente: respuestasFilas ? !respuestasFilas.some((r) => r.fecha === hoy && r.persona === yo) : null,
+      preguntaPendiente: preguntaPendiente(),
       temas,
       nombres,
       cumples,

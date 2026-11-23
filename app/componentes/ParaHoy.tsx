@@ -53,7 +53,12 @@ export default function ParaHoy({ yo, ahora, estado }: { yo: Persona; ahora: Dat
   for (const t of (estado?.turnos ?? []).filter(esTipoJuego)) lista.push({ id: `turno-${t}`, texto: `Te toca en ${JUEGOS[t].nombre}`, href: `#juegos/${t}` });
 
   // Pregunta del día
-  if (estado?.preguntaPendiente) lista.push({ id: "pregunta", texto: "Responde la pregunta del día", href: "#juegos/pregunta" });
+  if (estado?.preguntaPendiente)
+    lista.push({
+      id: "pregunta",
+      texto: estado.preguntaPendiente === "elegir" ? "Elige tu número para la pregunta del día" : "Te toca responder la pregunta del día",
+      href: "#juegos/pregunta",
+    });
 
   if (!lista.length) return null;
 

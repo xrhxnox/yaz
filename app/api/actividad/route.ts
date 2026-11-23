@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   const hoy = hoyCompartido();
 
   try {
-    const [likes, comentarios, respuestasHistoria, historias, publicaciones, canciones, cartas, diario, mensajes, preguntas, turnos] = await Promise.all([
+    const [likes, comentarios, respuestasHistoria, historias, publicaciones, canciones, cartas, diario, mensajes, preguntas, turnos, numeros] = await Promise.all([
       opcional<{ created_at: string; publicacion_id: number; publicaciones: { persona: Persona; texto: string | null } }>(
         db()
           .from("publicacion_likes")
@@ -68,6 +68,7 @@ export async function GET(req: Request) {
       ),
       opcional<{ fecha: string; created_at: string }>(db().from("respuestas").select("fecha, created_at").eq("persona", tu).eq("fecha", hoy)),
       opcional<{ id: number; tipo: TipoJuego; updated_at: string }>(db().from("partidas").select("id, tipo, updated_at").eq("turno", yo).is("ganador", null)),
+      opcional<{ fecha: string; created_at: string }>(db().from("pregunta_numeros").select("fecha, created_at").eq("persona", tu).eq("fecha", hoy)),
     ]);
 
     const items: Actividad[] = [
@@ -113,7 +114,8 @@ export async function GET(req: Request) {
         };
       }),
       ...mensajes.map((m) => ({ id: `mensaje-${m.id}`, texto: "te mandó un mensaje", detalle: recorta(m.mensaje), fecha: m.created_at, url: "inicio" })),
-      ...preguntas.map((p) => ({ id: `pregunta-${p.fecha}`, texto: "ya respondió la pregunta del día", detalle: null, fecha: p.created_at, url: "juegos/pregunta" })),
+      ...preguntas.map((p) => ({ id: `pregunta-${p.fecha}`, texto: "respondió la pregunta del día", detalle: null, fecha: p.created_at, url: "juegos/pregunta" })),
+      ...numeros.map((n) => ({ id: `numero-${n.fecha}`, texto: "eligió su número de la pregunta", detalle: null, fecha: n.created_at, url: "juegos/pregunta" })),
       ...turnos.map((t) => ({
         id: `turno-${t.id}-${t.updated_at}`,
         texto: `ya jugó: te toca en ${JUEGOS[t.tipo].nombre.toLowerCase()}`,

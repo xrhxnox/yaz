@@ -73,6 +73,12 @@ export const PREGUNTAS = [
   "¿Qué te gustaría preguntarme que nunca me has preguntado?",
 ];
 
+// Quién responde hoy según los números que eligieron (1 o 2):
+// distintos → Ric (a), iguales → Yaz (b)
+export function quienResponde(numeroA: number, numeroB: number): "a" | "b" {
+  return numeroA !== numeroB ? "a" : "b";
+}
+
 // Misma pregunta para los dos, cambia cada día
 export function preguntaDe(fecha: string): string {
   const dias = Math.round((Date.parse(fecha) - Date.parse(FECHA_INICIO)) / 864e5);

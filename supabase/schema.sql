@@ -33,6 +33,15 @@ create table if not exists respuestas (
   primary key (fecha, persona)
 );
 
+-- Pregunta del día: cada quien elige 1 o 2 a ciegas; distintos = responde Ric (a), iguales = responde Yaz (b)
+create table if not exists pregunta_numeros (
+  fecha date not null,
+  persona text not null check (persona in (a, b)),
+  numero smallint not null check (numero in (1, 2)),
+  created_at timestamptz not null default now(),
+  primary key (fecha, persona)
+);
+
 -- Ciudad de cada uno (para hora y clima)
 create table if not exists ubicaciones (
   persona text primary key check (persona in ('a', 'b')),
@@ -334,6 +343,7 @@ alter table ajustes enable row level security;
 alter table pensamientos enable row level security;
 alter table suscripciones enable row level security;
 alter table respuestas enable row level security;
+alter table pregunta_numeros enable row level security;
 alter table ubicaciones enable row level security;
 alter table pendientes enable row level security;
 alter table fotos enable row level security;
