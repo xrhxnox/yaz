@@ -108,7 +108,9 @@ export async function GET(req: Request) {
     // Pregunta del día: ¿me falta elegir número o me toca responder?
     const preguntaPendiente = (): "elegir" | "responder" | null => {
       const respondi = !!respuestasFilas?.some((r) => r.fecha === hoy && r.persona === yo);
-      if (!numerosHoy) return respuestasFilas && !respondi ? "responder" : null;
+      const alguienRespondio = !!respuestasFilas?.some((r) => r.fecha === hoy);
+      // Sin tabla de números, o día que empezó como antes (respuestas sin números): responden los dos
+      if (!numerosHoy || (!numerosHoy.length && alguienRespondio)) return respuestasFilas && !respondi ? "responder" : null;
       const mio = numerosHoy.find((n) => n.persona === yo);
       if (!mio) return "elegir";
       const na = numerosHoy.find((n) => n.persona === "a")?.numero;

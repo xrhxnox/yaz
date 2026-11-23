@@ -49,7 +49,9 @@ export async function GET(req: Request) {
         };
       });
 
-    if (numeros === null) {
+    // Día que ya se jugó como antes (hay respuestas pero nadie eligió número): ese día sigue igual
+    const diaDeAntes = !numHoy.a && !numHoy.b && !!(respHoy.a || respHoy.b);
+    if (numeros === null || diaDeAntes) {
       // Como antes: responden los dos y la del otro se ve hasta que contestes
       const mia = respHoy[yo] ?? null;
       const suya = respHoy[tu] ?? null;
@@ -93,6 +95,10 @@ export async function POST(req: Request) {
 
     if (numero !== undefined) {
       if (numero !== 1 && numero !== 2) return invalido();
+      // Si hoy ya respondieron como antes (sin números), los números empiezan mañana
+      const yaHay = (revisar(await db().from("respuestas").select("persona").eq("fecha", hoy)) as unknown[] | null) ?? [];
+      const algunNumero = (revisar(await db().from("pregunta_numeros").select("persona").eq("fecha", hoy)) as unknown[] | null) ?? [];
+      if (yaHay.length && !algunNumero.length) return invalido("Hoy ya respondieron como antes; los números empiezan mañana");
       const r = await db().from("pregunta_numeros").insert({ fecha: hoy, persona: yo, numero });
       if (r.error && /duplicate|unique/i.test(r.error.message)) return invalido("Ya elegiste tu número de hoy");
       revisar(r);
@@ -119,8 +125,13 @@ export async function POST(req: Request) {
       const deHoy = numeros.filter((n) => n.fecha === hoy);
       const na = deHoy.find((n) => n.persona === "a")?.numero;
       const nb = deHoy.find((n) => n.persona === "b")?.numero;
-      if (!na || !nb) return invalido("Primero tienen que elegir su número los dos");
-      if (quienResponde(na, nb) !== yo) return invalido(`Hoy le toca responder a ${nombres[tu]}`);
+      const yaHay = (revisar(await db().from("respuestas").select("persona").eq("fecha", hoy)) as unknown[] | null) ?? [];
+      // Día que empezó como antes: los dos pueden responder
+      const diaDeAntes = !deHoy.length && yaHay.length > 0;
+      if (!diaDeAntes) {
+        if (!na || !nb) return invalido("Primero tienen que elegir su número los dos");
+        if (quienResponde(na, nb) !== yo) return invalido(`Hoy le toca responder a ${nombres[tu]}`);
+      }
     }
 
     const previa = revisar(await db().from("respuestas").select("fecha").eq("fecha", hoy).eq("persona", yo).maybeSingle());
