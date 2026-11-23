@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FECHA_INICIO, type Persona } from "@/lib/config";
-import { useNombres } from "@/lib/pareja";
+import { FECHA_INICIO, otra, type Persona } from "@/lib/config";
+import { useNombres, usePareja } from "@/lib/pareja";
+import { useSubseccion } from "@/lib/subseccion";
 import type { Ubicacion } from "@/lib/cliente";
 import { NOMBRES_SECCION, SECCIONES } from "./Navegacion";
 import Campana from "./Campana";
@@ -32,7 +33,10 @@ export default function Cabecera({
   alCrear: () => void;
 }) {
   const NOMBRES = useNombres();
+  const { acentos } = usePareja();
   const enPerfil = seccion === "perfil";
+  // ¿Qué perfil se está viendo? (#perfil = el mío, #perfil/pareja = el de la otra persona)
+  const [parte] = useSubseccion(["datos", "app", "pareja"] as const, "datos");
   const [actualizando, setActualizando] = useState(false);
 
   async function actualizar() {
@@ -87,17 +91,28 @@ export default function Cabecera({
             Actualizar
           </button>
           <Campana yo={yo} />
-          {/* Tu foto de perfil: abre tu perfil (y regresa a Hoy si ya estás ahí) */}
-          <a
-            href={enPerfil ? "#inicio" : "#perfil"}
-            aria-label={enPerfil ? "Volver" : "Mi perfil"}
-            title={enPerfil ? "Volver" : "Mi perfil"}
-            className={`ml-1 rounded-full p-[2px] transition ${enPerfil ? "bg-acento" : "bg-borde hover:bg-suave"}`}
-          >
-            <span className="block rounded-full border-2 border-fondo">
-              <Avatar persona={yo} size={26} />
-            </span>
-          </a>
+          {/* Las dos fotos: la de la otra persona abre su perfil y la mía el mío (otra vez = regresar a Hoy) */}
+          <div className="ml-1 flex items-center gap-1">
+            {([otra(yo), yo] as Persona[]).map((p) => {
+              const activo = enPerfil && (p === yo ? parte !== "pareja" : parte === "pareja");
+              const etiqueta = activo ? "Volver" : p === yo ? "Mi perfil" : `Perfil de ${NOMBRES[p]}`;
+              return (
+                <a
+                  key={p}
+                  href={activo ? "#inicio" : p === yo ? "#perfil" : "#perfil/pareja"}
+                  aria-label={etiqueta}
+                  aria-current={activo ? "page" : undefined}
+                  title={etiqueta}
+                  className="rounded-full p-[2px] transition active:scale-95"
+                  style={{ background: activo ? acentos[p] : "var(--borde)" }}
+                >
+                  <span className="block rounded-full border-2 border-fondo">
+                    <Avatar persona={p} size={26} />
+                  </span>
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
 
