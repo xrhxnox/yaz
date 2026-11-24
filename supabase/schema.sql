@@ -311,6 +311,9 @@ alter table historias add column if not exists texto_y real;
 -- Estilo del texto ('rect' con fondo del acento o 'libre' sin fondo) y tamaño (fracción del ancho de la foto)
 alter table historias add column if not exists texto_estilo text;
 alter table historias add column if not exists texto_tam real;
+-- Historias con video: tipo (foto o video) y cuánto dura (segundos)
+alter table historias add column if not exists tipo text not null default foto;
+alter table historias add column if not exists duracion real;
 
 -- Respuestas a una historia: corazón o mensajito
 create table if not exists historia_respuestas (
@@ -374,6 +377,14 @@ grant usage, select on all sequences in schema public to service_role;
 -- Carpeta privada para las fotos: máximo 5 MB y solo imágenes
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('fotos', 'fotos', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set public = false,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+-- Carpeta privada para los videos de historias: máximo 50 MB
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (videos, videos, false, 52428800, array[video/mp4, video/quicktime, video/webm])
 on conflict (id) do update
   set public = false,
       file_size_limit = excluded.file_size_limit,

@@ -19,7 +19,7 @@ import { irA, perfilDe } from "@/lib/navegar";
 import Esqueleto from "./Esqueleto";
 
 type Respuesta = { persona: Persona; corazon: boolean; texto: string | null; created_at: string };
-export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; texto_estilo?: EstiloTexto | null; texto_tam?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
+export type Historia = { id: number; persona: Persona; url: string; texto: string | null; texto_x?: number | null; texto_y?: number | null; texto_estilo?: EstiloTexto | null; texto_tam?: number | null; tipo?: "foto" | "video" | null; duracion?: number | null; vista_at: string | null; created_at: string; respuestas: Respuesta[]; me_gusta?: boolean };
 
 // Sube fotos como historias (una por llamada); al terminar avisa para que la fila se actualice
 // Texto que se lee sobre un color: oscuro sobre colores claros, blanco sobre oscuros
@@ -107,16 +107,24 @@ export function Visor({
   // Cuántos dedos hay en la foto (con dos se está haciendo zoom)
   const dedos = useRef(0);
   const multitoque = useRef(false);
-  const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen();
   const h = historias[i];
+  const esVideo = h?.tipo === "video";
+  const { contenedor: cajaRef, alCargar: alCargarFoto, rect: rectFoto } = useCajaImagen(esVideo ? 9 / 16 : undefined);
+  // Video: el elemento, si está sin sonido (si el teléfono no deja reproducir con sonido), si se detuvo a cargar y cuánto dura
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [silencio, setSilencio] = useState(false);
+  const [esperando, setEsperando] = useState(false);
+  const [durVideo, setDurVideo] = useState<number | null>(null);
   const mia = h?.persona === yo;
   const lista = !!h && cargada === h.id;
-  const detenida = pausa || escribiendo || !lista;
+  const detenida = pausa || escribiendo || !lista || esperando;
   const meGusta = !!h && !!corazones[h.id];
 
   const ir = useCallback(
     (n: number) => {
       setAviso("");
+      setEsperando(false);
+      setDurVideo(null);
       setVuelta((v) => v + 1);
       if (n >= historias.length) return alCerrar();
       setI(Math.max(0, n));
@@ -127,8 +135,21 @@ export function Visor({
   // La siguiente se va bajando mientras ves esta
   useEffect(() => {
     const sig = historias[i + 1];
-    if (sig) new Image().src = sig.url;
+    if (sig && sig.tipo !== "video") new Image().src = sig.url;
   }, [i, historias]);
+
+  // El video se reproduce o se pausa junto con la historia; si no deja con sonido, sigue sin sonido
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !esVideo || !lista) return;
+    if (detenida) v.pause();
+    else
+      v.play().catch(() => {
+        v.muted = true;
+        setSilencio(true);
+        v.play().catch(() => {});
+      });
+  }, [detenida, esVideo, lista, h?.id]);
 
   // Marcar como vista la historia de la otra persona
   useEffect(() => {
@@ -235,8 +256,11 @@ export function Visor({
               <div
                 key={`${x.id}-${vuelta}`}
                 className="barra-historia h-full bg-white"
-                style={{ animationDuration: `${DURACION}ms`, animationPlayState: detenida ? "paused" : "running" }}
-                onAnimationEnd={() => ir(i + 1)}
+                style={{
+                  animationDuration: `${x.tipo === "video" ? Math.round((x.duracion ?? durVideo ?? DURACION / 1000) * 1000) : DURACION}ms`,
+                  animationPlayState: detenida ? "paused" : "running",
+                }}
+                onAnimationEnd={() => x.tipo !== "video" && ir(i + 1)}
               />
             )}
           </div>
@@ -258,8 +282,25 @@ export function Visor({
         </button>
         <p className="text-xs text-white/60">{hace(h.created_at)}</p>
         <div className="ml-auto flex items-center gap-1">
+          {esVideo && (
+            <button
+              onClick={() => {
+                const v = videoRef.current;
+                if (v) v.muted = !silencio;
+                setSilencio((x) => !x);
+              }}
+              aria-label={silencio ? "Activar sonido" : "Quitar sonido"}
+              className="rounded-full p-2 text-white/85 hover:bg-white/10"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M4 9h4l5-4v14l-5-4H4z" />
+                {silencio ? <path d="M17 9l4 6M21 9l-4 6" /> : <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />}
+              </svg>
+            </button>
+          )}
           {mia && (
             <>
+              {!esVideo && (
               <button
                 onClick={async () => {
                   setPausa(true);
@@ -274,6 +315,7 @@ export function Visor({
               >
                 Guardar en el muro
               </button>
+              )}
               <button
                 onClick={async () => {
                   setPausa(true);
@@ -373,7 +415,41 @@ export function Visor({
           setPausa(false);
         }}
       >
-        {/* La foto y su texto: se pueden agrandar pellizcando */}
+        {esVideo ? (
+          // Video con su texto encima (en el mismo marco con forma de pantalla con que se subió)
+          <div key={h.id} className="absolute inset-0">
+            <video
+              ref={videoRef}
+              src={h.url}
+              playsInline
+              preload="auto"
+              muted={silencio}
+              onLoadedMetadata={(e) => {
+                if (!h.duracion && Number.isFinite(e.currentTarget.duration)) setDurVideo(e.currentTarget.duration);
+                setCargada(h.id);
+              }}
+              onError={() => setCargada(h.id)}
+              onWaiting={() => setEsperando(true)}
+              onPlaying={() => setEsperando(false)}
+              onEnded={() => ir(i + 1)}
+              className={`pointer-events-none absolute object-contain transition-opacity duration-150 ${lista ? "opacity-100" : "opacity-0"}`}
+              style={{ left: rectFoto.left, top: rectFoto.top, width: rectFoto.width, height: rectFoto.height }}
+            />
+            {h.texto && lista && (
+              <TextoHistoria
+                texto={h.texto}
+                estilo={h.texto_estilo}
+                tam={h.texto_tam}
+                color={acentos[h.persona]}
+                rect={rectFoto}
+                x={h.texto_x ?? 0.5}
+                y={h.texto_y ?? 0.5}
+                className="pointer-events-none"
+              />
+            )}
+          </div>
+        ) : (
+        /* La foto y su texto: se pueden agrandar pellizcando */
         <Pellizcable key={h.id} className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -401,7 +477,8 @@ export function Visor({
           />
         )}
         </Pellizcable>
-        {!lista && (
+        )}
+        {(!lista || esperando) && (
           <span className="absolute inset-0 flex items-center justify-center" aria-label="Cargando">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
           </span>
@@ -678,7 +755,7 @@ export default function Historias({
 
   // Las fotos se bajan desde que se ven los círculos, para que al abrir salgan al instante
   useEffect(() => {
-    for (const h of historias ?? []) new Image().src = h.url;
+    for (const h of historias ?? []) if (h.tipo !== "video") new Image().src = h.url;
   }, [historias]);
 
   if (!historias)
@@ -732,7 +809,7 @@ export default function Historias({
         />
         {children && <div className={`min-w-0 flex-1 self-center pl-1 ${animos ? "pt-8" : ""}`}>{children}</div>}
       </div>
-      <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
+      <input ref={selector} type="file" accept="image/*,video/*" multiple onChange={subir} className="hidden" />
       {/* Cambiar mi estado: hoja desde abajo */}
       {editandoAnimo && alCambiarAnimo && (
         <div className="fondo-aparecer fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={() => setEditandoAnimo(false)} role="presentation">

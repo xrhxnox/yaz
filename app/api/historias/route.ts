@@ -1,6 +1,8 @@
-import { db, error, firmar, invalido, autenticar, nombresActuales, notificar, revisar, subirImagen } from "@/lib/servidor";
+import { BUCKET_VIDEOS, TIPOS_VIDEO, db, error, firmar, invalido, autenticar, nombresActuales, notificar, revisar, subirImagen } from "@/lib/servidor";
 import { hoyCompartido, otra, type Persona } from "@/lib/config";
 import { DURACION_HISTORIA_MS, borrarImagenHistoria } from "@/lib/historias";
+
+const esVideo = (path: string) => /\.(mp4|mov|webm)$/.test(path);
 
 type Fila = {
   id: number;
@@ -11,6 +13,8 @@ type Fila = {
   texto_y?: number | null;
   texto_estilo?: string | null;
   texto_tam?: number | null;
+  tipo?: string | null;
+  duracion?: number | null;
   vista_at: string | null;
   created_at: string;
   historia_respuestas: { persona: Persona; corazon: boolean; texto: string | null; created_at: string }[];
@@ -30,11 +34,16 @@ export async function GET(req: Request) {
         .gte("created_at", desde)
         .order("created_at");
     // Las columnas del texto se agregaron después: si faltan, se pide sin ellas
-    let r = await consulta(", texto_x, texto_y, texto_estilo, texto_tam");
+    let r = await consulta(", texto_x, texto_y, texto_estilo, texto_tam, tipo, duracion");
+    if (r.error && /tipo|duracion/.test(r.error.message)) r = await consulta(", texto_x, texto_y, texto_estilo, texto_tam");
     if (r.error && /texto_(estilo|tam)/.test(r.error.message)) r = await consulta(", texto_x, texto_y");
     if (r.error && /texto_/.test(r.error.message)) r = await consulta("");
     const filas: Fila[] = (revisar(r) as Fila[] | null) ?? [];
-    const urls = await firmar(filas.map((h) => h.path));
+    // Fotos y videos viven en carpetas distintas
+    const urls = {
+      ...(await firmar(filas.filter((h) => h.tipo !== "video").map((h) => h.path))),
+      ...(await firmar(filas.filter((h) => h.tipo === "video").map((h) => h.path), BUCKET_VIDEOS)),
+    };
     return Response.json({
       historias: filas
         .filter((h) => urls[h.path])
@@ -53,35 +62,70 @@ export async function GET(req: Request) {
   }
 }
 
-// Subir UNA historia (form: foto). Se avisa a la otra persona si no había subido otra hace poco
+// Subir UNA historia. Se avisa a la otra persona si no había subido otra hace poco
+// - Foto: form con "foto" (y el texto)
+// - Video, en dos pasos (pesan más de lo que aguanta el servidor, así que van directo a Supabase):
+//   1) JSON { subirVideo: { tipo } } → { path, url }: permiso temporal para subirlo
+//   2) JSON { video: path, duracion, texto… } → se guarda la historia
 export async function POST(req: Request) {
   const yo = await autenticar(req);
   if (yo instanceof Response) return yo;
 
-  const form = await req.formData().catch(() => null);
-  if (!form) return invalido();
-  const texto = form.get("texto");
+  const esJson = (req.headers.get("content-type") ?? "").includes("application/json");
+  const form = esJson ? null : await req.formData().catch(() => null);
+  const cuerpo: Record<string, unknown> = esJson ? await req.json().catch(() => ({})) : {};
+  if (!esJson && !form) return invalido();
+  const campo = (nombre: string): string | null => {
+    const v = form ? form.get(nombre) : cuerpo[nombre];
+    return typeof v === "string" ? v : typeof v === "number" ? String(v) : null;
+  };
 
   try {
+    // Paso 1 del video: permiso para subirlo directo
+    if (esJson && cuerpo.subirVideo && typeof cuerpo.subirVideo === "object") {
+      const tipo = String((cuerpo.subirVideo as { tipo?: unknown }).tipo ?? "");
+      const ext = TIPOS_VIDEO[tipo];
+      if (!ext) return invalido("Ese formato de video no se puede subir");
+      const path = `historias/${crypto.randomUUID()}.${ext}`;
+      const permiso = revisar(await db().storage.from(BUCKET_VIDEOS).createSignedUploadUrl(path)) as { signedUrl: string } | null;
+      if (!permiso) return invalido("No se pudo preparar la subida");
+      return Response.json({ path, url: permiso.signedUrl });
+    }
+
     const hacePoco = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { count } = await db().from("historias").select("*", { count: "exact", head: true }).eq("persona", yo).gte("created_at", hacePoco);
-    const path = await subirImagen(form.get("foto"), "historias");
+
+    let path: string;
+    let extra: Record<string, unknown> = {};
+    if (esJson) {
+      // Paso 2 del video: ya está en Supabase, solo se registra
+      const video = campo("video");
+      if (!video || !/^historias\/[0-9a-f-]{36}\.(mp4|mov|webm)$/.test(video)) return invalido();
+      path = video;
+      const duracion = Number(campo("duracion"));
+      extra = { tipo: "video", duracion: Number.isFinite(duracion) && duracion >= 0.5 ? Math.min(90, duracion) : null };
+    } else {
+      path = await subirImagen(form!.get("foto"), "historias");
+    }
+
     // Posición del texto (0 a 1); si no viene, al centro
-    const lugar = (v: FormDataEntryValue | null) => {
+    const lugar = (v: string | null) => {
       const n = Number(v);
-      return v !== null && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : null;
+      return v !== null && v !== "" && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : null;
     };
-    const fila: Record<string, unknown> = { persona: yo, path, texto: typeof texto === "string" && texto.trim() ? texto.trim().slice(0, 200) : null };
-    const x = lugar(form.get("texto_x"));
-    const y = lugar(form.get("texto_y"));
+    const texto = campo("texto");
+    const fila: Record<string, unknown> = { persona: yo, path, texto: texto && texto.trim() ? texto.trim().slice(0, 200) : null };
+    const x = lugar(campo("texto_x"));
+    const y = lugar(campo("texto_y"));
     const conLugar = x !== null && y !== null ? { ...fila, texto_x: x, texto_y: y } : fila;
-    const estilo = form.get("texto_estilo") === "libre" ? "libre" : "rect";
-    const tam = Number(form.get("texto_tam"));
+    const estilo = campo("texto_estilo") === "libre" ? "libre" : "rect";
+    const tam = Number(campo("texto_tam"));
     const completa = fila.texto ? { ...conLugar, texto_estilo: estilo, texto_tam: Number.isFinite(tam) && tam > 0 ? Math.min(0.2, Math.max(0.03, tam)) : null } : conLugar;
-    // Si faltan columnas nuevas en la base, se guarda con lo que sí hay
-    let r = await db().from("historias").insert(completa);
-    if (r.error && /texto_(estilo|tam)/.test(r.error.message)) r = await db().from("historias").insert(conLugar);
-    if (r.error && /texto_/.test(r.error.message)) r = await db().from("historias").insert(fila);
+    // Si faltan columnas nuevas en la base, se guarda con lo que sí hay (un video sin columna "tipo" no se puede guardar)
+    let r = await db().from("historias").insert({ ...completa, ...extra });
+    if (r.error && /tipo|duracion/.test(r.error.message)) return invalido("Falta preparar la base de datos para videos (corre el SQL nuevo)");
+    if (r.error && /texto_(estilo|tam)/.test(r.error.message)) r = await db().from("historias").insert({ ...conLugar, ...extra });
+    if (r.error && /texto_/.test(r.error.message)) r = await db().from("historias").insert({ ...fila, ...extra });
     revisar(r);
     if (!count) await notificar(otra(yo), "Historia nueva", `${(await nombresActuales())[yo]} subió una historia`, "/#inicio");
     return Response.json({ ok: true });
@@ -134,6 +178,7 @@ export async function PATCH(req: Request) {
 
     if (alMuro === true) {
       if (h.persona !== yo) return invalido("Solo puedes guardar tus historias");
+      if (esVideo(h.path)) return invalido("Los videos todavía no se pueden guardar en el muro");
       const { count } = await db().from("publicacion_fotos").select("*", { count: "exact", head: true }).eq("path", h.path);
       if (count) return invalido("Esa historia ya está en el muro");
       const pub = revisar(await db().from("publicaciones").insert({ persona: yo, fecha: hoyCompartido(), texto: h.texto }).select("id").single()) as { id: number };
@@ -157,7 +202,7 @@ export async function DELETE(req: Request) {
   try {
     const h = revisar(await db().from("historias").delete().eq("id", id).eq("persona", yo).select("path").maybeSingle()) as { path: string } | null;
     if (!h) return invalido("Solo puedes borrar tus historias");
-    await borrarImagenHistoria(h.path);
+    await borrarImagenHistoria(h.path, esVideo(h.path) ? "video" : "foto");
     return Response.json({ ok: true });
   } catch (e) {
     return error(e);

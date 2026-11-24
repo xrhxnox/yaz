@@ -10,7 +10,7 @@ type Opcion = { id: Intencion | "historia"; nombre: string; texto: string; desti
 // Todo lo que se puede crear, y a dónde lleva cada cosa
 const OPCIONES: Opcion[] = [
   { id: "publicar", nombre: "Foto al muro", texto: "Una o varias fotos", destino: "muro", icono: "M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" },
-  { id: "historia", nombre: "Historia", texto: "Dura 24 horas", destino: "inicio", icono: "M12 3a9 9 0 1 0 9 9M12 8v8M8 12h8M17 3.5l.5 1.5M20.5 7l-1.5.5" },
+  { id: "historia", nombre: "Historia", texto: "Fotos o videos · dura 24 horas", destino: "inicio", icono: "M12 3a9 9 0 1 0 9 9M12 8v8M8 12h8M17 3.5l.5 1.5M20.5 7l-1.5.5" },
   { id: "diario", nombre: "Anotar en el diario", texto: "Qué hiciste, comiste, viste…", destino: "nosotros/diario", icono: "M5 4h11l3 3v13H5zM9 9h6M9 13h6M9 17h4" },
   { id: "cancion", nombre: "Canción", texto: "A la playlist", destino: "nosotros/playlist", icono: "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" },
   { id: "carta", nombre: "Carta", texto: "Para abrir cuando quieras", destino: "nosotros/buzon", icono: "M3 5h18v14H3zM3 7l9 6 9-6" },
@@ -51,7 +51,7 @@ export default function Crear({ abierto, alCerrar }: { abierto: boolean; alCerra
 
   return (
     <>
-      <input ref={selector} type="file" accept="image/*" multiple onChange={subir} className="hidden" />
+      <input ref={selector} type="file" accept="image/*,video/*" multiple onChange={subir} className="hidden" />
       {abierto && (
         <div className="fondo-aparecer fixed inset-0 z-[70] flex items-end justify-center bg-black/45 lg:items-center" onClick={alCerrar} role="presentation">
           <div

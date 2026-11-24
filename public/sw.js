@@ -112,7 +112,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Fotos privadas de Supabase
-  if (url.hostname.endsWith(".supabase.co") && url.pathname.includes("/storage/v1/object/sign/")) {
+  // (los videos no: se piden por pedazos y el navegador necesita hablar directo con Supabase)
+  if (url.hostname.endsWith(".supabase.co") && url.pathname.includes("/storage/v1/object/sign/") && !url.pathname.includes("/sign/videos/") && !request.headers.has("range")) {
     event.respondWith(foto(request));
   }
 });

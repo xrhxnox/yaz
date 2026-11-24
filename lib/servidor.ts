@@ -109,6 +109,9 @@ export async function notificar(para: Persona, title: string, body: string, url 
 }
 
 const BUCKET = "fotos";
+// Videos de historias: carpeta aparte (hasta 50 MB); se suben directo desde el teléfono con un permiso temporal
+export const BUCKET_VIDEOS = "videos";
+export const TIPOS_VIDEO: Record<string, string> = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" };
 const TIPOS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const MAX_BYTES = 4 * 1024 * 1024;
 
@@ -120,8 +123,8 @@ export async function subirImagen(archivo: FormDataEntryValue | null, carpeta: s
   return path;
 }
 
-export async function borrarImagenes(paths: string[]) {
-  if (paths.length) await db().storage.from(BUCKET).remove(paths);
+export async function borrarImagenes(paths: string[], bucket = BUCKET) {
+  if (paths.length) await db().storage.from(bucket).remove(paths);
 }
 
 // Las fotos son privadas: generamos links temporales para verlas
@@ -129,24 +132,25 @@ export async function borrarImagenes(paths: string[]) {
 const firmados = new Map<string, { url: string; vence: number }>();
 const DURACION = 60 * 60 * 6; // segundos
 
-export async function firmar(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+export async function firmar(paths: (string | null | undefined)[], bucket = BUCKET): Promise<Record<string, string>> {
   const unicos = [...new Set(paths.filter((p): p is string => !!p))];
+  const clave = (p: string) => (bucket === BUCKET ? p : `${bucket}:${p}`);
   const ahora = Date.now();
   const resultado: Record<string, string> = {};
   const faltan: string[] = [];
   for (const p of unicos) {
-    const c = firmados.get(p);
+    const c = firmados.get(clave(p));
     // Se renueva si le queda menos de una hora
     if (c && c.vence - ahora > 60 * 60 * 1000) resultado[p] = c.url;
     else faltan.push(p);
   }
   if (faltan.length) {
-    const nuevos = revisar(await db().storage.from(BUCKET).createSignedUrls(faltan, DURACION)) ?? [];
+    const nuevos = revisar(await db().storage.from(bucket).createSignedUrls(faltan, DURACION)) ?? [];
     if (firmados.size > 2000) firmados.clear();
     for (const f of nuevos) {
       if (!f.signedUrl || !f.path) continue;
       resultado[f.path] = f.signedUrl;
-      firmados.set(f.path, { url: f.signedUrl, vence: ahora + DURACION * 1000 });
+      firmados.set(clave(f.path), { url: f.signedUrl, vence: ahora + DURACION * 1000 });
     }
   }
   return resultado;

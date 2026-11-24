@@ -30,7 +30,66 @@ type Borrador = {
   y: number;
   estilo: EstiloTexto;
   tam: number;
+  // Si es video: el archivo tal cual y cuánto dura (segundos)
+  video?: File;
+  duracion?: number;
 };
+
+// Videos: hasta 60 segundos y 50 MB (lo que aguanta la carpeta de videos)
+const VIDEO_MAX_SEG = 60;
+const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+const TIPOS_VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
+
+async function prepararVideo(archivo: File): Promise<Borrador> {
+  if (!TIPOS_VIDEO.includes(archivo.type)) throw new Error("Ese formato de video no se puede subir");
+  if (archivo.size > VIDEO_MAX_BYTES) throw new Error("El video pesa más de 50 MB; prueba con uno más corto");
+  const vista = URL.createObjectURL(archivo);
+  const datos = await new Promise<{ w: number; h: number; d: number }>((ok, falla) => {
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.muted = true;
+    v.onloadedmetadata = () => ok({ w: v.videoWidth, h: v.videoHeight, d: v.duration });
+    v.onerror = () => falla(new Error("No se pudo leer el video"));
+    v.src = vista;
+  });
+  if (datos.d > VIDEO_MAX_SEG + 0.5) {
+    URL.revokeObjectURL(vista);
+    throw new Error(`El video dura más de ${VIDEO_MAX_SEG} segundos`);
+  }
+  return {
+    blob: archivo,
+    vista,
+    nw: datos.w || 1080,
+    nh: datos.h || 1920,
+    fondo: "#000",
+    zoom: 1,
+    dx: 0,
+    dy: 0,
+    texto: "",
+    x: 0.5,
+    y: 0.5,
+    estilo: "rect",
+    tam: TAM_DEF,
+    video: archivo,
+    duracion: Number.isFinite(datos.d) && datos.d >= 0.5 ? datos.d : undefined,
+  };
+}
+
+// Sube el video directo a Supabase (con el permiso temporal) mostrando cuánto lleva
+function subirConAvance(url: string, archivo: File, alAvance: (fraccion: number) => void) {
+  return new Promise<void>((ok, falla) => {
+    const x = new XMLHttpRequest();
+    x.open("PUT", url);
+    x.setRequestHeader("x-upsert", "false");
+    x.upload.onprogress = (e) => e.lengthComputable && alAvance(e.loaded / e.total);
+    x.onload = () => (x.status < 300 ? ok() : falla(new Error(x.status === 413 ? "El video es muy pesado" : "No se pudo subir el video")));
+    x.onerror = () => falla(new Error("Se cortó la conexión al subir el video"));
+    const cuerpo = new FormData();
+    cuerpo.append("cacheControl", "3600");
+    cuerpo.append("", archivo);
+    x.send(cuerpo);
+  });
+}
 
 // Pide abrir la vista previa de historias con estas fotos (desde la fila de historias o desde "Crear")
 export function componerHistorias(archivos: File[]) {
@@ -155,9 +214,17 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
       setPreparando(true);
       try {
         const nuevos: Borrador[] = [];
-        for (const a of archivos) nuevos.push(await prepararFoto(a));
+        const fallas: string[] = [];
+        for (const a of archivos) {
+          try {
+            nuevos.push(await (a.type.startsWith("video/") ? prepararVideo(a) : prepararFoto(a)));
+          } catch (err) {
+            fallas.push((err as Error).message);
+          }
+        }
         setBorradores(nuevos);
         setI(0);
+        if (fallas.length) setError(fallas[0]);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -171,7 +238,8 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
   // Liberar las vistas previas al salir
   useEffect(() => () => vistas.current.forEach((b) => URL.revokeObjectURL(b.vista)), []);
 
-  const abierta = borradores.length > 0 || preparando;
+  // También se queda abierta si no se pudo preparar ninguno, para mostrar por qué
+  const abierta = borradores.length > 0 || preparando || !!error;
   useEffect(() => {
     if (!abierta) return;
     const antes = document.body.style.overflow;
@@ -191,17 +259,22 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
     setError("");
     try {
       for (const [n, b] of borradores.entries()) {
-        setSubiendo(borradores.length > 1 ? `${n + 1} de ${borradores.length}` : "…");
-        const form = new FormData();
-        form.set("foto", await hornear(b), "historia.jpg");
-        if (b.texto.trim()) {
-          form.set("texto", b.texto.trim());
-          form.set("texto_x", b.x.toFixed(3));
-          form.set("texto_y", b.y.toFixed(3));
-          form.set("texto_estilo", b.estilo);
-          form.set("texto_tam", b.tam.toFixed(4));
+        const cual = borradores.length > 1 ? `${n + 1} de ${borradores.length}` : "";
+        setSubiendo(cual || "…");
+        const texto = b.texto.trim()
+          ? { texto: b.texto.trim(), texto_x: b.x.toFixed(3), texto_y: b.y.toFixed(3), texto_estilo: b.estilo, texto_tam: b.tam.toFixed(4) }
+          : {};
+        if (b.video) {
+          // 1) permiso, 2) subir directo, 3) registrar la historia
+          const { path, url } = await api<{ path: string; url: string }>("/api/historias", { subirVideo: { tipo: b.video.type } });
+          await subirConAvance(url, b.video, (p) => setSubiendo(`${cual ? cual + " · " : ""}${Math.round(p * 100)}%`));
+          await api("/api/historias", { video: path, duracion: b.duracion, ...texto });
+        } else {
+          const form = new FormData();
+          form.set("foto", await hornear(b), "historia.jpg");
+          for (const [k, v] of Object.entries(texto)) form.set(k, v);
+          await api("/api/historias", form);
         }
-        await api("/api/historias", form);
       }
       vibrar();
       window.dispatchEvent(new Event("historias:actualizar"));
@@ -258,10 +331,11 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
         onPointerDown={(e) => {
           if (!b) return;
           dedos.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (dedos.current.size === 1 && !arrastrando.current) moviendoFoto.current = { x: e.clientX, y: e.clientY, dx: b.dx, dy: b.dy };
+          if (dedos.current.size === 1 && !arrastrando.current && !b.video) moviendoFoto.current = { x: e.clientX, y: e.clientY, dx: b.dx, dy: b.dy };
           if (dedos.current.size === 2) {
             moviendoFoto.current = null;
-            pellizco.current = arrastrando.current && b.texto.trim() ? { d: distancia(), valor: b.tam, de: "texto" } : { d: distancia(), valor: b.zoom, de: "foto" };
+            pellizco.current =
+              arrastrando.current && b.texto.trim() ? { d: distancia(), valor: b.tam, de: "texto" } : b.video ? null : { d: distancia(), valor: b.zoom, de: "foto" };
           }
         }}
         onPointerMove={(e) => {
@@ -279,15 +353,19 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
         }}
         onPointerUp={soltar}
         onPointerCancel={soltar}
-        onWheel={(e) => b && cambiar({ zoom: limitarZoom(b, b.zoom * Math.exp(-e.deltaY * 0.0015)) })}
+        onWheel={(e) => b && !b.video && cambiar({ zoom: limitarZoom(b, b.zoom * Math.exp(-e.deltaY * 0.0015)) })}
       >
         {b ? (
           <>
             {/* El marco con forma de pantalla: lo que quede fuera no se guarda */}
             <div className="absolute overflow-hidden rounded-xl" style={{ ...marco, background: b.fondo }}>
-              {foto && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={b.vista} alt="" draggable={false} className="pointer-events-none absolute" style={{ ...foto, maxWidth: "none" }} />
+              {b.video ? (
+                <video key={b.vista} src={b.vista} autoPlay muted loop playsInline className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+              ) : (
+                foto && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={b.vista} alt="" draggable={false} className="pointer-events-none absolute" style={{ ...foto, maxWidth: "none" }} />
+                )
               )}
             </div>
             {b.texto.trim() && (
@@ -333,7 +411,8 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
                 </span>
               </div>
             )}
-            {/* Ver la foto completa o volver a llenar la pantalla */}
+            {/* Ver la foto completa o volver a llenar la pantalla (los videos se ven completos) */}
+            {!b.video && (
             <button
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => (llenaPantalla(b) ? cambiar({ zoom: zoomCompleta(b), dx: 0, dy: 0 }) : cambiar({ zoom: 1, dx: 0, dy: 0 }))}
@@ -345,9 +424,15 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
               </svg>
               {llenaPantalla(b) ? "Ver completa" : "Llenar pantalla"}
             </button>
+            )}
+            {b.video && !!b.duracion && b.duracion >= 1 && (
+              <span className="pointer-events-none absolute rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium" style={{ left: marco.left + 10, top: marco.top + marco.height - 38 }}>
+                ▶ {Math.round(b.duracion)} s
+              </span>
+            )}
           </>
         ) : (
-          <p className="flex h-full items-center justify-center text-sm text-white/70">Preparando fotos…</p>
+          <p className="flex h-full items-center justify-center text-sm text-white/70">{preparando ? "Preparando…" : "No se pudo abrir"}</p>
         )}
         {error && <p className="absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1 text-xs text-black">{error}</p>}
       </div>
@@ -358,7 +443,7 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
             value={b.texto}
             onChange={(e) => cambiar({ texto: e.target.value })}
             maxLength={200}
-            placeholder="Escribe algo sobre la foto (opcional)…"
+            placeholder={`Escribe algo sobre ${b.video ? "el video" : "la foto"} (opcional)…`}
             aria-describedby="ayuda-historia"
             className="w-full rounded-full border border-white/40 bg-transparent px-4 py-2.5 text-base text-white outline-none placeholder:text-white/60 focus:border-white"
           />
@@ -377,7 +462,13 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
             </div>
           )}
           <p id="ayuda-historia" className="text-center text-[11px] text-white/60">
-            {b.texto.trim() ? "Arrastra para mover la foto o el texto · pellizca para hacerlos más grandes" : "Arrastra para mover la foto · pellizca para hacer zoom"}
+            {b.video
+              ? b.texto.trim()
+                ? "Arrastra el texto para moverlo · pellizca para hacerlo más grande"
+                : "Así se verá tu video"
+              : b.texto.trim()
+                ? "Arrastra para mover la foto o el texto · pellizca para hacerlos más grandes"
+                : "Arrastra para mover la foto · pellizca para hacer zoom"}
           </p>
           {borradores.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -385,11 +476,15 @@ export default function ComponerHistoria({ yo }: { yo: Persona }) {
                 <button
                   key={x.vista}
                   onClick={() => setI(n)}
-                  aria-label={`Foto ${n + 1}`}
+                  aria-label={`${x.video ? "Video" : "Foto"} ${n + 1}`}
                   className={`h-14 w-10 shrink-0 overflow-hidden rounded-md border-2 ${n === i ? "border-white" : "border-transparent opacity-60"}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={x.vista} alt="" className="h-full w-full object-cover" />
+                  {x.video ? (
+                    <video src={x.vista} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={x.vista} alt="" className="h-full w-full object-cover" />
+                  )}
                 </button>
               ))}
             </div>

@@ -116,7 +116,7 @@ if (url && llave && llaveOk) {
   if (conectado) {
     for (const [tabla, columna] of [["pendientes", "foto_path"], ["perfiles", "apodo"], ["perfiles", "cumple"], ["perfiles", "avatar_path"], ["perfiles", "favoritos"], ["perfiles", "estilo"], ["deseos", "orden"], ["pendientes", "para_reencuentro"], ["partidas", "ultima"],
   ["publicacion_fotos", "miniatura"],
-  ["historias", "texto_x"], ["historias", "texto_tam"]]) {
+  ["historias", "texto_x"], ["historias", "texto_tam"], ["historias", "tipo"]]) {
       const { error } = await db.from(tabla).select(columna).limit(1);
       if (error) mal(`Falta la columna ${tabla}.${columna}`, "Corre de nuevo supabase/schema.sql (o solo la línea alter table de esa columna)");
     }
